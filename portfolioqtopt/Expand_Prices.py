@@ -9,6 +9,7 @@
 # coding=utf-8
 import numpy as np
 
+
 class ExpandPriceData:
     def __init__(self, budget, slices, raw_price_data):
         ######### Inicializamos los datos de entrada. El numero de slices es el numero de proporciones consideradas #########
@@ -25,7 +26,7 @@ class ExpandPriceData:
         self.slices_list = np.zeros(self.slices)
         self.slices_list[0] = 1
         for i in range(1, self.slices):
-            self.slices_list[i] = float(1) / float(2 ** i)
+            self.slices_list[i] = float(1) / float(2**i)
         self.slices_list = np.array(self.slices_list)
 
         ######### Inicializamos la variable self.price_data_expanded #########
@@ -48,13 +49,17 @@ class ExpandPriceData:
             ######### Este for va rellenando los precios normalizados por cada asset y slice a lo largo del periodo temporal #########
             for j in range(self.slices):
                 for k in range(num_rows):
-                    asset_prices[k, j] = raw_price_data[k, i] * self.slices_list[j] * norm_price_factor
+                    asset_prices[k, j] = (
+                        raw_price_data[k, i] * self.slices_list[j] * norm_price_factor
+                    )
 
             ######### se va generando poco a poco price_data_expanded, que incluye todos los precios normalizados #########
             if i == 0:
                 self.price_data_expanded = asset_prices
             else:
-                self.price_data_expanded = np.append(self.price_data_expanded, asset_prices, 1)
+                self.price_data_expanded = np.append(
+                    self.price_data_expanded, asset_prices, 1
+                )
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # EN FUNCION DE LOS PRECIOS Y LAS PROPORCIONES, CREAMOS LOS PRECIOS EXPANDIDOS
@@ -70,10 +75,14 @@ class ExpandPriceData:
             ######### Este for va rellenando los precios normalizados por cada asset y slice a lo largo del periodo temporal #########
             for j in range(self.slices):
                 for k in range(num_rows):
-                    asset_prices[k, j] = raw_price_data[k, i] * self.slices_list[j] * norm_price_factor
+                    asset_prices[k, j] = (
+                        raw_price_data[k, i] * self.slices_list[j] * norm_price_factor
+                    )
 
             ######### se va generando poco a poco price_data_expanded, que incluye todos los precios normalizados #########
             if i == 0:
                 self.price_data_expanded_reversed = asset_prices
             else:
-                self.price_data_expanded_reversed = np.append(self.price_data_expanded_reversed, asset_prices, 1)
+                self.price_data_expanded_reversed = np.append(
+                    self.price_data_expanded_reversed, asset_prices, 1
+                )

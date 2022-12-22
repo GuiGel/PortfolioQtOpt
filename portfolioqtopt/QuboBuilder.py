@@ -6,8 +6,8 @@
 
 from SymmetricToTriangular import TriangleGenerator
 
-class QUBO:
 
+class QUBO:
     def __init__(self, qi, qij):
         ######### Inicializamos los datos de input #########
         self.qi = qi
@@ -34,9 +34,6 @@ class QUBO:
 
         ######### Generamos el diccionario, que es lo que vamos a emplear para resolver el problema en DWAVE #########
         self.qubo_dict = {}
-        self.qubo_dict.update({(i, j): self.qubo[i][j] for i in range(self.n) for j in range(self.n)})
-
-
-
-
-
+        self.qubo_dict.update(
+            {(i, j): self.qubo[i][j] for i in range(self.n) for j in range(self.n)}
+        )

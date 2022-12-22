@@ -1,5 +1,12 @@
+# python compiled files
+*.pyc
+__pycache__
+
 # Pyenv
 .python-version
 
 # Poetry
 poetry.lock
+
+# Data direcotry from Welzia
+data

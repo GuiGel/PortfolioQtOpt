@@ -7,8 +7,8 @@
 # coding=utf-8
 import numpy as np
 
-class ExpectedReturns:
 
+class ExpectedReturns:
     def __init__(self, price_data):
 
         ######### Obtenemos los valores del precio #########
@@ -29,8 +29,7 @@ class ExpectedReturns:
         # Calculate daily_return array which contains the daily returns contained in the historical price_data array:
         for i in range(self.num_cols):
             for j in range(self.num_rows - 1):
-                self.daily_return[j, i] = self.price_data[j + 1, i] - self.price_data[j, i]
+                self.daily_return[j, i] = (
+                    self.price_data[j + 1, i] - self.price_data[j, i]
+                )
             self.exp_returns[i] = np.mean(self.daily_return[:, i])
-
-
-

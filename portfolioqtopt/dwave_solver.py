@@ -1,12 +1,11 @@
 # coding=utf-8
-from dwave.system.samplers import DWaveSampler  # Library to interact with the QPU
-import dimod
+
 from dwave.system import LeapHybridSampler
-import statistics
-import numpy as np
+from dwave.system.samplers import \
+    DWaveSampler  # Library to interact with the QPU
+
 
 class DWaveSolver(object):
-
     def __init__(self, qubo, qubo_dict, runs, chainstrength, anneal_time, solver, API):
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -18,10 +17,10 @@ class DWaveSolver(object):
         self.qubo = qubo
         self.qubo_dict = qubo_dict
         self.solver = solver
-        #self.sapi_token = 'DEV-d9751cb50bc095c993f55b3255f728d5b2793c36'
+        # self.sapi_token = 'DEV-d9751cb50bc095c993f55b3255f728d5b2793c36'
         self.sapi_token = API
-        #self.url = 'https://eu-central-1.cloud.dwavesys.com/sapi/v2/'
-        self.url = 'https://na-west-1.cloud.dwavesys.com/sapi/v2/'
+        # self.url = 'https://eu-central-1.cloud.dwavesys.com/sapi/v2/'
+        self.url = "https://na-west-1.cloud.dwavesys.com/sapi/v2/"
 
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # RESOLVEMOS EL PROBLEMA EMPLEANDO DWAVE, LOS PARAMETROS ARRIBA INDICADOS
@@ -29,16 +28,21 @@ class DWaveSolver(object):
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     def solve_DWAVE_Advantadge_QUBO(self):
 
-        if self.solver == 'hybrid_solver':
+        if self.solver == "hybrid_solver":
             sampler = LeapHybridSampler(token=self.sapi_token, endpoint=self.url)
 
         ######### Resolvemos el problema y obtenemos la solución #########
-        if self.solver == 'hybrid_solver' or self.solver == 'exact':
+        if self.solver == "hybrid_solver" or self.solver == "exact":
             self.dwave_return = sampler.sample_qubo(self.qubo_dict)
-        
+
         self.dwave_raw_array = self.dwave_return.record.sample
         self.num_occurrences = self.dwave_return.record.num_occurrences
         self.energies = self.dwave_return.record.energy
 
         ######### Devolvemos la solucion, ocurrencias y energias #########
-        return self.dwave_return, self.dwave_raw_array, self.num_occurrences, self.energies
+        return (
+            self.dwave_return,
+            self.dwave_raw_array,
+            self.num_occurrences,
+            self.energies,
+        )

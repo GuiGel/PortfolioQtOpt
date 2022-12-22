@@ -5,12 +5,11 @@
 ########################################################################################################################
 import numpy as np
 from Covariance_calculator import Covariance
-from ExpectedReturn_calculator import ExpectedReturns
 from Expand_Prices import ExpandPriceData
+from ExpectedReturn_calculator import ExpectedReturns
 
 
 class PortfolioSelection:
-
     def __init__(self, theta_one, theta_two, theta_three, price_data, num_slices):
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # OBTENEMOS LOS VALORES DE INPUT
@@ -88,8 +87,11 @@ class PortfolioSelection:
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
         ######### Primero conformamos los valores de la diagonal, relacionados con el return y los precios #########
-        self.qi = -(self.theta_one * self.QUBO_returns) - (self.theta_two * self.QUBO_prices_linear)
+        self.qi = -(self.theta_one * self.QUBO_returns) - (
+            self.theta_two * self.QUBO_prices_linear
+        )
 
         ######### Ahora conformamos los valores cuadraticos, relacionados con la diversidad ##########
-        self.qij = (self.theta_two * self.QUBO_prices_quadratic) + (self.theta_three * self.QUBO_covariance)
-
+        self.qij = (self.theta_two * self.QUBO_prices_quadratic) + (
+            self.theta_three * self.QUBO_covariance
+        )

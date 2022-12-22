@@ -10,3 +10,6 @@ poetry.lock
 
 # Data direcotry from Welzia
 data
+
+# vscode stuff
+.vscode

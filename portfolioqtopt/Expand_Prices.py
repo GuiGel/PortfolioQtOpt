@@ -66,6 +66,32 @@ def get_expand_prices(
     return price_data_expanded
 
 
+def get_expand_prices_opt(
+    prices: npt.NDArray[np.float64],
+    slices_list: npt.NDArray[np.float64],
+    budget: int = 1,
+) -> npt.NDArray[np.float64]:
+    """Optimized version of get_expand_prices.
+
+    Args:
+        prices (npt.NDArray[np.float64]): The fund prices with shape
+            (prices number, funds number).
+        slices_list (npt.NDArray[np.float64]): Granularity slice list.
+        budget (int, optional): The initial budget. Defaults to 1.
+
+    Returns:
+        npt.NDArray[np.float64]: The expanded prices.
+    """
+    # This is the value we will use to normalize the purchase values of each
+    # asset
+    norm_price_factor = budget / prices[-1, :]
+    all_assert_prices = (
+        np.expand_dims(prices, axis=2) * slices_list * norm_price_factor.reshape(-1, 1)
+    )
+    asset_prices = all_assert_prices.squeeze()
+    return asset_prices
+
+
 class ExpandPriceData:
     def __init__(self, budget, slices, raw_price_data):
         ######### Inicializamos los datos de entrada. El numero de slices es el numero de proporciones consideradas #########

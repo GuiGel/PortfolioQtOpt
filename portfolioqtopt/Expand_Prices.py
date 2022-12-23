@@ -30,6 +30,42 @@ def get_slices_list(slices: int) -> npt.NDArray[np.float64]:
     return np.power(0.5, np.arange(slices))
 
 
+def get_expand_prices(
+    prices: npt.NDArray[np.float64],
+    slices: int,
+    slices_list: npt.NDArray[np.float64],
+    budget: int = 1,
+) -> npt.NDArray[np.float64]:
+    num_rows, num_cols = prices.shape
+
+    ######### Inicializamos la variable self.price_data_expanded #########
+    price_data_expanded: npt.NDArray[np.float64] | None = None
+
+    assert num_cols > 0
+
+    for i in range(num_cols):
+
+        ######### Inicializamos asset_prices #########
+        asset_prices = np.zeros((num_rows, slices))
+
+        ######### Este es el valor que vamos a usar para normalizar los valores de compra de cada asset. Se hace por slide #########
+        norm_price_factor = budget / prices[num_rows - 1, i]
+
+        ######### Este for va rellenando los precios normalizados por cada asset y slice a lo largo del periodo temporal #########
+        for j in range(slices):
+            for k in range(num_rows):
+                asset_prices[k, j] = prices[k, i] * slices_list[j] * norm_price_factor
+
+        ######### se va generando poco a poco price_data_expanded, que incluye todos los precios normalizados #########
+        if i == 0:
+            price_data_expanded = asset_prices
+        else:
+            assert isinstance(price_data_expanded, np.ndarray)
+            price_data_expanded = np.append(price_data_expanded, asset_prices, 1)
+
+    return price_data_expanded
+
+
 class ExpandPriceData:
     def __init__(self, budget, slices, raw_price_data):
         ######### Inicializamos los datos de entrada. El numero de slices es el numero de proporciones consideradas #########
@@ -46,36 +82,12 @@ class ExpandPriceData:
         self.slices_list = get_slices_list(slices)
 
         ######### Inicializamos la variable self.price_data_expanded #########
-        self.price_data_expanded = None
+        self.price_data_expanded = get_expand_prices(
+            raw_price_data, slices, self.slices_list, self.b
+        )
 
         ######### Inicializamos la variable self.price_data_expanded #########
         self.price_data_expanded_reversed = None
-
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # EN FUNCIÓN DE LOS PRECIOS Y LAS PROPORCIONES, CREAMOS LOS PRECIOS EXPANDIDOS
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        for i in range(num_cols):
-
-            ######### Inicializamos asset_prices #########
-            asset_prices = np.zeros((num_rows, self.slices))
-
-            ######### Este es el valor que vamos a usar para normalizar los valores de compra de cada asset. Se hace por slide #########
-            norm_price_factor = budget / raw_price_data[num_rows - 1, i]
-
-            ######### Este for va rellenando los precios normalizados por cada asset y slice a lo largo del periodo temporal #########
-            for j in range(self.slices):
-                for k in range(num_rows):
-                    asset_prices[k, j] = (
-                        raw_price_data[k, i] * self.slices_list[j] * norm_price_factor
-                    )
-
-            ######### se va generando poco a poco price_data_expanded, que incluye todos los precios normalizados #########
-            if i == 0:
-                self.price_data_expanded = asset_prices
-            else:
-                self.price_data_expanded = np.append(
-                    self.price_data_expanded, asset_prices, 1
-                )
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # EN FUNCION DE LOS PRECIOS Y LAS PROPORCIONES, CREAMOS LOS PRECIOS EXPANDIDOS

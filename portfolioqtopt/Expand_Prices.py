@@ -72,6 +72,7 @@ def get_expand_prices_opt(
     budget: int = 1,
 ) -> npt.NDArray[np.float64]:
     """Optimized version of get_expand_prices.
+    Speedup of 100X with the original ``get_expand_prices`` code.
 
     Args:
         prices (npt.NDArray[np.float64]): The fund prices with shape

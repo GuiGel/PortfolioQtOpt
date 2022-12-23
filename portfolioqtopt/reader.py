@@ -1,4 +1,4 @@
-"""This model contains the data readers."""
+"""This module contains the data readers."""
 from pathlib import Path
 from typing import Union
 
@@ -44,3 +44,6 @@ if __name__ == "__main__":
 
     df = read_welzia_stocks_file(file_path, sheet_name)
     print(df)
+    print(df.columns)
+    print(df.columns.names)
+    print(df.columns.get_level_values(0))

@@ -8,7 +8,25 @@
 ########################################################################################################################
 # coding=utf-8
 import numpy as np
+import numpy.typing as npt
 
+def get_slices_list(slices: int) -> npt.NDArray[np.float64]:
+    """Generate a list of slices.
+
+    Example:
+
+    >>> get_slices_list(5)
+    array([1.    , 0.5   , 0.25  , 0.125 , 0.0625])
+
+    Args:
+        slices (int): The number of slices is the granularity that we are 
+            going to give to each fund. That is, the amount of the budget we will
+            be able to invest.
+
+    Returns:
+        npt.NDArray[np.float64]: List of slices values.
+    """
+    return np.power(0.5, np.arange(1000))
 
 class ExpandPriceData:
     def __init__(self, budget, slices, raw_price_data):
@@ -23,11 +41,7 @@ class ExpandPriceData:
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # GENERAMOS LAS POSIBLES PROPORCIONES DEL BUDGET QUE PODEMOS ASIGNAR A CADA FONDO
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        self.slices_list = np.zeros(self.slices)
-        self.slices_list[0] = 1
-        for i in range(1, self.slices):
-            self.slices_list[i] = float(1) / float(2**i)
-        self.slices_list = np.array(self.slices_list)
+        self.slices_list = get_slices_list(slices)
 
         ######### Inicializamos la variable self.price_data_expanded #########
         self.price_data_expanded = None
@@ -36,7 +50,7 @@ class ExpandPriceData:
         self.price_data_expanded_reversed = None
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # EN FUNCION DE LOS PRECIOS Y LAS PROPORCIONES, CREAMOS LOS PRECIOS EXPANDIDOS
+        # EN FUNCIÓN DE LOS PRECIOS Y LAS PROPORCIONES, CREAMOS LOS PRECIOS EXPANDIDOS
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         for i in range(num_cols):
 

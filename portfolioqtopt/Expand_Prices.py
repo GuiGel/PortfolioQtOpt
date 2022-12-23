@@ -108,8 +108,8 @@ class ExpandPriceData:
         self.slices_list = get_slices_list(slices)
 
         ######### Inicializamos la variable self.price_data_expanded #########
-        self.price_data_expanded = get_expand_prices(
-            raw_price_data, slices, self.slices_list, self.b
+        self.price_data_expanded = get_expand_prices_opt(
+            raw_price_data, self.slices_list, self.b
         )
 
         ######### Inicializamos la variable self.price_data_expanded #########

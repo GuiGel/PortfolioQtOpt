@@ -89,8 +89,45 @@ def get_expand_prices_opt(
     all_assert_prices = (
         np.expand_dims(prices, axis=2) * slices_list * norm_price_factor.reshape(-1, 1)
     )
-    asset_prices = all_assert_prices.squeeze()
+    _, num_cols, num_slices = all_assert_prices.shape
+    asset_prices = all_assert_prices.reshape(-1, num_cols * num_slices)
     return asset_prices
+
+
+def get_expand_prices_reversed(raw_price_data, slices, slices_list, budget):
+
+    num_rows, num_cols = raw_price_data.shape
+
+    ######### Inicializamos la variable self.price_data_expanded #########
+    price_data_expanded_reversed = None
+
+    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    # EN FUNCIÓN DE LOS PRECIOS Y LAS PROPORCIONES, CREAMOS LOS PRECIOS EXPANDIDOS
+    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    for i in range(num_cols):
+
+        ######### Inicializamos asset_prices #########
+        asset_prices = np.zeros((num_rows, slices))
+
+        ######### Este es el valor que vamos a usar para normalizar los valores de compra de cada asset. Se hace por slide #########
+        norm_price_factor = budget / raw_price_data[0, i]
+
+        ######### Este for va rellenando los precios normalizados por cada asset y slice a lo largo del periodo temporal #########
+        for j in range(slices):
+            for k in range(num_rows):
+                asset_prices[k, j] = (
+                    raw_price_data[k, i] * slices_list[j] * norm_price_factor
+                )
+
+        ######### se va generando poco a poco price_data_expanded, que incluye todos los precios normalizados #########
+        if i == 0:
+            price_data_expanded_reversed = asset_prices
+        else:
+            price_data_expanded_reversed = np.append(
+                price_data_expanded_reversed, asset_prices, 1
+            )
+
+    return price_data_expanded_reversed
 
 
 class ExpandPriceData:
@@ -141,3 +178,9 @@ class ExpandPriceData:
                 self.price_data_expanded_reversed = np.append(
                     self.price_data_expanded_reversed, asset_prices, 1
                 )
+        price_data_expanded_reversed_ = get_expand_prices_reversed(
+            raw_price_data, self.slices, self.slices_list, self.b
+        )
+        np.testing.assert_equal(
+            self.price_data_expanded_reversed, price_data_expanded_reversed_
+        )

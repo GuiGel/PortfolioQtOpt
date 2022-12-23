@@ -10,6 +10,7 @@
 import numpy as np
 import numpy.typing as npt
 
+
 def get_slices_list(slices: int) -> npt.NDArray[np.float64]:
     """Generate a list of slices.
 
@@ -19,14 +20,15 @@ def get_slices_list(slices: int) -> npt.NDArray[np.float64]:
     array([1.    , 0.5   , 0.25  , 0.125 , 0.0625])
 
     Args:
-        slices (int): The number of slices is the granularity that we are 
-            going to give to each fund. That is, the amount of the budget we will
-            be able to invest.
+        slices (int): The number of slices is the granularity that we are
+            going to give to each fund. That is, the amount of the budget we
+            will be able to invest.
 
     Returns:
         npt.NDArray[np.float64]: List of slices values.
     """
-    return np.power(0.5, np.arange(1000))
+    return np.power(0.5, np.arange(slices))
+
 
 class ExpandPriceData:
     def __init__(self, budget, slices, raw_price_data):

@@ -32,15 +32,15 @@ def get_slices_list(slices: int) -> npt.NDArray[np.float64]:
 
 
 def get_expand_prices(
-    prices: npt.NDArray[np.float64],
-    slices: int,
-    slices_list: npt.NDArray[np.float64],
-    budget: int = 1,
-) -> npt.NDArray[np.float64]:
+    prices,
+    slices,
+    slices_list,
+    budget=1,
+):
     num_rows, num_cols = prices.shape
 
     ######### Inicializamos la variable self.price_data_expanded #########
-    price_data_expanded: npt.NDArray[np.float64] | None = None
+    price_data_expanded = None
 
     assert num_cols > 0
 
@@ -71,6 +71,7 @@ def get_expand_prices_opt(
     prices: npt.NDArray[np.float64],
     slices_list: npt.NDArray[np.float64],
     budget: float = 1.0,
+    reversed: bool = False,
 ) -> npt.NDArray[np.float64]:
     """Optimized version of get_expand_prices.
     Speedup of 50X with the original ``get_expand_prices`` code.
@@ -89,9 +90,11 @@ def get_expand_prices_opt(
 
     # TODO ensure that prices values must be > 0 and not np.Nan
 
-    norm_price_factor = np.divide(
-        budget, prices[-1, :], dtype=np.float64, casting="unsafe"
-    )
+    factor = prices[-1, :]
+    if reversed:
+        factor = prices[0, :]
+
+    norm_price_factor = np.divide(budget, factor, dtype=np.float64, casting="unsafe")
     all_assert_prices = (
         np.expand_dims(prices, axis=2) * slices_list * norm_price_factor.reshape(-1, 1)
     )
@@ -152,13 +155,14 @@ class ExpandPriceData:
         self.slices_list = get_slices_list(slices)
 
         ######### Inicializamos la variable self.price_data_expanded #########
-        self.price_data_expanded = get_expand_prices_opt(
-            raw_price_data, self.slices_list, self.b
-        )
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # EN FUNCIÓN DE LOS PRECIOS Y LAS PROPORCIONES, CREAMOS LOS PRECIOS EXPANDIDOS
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        self.price_data_expanded = get_expand_prices_opt(
+            raw_price_data, self.slices_list, self.b
+        )
+
         self.price_data_expanded_reversed = get_expand_prices_reversed(
             raw_price_data, self.slices, self.slices_list, self.b
         )

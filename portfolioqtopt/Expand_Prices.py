@@ -7,6 +7,7 @@
 # Esto, por supuesto, aumenta el espacio de búsqueda.
 ########################################################################################################################
 # coding=utf-8
+
 import numpy as np
 import numpy.typing as npt
 
@@ -72,7 +73,7 @@ def get_expand_prices_opt(
     budget: int = 1,
 ) -> npt.NDArray[np.float64]:
     """Optimized version of get_expand_prices.
-    Speedup of 100X with the original ``get_expand_prices`` code.
+    Speedup of 50X with the original ``get_expand_prices`` code.
 
     Args:
         prices (npt.NDArray[np.float64]): The fund prices with shape
@@ -83,15 +84,18 @@ def get_expand_prices_opt(
     Returns:
         npt.NDArray[np.float64]: The expanded prices.
     """
-    # This is the value we will use to normalize the purchase values of each
+    # norm_price_factor is the value we will use to normalize the purchase values of each
     # asset
-    norm_price_factor = budget / prices[-1, :]
+
+    # TODO ensure that prices values must be > 0 and not np.Nan
+
+    norm_price_factor = np.divide(budget, prices[-1, :], dtype=np.float64)
     all_assert_prices = (
         np.expand_dims(prices, axis=2) * slices_list * norm_price_factor.reshape(-1, 1)
     )
     _, num_cols, num_slices = all_assert_prices.shape
     asset_prices = all_assert_prices.reshape(-1, num_cols * num_slices)
-    return asset_prices
+    return asset_prices.astype(np.float64)
 
 
 def get_expand_prices_reversed(raw_price_data, slices, slices_list, budget):
@@ -154,7 +158,7 @@ class ExpandPriceData:
         self.price_data_expanded_reversed = None
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # EN FUNCION DE LOS PRECIOS Y LAS PROPORCIONES, CREAMOS LOS PRECIOS EXPANDIDOS
+        # EN FUNCIÓN DE LOS PRECIOS Y LAS PROPORCIONES, CREAMOS LOS PRECIOS EXPANDIDOS
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         for i in range(num_cols):
 

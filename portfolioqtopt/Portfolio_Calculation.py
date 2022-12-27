@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from .dwave_solver import DWaveSolver
 from .PortfolioSelection import PortfolioSelection
-from .QuboBuilder import QUBO
+from .qubo import QUBO
 from .reader import read_welzia_stocks_file
 
 

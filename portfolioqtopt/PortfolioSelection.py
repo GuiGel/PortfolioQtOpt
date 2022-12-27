@@ -111,15 +111,11 @@ class PortfolioSelection:
 
         # Generamos una matriz diagonal con los precios posibles * 2.
         # Esto se relacionara con los returns
-        QUBO_prices_linear = np.diag(
-            [x * (2 * self.b) for x in self.prices]
-        )  # (num_cols, num_cols)
+        QUBO_prices_linear = 2.0 * self.b * np.diag(self.prices)  # (m, n)
 
         # Generamos una matriz simétrica también relacionada con los precios
         # posibles. Esto se relacionara con la diversidad.
-        QUBO_prices_quadratic = np.outer(
-            self.prices, self.prices
-        )  # (num_cols, num_cols)
+        QUBO_prices_quadratic = np.outer(self.prices, self.prices)  # (m, n)
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # FORMACIÓN DEFINITIVA DEL QUBO, CON LOS VALORES DE BIAS Y PENALIZACIÓN INCLUIDOS

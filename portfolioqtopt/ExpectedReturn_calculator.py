@@ -6,6 +6,7 @@
 ########################################################################################################################
 # coding=utf-8
 import numpy as np
+import numpy.typing as npt
 
 
 class ExpectedReturns:
@@ -33,3 +34,20 @@ class ExpectedReturns:
                     self.price_data[j + 1, i] - self.price_data[j, i]
                 )
             self.exp_returns[i] = np.mean(self.daily_return[:, i])
+
+
+def get_expected_returns(
+    normalized_prices: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
+    """Compute the mean daily returns of prices.
+
+    Args:
+        normalized_prices (npt.NDArray[np.float64]): The normalized prices. shape (n, m)
+
+    Returns:
+        npt.NDArray[np.float64]: The mean daily returns of prices. shape (m, )
+    """
+    mean_daily_return = (normalized_prices[1:, :] - normalized_prices[:-1, :]).mean(
+        axis=0
+    )
+    return mean_daily_return

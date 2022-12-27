@@ -29,6 +29,7 @@ def Portfolio_Calculation(
     theta3: float = 0.1,
     lista_fondos_invertidos: Optional[List[str]] = None,
     solver_type: SolverTypes = SolverTypes.hybrid_solver,
+    runs: Optional[int] = None,
 ):
     """Compute the portfolio.
 
@@ -48,6 +49,7 @@ def Portfolio_Calculation(
             specific fund to select. Defaults to None.
         solver_type (SolverTypes, optional): Choose one type of solvers.
             Defaults to SolverTypes.hybrid_solver.
+        runs (int, optional): Numero de runs. Defaults to None.
 
     Returns:
         _type_: _description_
@@ -69,9 +71,8 @@ def Portfolio_Calculation(
     chain_strengths = {0.5: 0.5, 0.75: 0.75, 1: 1, 1.25: 1.25, 2: 2}
     chain_strength = chain_strengths[1]
 
-    # Elegimos el numero de runs
-    number_runs = {10: 10, 500: 500, 1000: 1000, 2000: 2000, 10000: 10000}
-    runs = 10000
+    if runs is None:
+        runs = 10000
 
     # Elegimos el annealing time
     anneal_time_dict = {1: "1", 5: "5", 100: "100", 250: "250", 500: "500", 999: "999"}

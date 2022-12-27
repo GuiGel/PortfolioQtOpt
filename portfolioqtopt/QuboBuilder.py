@@ -1,9 +1,7 @@
-# coding=utf-8
-########################################################################################################################
-# Esta clase genera el QUBO a partir de los pesos (theta_one, theta_two, y theta_three), el presupuesto,
-# los datos históricos de precios de cada activo, y los rendimientos esperados de cada activo como una matriz.
-########################################################################################################################
-
+"""This class generates the QUBO from the weights (theta_one, theta_two, and 
+theta_three), the budget, the historical price data for each asset, and the
+expected returns of each asset as a matrix.
+"""
 
 import itertools as it
 

@@ -5,6 +5,8 @@
 # a partir de matrices simétricas QUBO.
 ########################################################################################################################
 # coding=utf-8
+import numpy as np
+import numpy.typing as npt
 
 
 class TriangleGenerator:
@@ -32,3 +34,35 @@ class TriangleGenerator:
             for row in range(col + 1, self.n):
                 self.q[row, col] = 2 * self.q[row, col]
         self.lower_matrix = self.q
+
+
+def get_upper_triangular(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    """Extract an upper triangular matrix.
+
+    Example:
+        >>> a = np.array([[1, 2, 3], [2, 1, 4], [3, 4, 1]])
+        >>> get_upper_triangular(a)
+        array([[1, 4, 6],
+               [0, 1, 8],
+               [0, 0, 1]])
+
+
+    Args:
+        a (npt.NDArray[np.float64]): A numpy array.
+
+    Returns:
+        npt.NDArray[np.float64]: A numpy array.
+    """
+    return np.triu(a, 1) + np.triu(a, 0)
+
+
+def get_lower_triangular(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    return np.tril(a, -1) + np.triu(a, 0)
+
+
+if __name__ == "__main__":
+    import numpy as np
+
+    a = np.array([[1, 2, 3], [2, 1, 4], [3, 4, 1]])
+    b = get_upper_triangular(a)
+    print(b)

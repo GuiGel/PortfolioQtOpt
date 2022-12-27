@@ -155,26 +155,14 @@ class ExpandPriceData:
         self.slices_list = get_slices_list(slices)
 
         ######### Inicializamos la variable self.price_data_expanded #########
-        self.price_data_expanded = get_expand_prices_opt(
-            raw_price_data, self.slices_list, self.b
-        )
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # EN FUNCIÓN DE LOS PRECIOS Y LAS PROPORCIONES, CREAMOS LOS PRECIOS EXPANDIDOS
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        self.price_data_expanded = get_expand_prices_opt(
+            raw_price_data, self.slices_list, self.b
+        )
+
         self.price_data_expanded_reversed = get_expand_prices_reversed(
             raw_price_data, self.slices, self.slices_list, self.b
         )
-
-        price_data_expanded_reversed = get_expand_prices_opt(
-            raw_price_data,
-            self.slices_list,
-            self.b,
-            reversed=True,
-        )
-
-        if self.price_data_expanded_reversed is not None:
-            np.testing.assert_array_equal(
-                price_data_expanded_reversed[1, :],
-                self.price_data_expanded_reversed.astype(np.float64)[1, :],
-            )

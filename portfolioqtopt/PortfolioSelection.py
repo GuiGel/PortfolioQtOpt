@@ -89,7 +89,7 @@ class PortfolioSelection:
         # del budget que puedes invertir para cada uno de los fondos.
         # Por ejemplo: 1.0, 0.5, 0.25, 0.125
         # NOTE: We talk about the final possible prices
-        self.prices = self.price_data[self.num_rows - 1, :].tolist()
+        self.prices = self.price_data[self.num_rows - 1, :]
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # OBTENEMOS EL EXPECTED RETURN

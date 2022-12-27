@@ -5,7 +5,7 @@
 ########################################################################################################################
 import numpy as np
 
-from .Covariance_calculator import Covariance
+from .Covariance_calculator import get_prices_covariance
 from .Expand_Prices import ExpandPriceData
 from .ExpectedReturn_calculator import get_expected_returns
 
@@ -65,14 +65,7 @@ class PortfolioSelection:
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
         ######### Obtenemos los valores asociados al riesgo, es decir, la covariance #########
-        ######### Inicializamos la clase, calculamos la covarianza y la asignamos #########
-        cov = Covariance(self.price_data)
-        self.QUBO_covariance = cov.QUBO_covariance
-
-        from portfolioqtopt.Covariance_calculator import get_prices_covariance
-
-        cov_ = get_prices_covariance(self.price_data)
-        np.testing.assert_allclose(cov_, self.QUBO_covariance)
+        self.QUBO_covariance = get_prices_covariance(self.price_data)
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # CONFORMACIÓN DE LOS VALORES DEL QUBO

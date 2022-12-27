@@ -57,12 +57,20 @@ def get_upper_triangular(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
 
 
 def get_lower_triangular(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-    return np.tril(a, -1) + np.triu(a, 0)
+    """Extract a lower triangular matrix.
+
+    Example:
+        >>> a = np.array([[1, 2, 3], [2, 1, 4], [3, 4, 1]])
+        >>> get_lower_triangular(a)
+        array([[1, 0, 0],
+               [4, 1, 0],
+               [6, 8, 1]])
 
 
-if __name__ == "__main__":
-    import numpy as np
+    Args:
+        a (npt.NDArray[np.float64]): A numpy array.
 
-    a = np.array([[1, 2, 3], [2, 1, 4], [3, 4, 1]])
-    b = get_upper_triangular(a)
-    print(b)
+    Returns:
+        npt.NDArray[np.float64]: A numpy array.
+    """
+    return np.tril(a, -1) + np.tril(a, 0)

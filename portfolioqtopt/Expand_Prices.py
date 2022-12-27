@@ -32,15 +32,15 @@ def get_slices_list(slices: int) -> npt.NDArray[np.float64]:
 
 
 def get_expand_prices(
-    prices: npt.NDArray[np.float64],
-    slices: int,
-    slices_list: npt.NDArray[np.float64],
-    budget: int = 1,
-) -> npt.NDArray[np.float64]:
+    prices,
+    slices,
+    slices_list,
+    budget=1,
+):
     num_rows, num_cols = prices.shape
 
     ######### Inicializamos la variable self.price_data_expanded #########
-    price_data_expanded: npt.NDArray[np.float64] | None = None
+    price_data_expanded = None
 
     assert num_cols > 0
 

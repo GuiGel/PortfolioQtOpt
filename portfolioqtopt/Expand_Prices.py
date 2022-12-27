@@ -70,7 +70,7 @@ def get_expand_prices(
 def get_expand_prices_opt(
     prices: npt.NDArray[np.float64],
     slices_list: npt.NDArray[np.float64],
-    budget: int = 1,
+    budget: float = 1.0,
 ) -> npt.NDArray[np.float64]:
     """Optimized version of get_expand_prices.
     Speedup of 50X with the original ``get_expand_prices`` code.
@@ -89,7 +89,9 @@ def get_expand_prices_opt(
 
     # TODO ensure that prices values must be > 0 and not np.Nan
 
-    norm_price_factor = np.divide(budget, prices[-1, :], dtype=np.float64)
+    norm_price_factor = np.divide(
+        budget, prices[-1, :], dtype=np.float64, casting="unsafe"
+    )
     all_assert_prices = (
         np.expand_dims(prices, axis=2) * slices_list * norm_price_factor.reshape(-1, 1)
     )

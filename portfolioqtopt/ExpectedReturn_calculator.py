@@ -45,8 +45,11 @@ def get_expected_returns(
         normalized_prices (npt.NDArray[np.float64]): The normalized prices. shape (n, m)
 
     Returns:
-        npt.NDArray[np.float64]: The mean daily returns of prices. shape (m, )
+        npt.NDArray[np.float64]: The mean daily returns of prices. shape (m - 1, )
     """
+    assert (
+        normalized_prices.shape[1] > 1
+    ), f"There must be more than one normalized prices per stocks!"
     mean_daily_return = (normalized_prices[1:, :] - normalized_prices[:-1, :]).mean(
         axis=0,
     )

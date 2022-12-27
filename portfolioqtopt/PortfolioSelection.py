@@ -4,6 +4,7 @@
 # ESTA ES LA CLASE QUE OBTIENE LOS DATOS Y GENERA LOS VALORES PARA CONFORMAR EL QUBO
 ########################################################################################################################
 import numpy as np
+import numpy.typing as npt
 
 from .Covariance_calculator import get_prices_covariance
 from .Expand_Prices import ExpandPriceData
@@ -11,43 +12,82 @@ from .ExpectedReturn_calculator import get_expected_returns
 
 
 class PortfolioSelection:
-    def __init__(self, theta_one, theta_two, theta_three, price_data, num_slices):
+    """The PortfolioSelection class.
+
+    Attributes:
+        theta_one (float): The weight we give to return.
+        theta_two (float): The weight we give to the penalty, to the
+                constraint of not exceeding the budget.
+        theta_three (float): The weight we give to covariance, i.e. to
+                diversity.
+        price_data (npt.NDArray[np.float64]): At this point in the
+                execution, prices are the values of the funds in raw format,
+                without normalizing.
+        num_slices (int): The number of slices is the granularity we are
+            going to give to each fund. That is, the amount of the budget
+            that we will be able to invest. For example, a 0.5, a 0.25, a
+            0.125...
+        b (int): The budget, which is equal to 1 in all cases
+    """
+
+    def __init__(
+        self,
+        theta_one: float,
+        theta_two: float,
+        theta_three: float,
+        price_data: npt.NDArray[np.float64],
+        num_slices: int,
+    ) -> None:
+        """Initialized the ``PortfolioSelection`` class.
+
+        Args:
+            theta_one (float): The weight we give to return.
+            theta_two (float): The weight we give to the penalty, to the
+                constraint of not exceeding the budget.
+            theta_three (float): The weight we give to covariance, i.e. to
+                diversity.
+            price_data (npt.NDArray[np.float64]): At this point in the
+                execution, prices are the values of the funds in raw format,
+                without normalizing.
+            num_slices (int): The number of slices is the granularity we are
+                going to give to each fund. That is, the amount of the budget
+                that we will be able to invest. For example, a 0.5, a 0.25, a
+                0.125...
+        """
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # OBTENEMOS LOS VALORES DE INPUT
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-        ######### El peso que le damos al retorno #########
         self.theta_one = theta_one
-        ######### El peso que le damos al penalty, a la restriccion de no sobrepasar el budget #########
         self.theta_two = theta_two
-        ######### El peso que le damos a la covarianza, es decir, a la diversidad #########
         self.theta_three = theta_three
-        ######### Este es el budget, que es igual a 1 en todos los casos #########
-        self.b = 1
-        ######### En este punto de la ejecucion, los precios son los valores de los fondos en formato raw, sin normalizar #########
         self.price_data = price_data
-        ######### El numero de slices es la granularidad que le vamos a dar a cada fondo. Es decir, la cantidad del #########
-        ######### presupuesto que vamos a ser capaces de invertir. Por ejemplo, un 0.5, un 0.25, un 0.125... #########
         self.num_slices = num_slices
+
+        self.b = 1.0  # Este es el budget, que es igual a 1 en todos los casos
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # HACEMOS LA EXPANSION DE LOS PRECIOS EN FUNCIÓN DE LAS SLIDES
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-        ######### En este punto es en el que se normalizan los precios de cada fondo, utilizando como base el ultimo valor #########
-        ######### registrado. A raíz de ese valor y en función de las slides, se va componiendo el resto de precios #########
+        # En este punto es en el que se normalizan los precios de cada fondo,
+        # utilizando como base el ultimo valor registrado. A raíz de ese valor
+        # y en función de las slides, se va componiendo el resto de precios
         expand = ExpandPriceData(self.b, self.num_slices, self.price_data)
 
-        ######### Se substituye los precios en formato raw por los precios en formato normalizado #########
+        # Se substituye los precios en formato raw por los precios en formato
+        # normalizado.
         self.price_data = expand.price_data_expanded
         self.price_data_reversed = expand.price_data_expanded_reversed
 
-        ######### Obtenemos las dimensiones del problema, num_rows = la profundidad historica de los datos #########
-        ######### num_cols = el numero de fondos * el numero de slices #########
+        # Obtenemos las dimensiones del problema, num_rows = la profundidad historica de los datos
+        # num_cols = el numero de fondos * el numero de slices
         self.num_rows, self.num_cols = self.price_data.shape
 
-        ######### Los precios posibles, esto realmente es una lista de la proporcion del budget que puedes invertir #########
-        ######### para cada uno de los fondos. Por ejemplo: 1.0, 0.5, 0.25, 0.125 #########
+        # Los precios posibles, esto realmente es una lista de la proporción
+        # del budget que puedes invertir para cada uno de los fondos.
+        # Por ejemplo: 1.0, 0.5, 0.25, 0.125
+        # NOTE: We talk about the final possible prices
         self.prices = self.price_data[self.num_rows - 1, :].tolist()
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -74,10 +114,14 @@ class PortfolioSelection:
         self.QUBO_returns = np.diag(self.expected_returns)
 
         ######### Generamos una matriz diagonal con los precios posibles * 2. Esto se relacionara con los returns #########
-        self.QUBO_prices_linear = np.diag([x * (2 * self.b) for x in self.prices])
+        self.QUBO_prices_linear = np.diag(
+            [x * (2 * self.b) for x in self.prices]
+        )  # (num_cols, num_cols)
 
         ######### Generamos una matriz simétrica también relacionada con los precios posibles. Esto se relacionara con la diversidad #########
-        self.QUBO_prices_quadratic = np.outer(self.prices, self.prices)
+        self.QUBO_prices_quadratic = np.outer(
+            self.prices, self.prices
+        )  # (num_cols, num_cols)
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # FORMACIÓN DEFINITIVA DEL QUBO, CON LOS VALORES DE BIAS Y PENALIZACIÓN INCLUIDOS

@@ -17,17 +17,16 @@ class PortfolioSelection:
 
     Attributes:
         theta_one (float): The weight we give to return.
-        theta_two (float): The weight we give to the penalty, to the
-                constraint of not exceeding the budget.
-        theta_three (float): The weight we give to covariance, i.e. to
-                diversity.
-        price_data (npt.NDArray[np.float64]): At this point in the
-                execution, prices are the values of the funds in raw format,
-                without normalizing.
-        num_slices (int): The number of slices is the granularity we are
-            going to give to each fund. That is, the amount of the budget
-            that we will be able to invest. For example, a 0.5, a 0.25, a
-            0.125...
+        theta_two (float): The weight we give to the penalty, to the constraint of
+            not exceeding the budget.
+        theta_three (float): The weight we give to covariance, i.e. to diversity.
+        price_data (npt.NDArray[np.float64]): At this point in the execution, prices
+            are the values of the funds in raw format, without normalizing.
+            Shape (m, n) where m is the historical depth of the data and
+            n = funds number * slices number.
+        num_slices (int): The number of slices is the granularity we are going to
+            give to each fund. That is, the amount of the budget that we will be
+            able to invest. For example, a 0.5, a 0.25, a 0.125...
         b (int): The budget, which is equal to 1 in all cases
     """
 
@@ -43,17 +42,16 @@ class PortfolioSelection:
 
         Args:
             theta_one (float): The weight we give to return.
-            theta_two (float): The weight we give to the penalty, to the
-                constraint of not exceeding the budget.
-            theta_three (float): The weight we give to covariance, i.e. to
-                diversity.
-            price_data (npt.NDArray[np.float64]): At this point in the
-                execution, prices are the values of the funds in raw format,
-                without normalizing.
-            num_slices (int): The number of slices is the granularity we are
-                going to give to each fund. That is, the amount of the budget
-                that we will be able to invest. For example, a 0.5, a 0.25, a
-                0.125...
+            theta_two (float): The weight we give to the penalty, to the constraint of
+                not exceeding the budget.
+            theta_three (float): The weight we give to covariance, i.e. to diversity.
+            price_data (npt.NDArray[np.float64]): At this point in the execution, prices
+                are the values of the funds in raw format, without normalizing.
+                Shape (m, n) where m is the historical depth of the data and
+                n = funds number * slices number.
+            num_slices (int): The number of slices is the granularity we are going to
+                give to each fund. That is, the amount of the budget that we will be
+                able to invest. For example, a 0.5, a 0.25, a 0.125...
         """
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # OBTENEMOS LOS VALORES DE INPUT
@@ -81,15 +79,11 @@ class PortfolioSelection:
         self.price_data = expand.price_data_expanded
         self.price_data_reversed = expand.price_data_expanded_reversed
 
-        # Obtenemos las dimensiones del problema, num_rows = la profundidad historica de los datos
-        # num_cols = el numero de fondos * el numero de slices
-        self.num_rows, self.num_cols = self.price_data.shape
-
         # Los precios posibles, esto realmente es una lista de la proporción
         # del budget que puedes invertir para cada uno de los fondos.
         # Por ejemplo: 1.0, 0.5, 0.25, 0.125
         # NOTE: We talk about the final possible prices
-        self.prices = self.price_data[self.num_rows - 1, :]
+        self.prices = self.price_data[-1, :]
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # OBTENEMOS EL EXPECTED RETURN

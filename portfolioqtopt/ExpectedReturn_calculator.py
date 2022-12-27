@@ -48,6 +48,6 @@ def get_expected_returns(
         npt.NDArray[np.float64]: The mean daily returns of prices. shape (m, )
     """
     mean_daily_return = (normalized_prices[1:, :] - normalized_prices[:-1, :]).mean(
-        axis=0
+        axis=0,
     )
     return mean_daily_return

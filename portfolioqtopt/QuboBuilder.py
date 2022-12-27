@@ -5,20 +5,25 @@
 ########################################################################################################################
 
 
+import itertools as it
+
+import numpy as np
+import numpy.typing as npt
+
 from .SymmetricToTriangular import get_upper_triangular
 
 
 class QUBO:
-    def __init__(self, qi, qij):
-        ######### Inicializamos los datos de input #########
+    def __init__(
+        self, qi: npt.NDArray[np.float64], qij: npt.NDArray[np.float64]
+    ) -> None:
         self.qi = qi
         self.qij = qij
 
         # Obtenemos las dimensiones del problema,
-        # num_rows = la profundidad historica de los datos
-        # num_cols = el numero de fondos * el numero de slices
-        self.num_rows, self.num_cols = self.qij.shape
-        self.n = self.num_cols
+        # m = la profundidad historica de los datos
+        # n = el numero de fondos * el numero de slices
+        m, n = self.qij.shape
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # GENERAMOS EL QUBO
@@ -36,6 +41,4 @@ class QUBO:
 
         # Generamos el diccionario, que es lo que vamos a emplear para
         # resolver el problema en DWAVE.
-        self.qubo_dict = {
-            (i, j): self.qubo[i][j] for i in range(self.n) for j in range(self.n)
-        }
+        self.qubo_dict = {z: self.qubo[z] for z in it.product(range(n), range(n))}

@@ -163,6 +163,9 @@ class ExpandPriceData:
             raw_price_data, self.slices_list, self.b
         )
 
-        self.price_data_expanded_reversed = get_expand_prices_reversed(
-            raw_price_data, self.slices, self.slices_list, self.b
+        self.price_data_expanded_reversed = get_expand_prices_opt(
+            raw_price_data,
+            self.slices_list,
+            self.b,
+            reversed=True,
         )

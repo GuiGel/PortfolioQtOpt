@@ -83,27 +83,27 @@ def Portfolio_Calculation(
         theta_one, theta_two, theta_three, price_data, slices
     )
 
-    ######### qi son los valores de la diagonal #########
+    # qi son los valores de la diagonal
     qi = portfolio_selection.qi
 
-    ######### qij son los valores que se colocan por encima de la diagonal #########
+    # qij son los valores que se colocan por encima de la diagonal
     qij = portfolio_selection.qij
 
-    ######### Generamos la clase QUBO y configuramos la matriz y el diccionario #########
+    # Generamos la clase QUBO y configuramos la matriz y el diccionario
     qubo = QUBO(qi, qij)
     qubo_matrix = qubo.qubo
     qubo_dict = qubo.qubo_dict
 
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    # RESOLUCION DEL PROBLEMA
+    # RESOLUCIÓN DEL PROBLEMA
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-    ######### Configuramos el solver #########
+    # Configuramos el solver
     dwave_solve = DWaveSolver(
         qubo_matrix, qubo_dict, runs, chain_strength, anneal_time, choose_solver, API
     )
 
-    ######### Resolvemos el problema #########
+    # Resolvemos el problema
     (
         dwave_return,
         dwave_raw_array,

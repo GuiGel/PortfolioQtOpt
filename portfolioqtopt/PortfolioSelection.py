@@ -4,9 +4,10 @@
 # ESTA ES LA CLASE QUE OBTIENE LOS DATOS Y GENERA LOS VALORES PARA CONFORMAR EL QUBO
 ########################################################################################################################
 import numpy as np
-from Covariance_calculator import Covariance
-from Expand_Prices import ExpandPriceData
-from ExpectedReturn_calculator import ExpectedReturns
+
+from .Covariance_calculator import get_prices_covariance
+from .Expand_Prices import ExpandPriceData
+from .ExpectedReturn_calculator import get_expected_returns
 
 
 class PortfolioSelection:
@@ -30,11 +31,11 @@ class PortfolioSelection:
         self.num_slices = num_slices
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # HACEMOS LA EXPANSION DE LOS PRECIOS EN FUNCION DE LAS SLIDES
+        # HACEMOS LA EXPANSION DE LOS PRECIOS EN FUNCIÓN DE LAS SLIDES
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
         ######### En este punto es en el que se normalizan los precios de cada fondo, utilizando como base el ultimo valor #########
-        ######### registrado. A raiz de ese valor y en funcion de las slides, se va componiendo el resto de precios #########
+        ######### registrado. A raíz de ese valor y en función de las slides, se va componiendo el resto de precios #########
         expand = ExpandPriceData(self.b, self.num_slices, self.price_data)
 
         ######### Se substituye los precios en formato raw por los precios en formato normalizado #########
@@ -54,24 +55,20 @@ class PortfolioSelection:
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
         ######### Obtenemos el retorno esperado utilizando los precios como base #########
-        ######### Inicializamos la clase #########
-        expected = ExpectedReturns(self.price_data)
 
-        ######### Calculamos el return esperado, utilizando una funcion de average #########
-        expected.all_average()
-        self.expected_returns = expected.exp_returns
+        ######### Calculamos el return esperado, utilizando una función de average #########
+
+        self.expected_returns = get_expected_returns(self.price_data)
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # OBTENEMOS EL EXPECTED RETURN
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-        ######### Obtenemos los valores asociados al riesgo, es decir, la covarianza #########
-        ######### Inicializamos la clase, calculamos la covarianza y la asignamos #########
-        cov = Covariance(self.price_data)
-        self.QUBO_covariance = cov.QUBO_covariance
+        ######### Obtenemos los valores asociados al riesgo, es decir, la covariance #########
+        self.QUBO_covariance = get_prices_covariance(self.price_data)
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # CONFORMACION DE LOS VALORES DEL QUBO
+        # CONFORMACIÓN DE LOS VALORES DEL QUBO
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         ######### Generamos una matriz diagonal con los retornos, esta matriz la usaremos luego con el valor de theta_one #########
         self.QUBO_returns = np.diag(self.expected_returns)
@@ -79,11 +76,11 @@ class PortfolioSelection:
         ######### Generamos una matriz diagonal con los precios posibles * 2. Esto se relacionara con los returns #########
         self.QUBO_prices_linear = np.diag([x * (2 * self.b) for x in self.prices])
 
-        ######### Generamos una matriz simetrica también relacionada con los precios posibles. Esto se relacionara con la diversidad #########
+        ######### Generamos una matriz simétrica también relacionada con los precios posibles. Esto se relacionara con la diversidad #########
         self.QUBO_prices_quadratic = np.outer(self.prices, self.prices)
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # FORMACION DEFINITIVA DEL QUBO, CON LOS VALORES DE BIAS Y PENALIZACION INCLUIDOS
+        # FORMACIÓN DEFINITIVA DEL QUBO, CON LOS VALORES DE BIAS Y PENALIZACIÓN INCLUIDOS
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
         ######### Primero conformamos los valores de la diagonal, relacionados con el return y los precios #########
@@ -91,7 +88,7 @@ class PortfolioSelection:
             self.theta_two * self.QUBO_prices_linear
         )
 
-        ######### Ahora conformamos los valores cuadraticos, relacionados con la diversidad ##########
+        ######### Ahora conformamos los valores cuadráticos, relacionados con la diversidad ##########
         self.qij = (self.theta_two * self.QUBO_prices_quadratic) + (
             self.theta_three * self.QUBO_covariance
         )

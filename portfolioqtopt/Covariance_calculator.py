@@ -6,6 +6,7 @@
 ########################################################################################################################
 # coding=utf-8
 import numpy as np
+import numpy.typing as npt
 
 
 class Covariance:
@@ -25,3 +26,7 @@ class Covariance:
                     self.price_data[:, i], self.price_data[:, j]
                 )[0][1]
                 # self.QUBO_covariance[i, j] = ((price_data[num_rows - 1, i] - np.mean(price_data[:, i])) * (price_data[num_rows - 1, j] - np.mean(price_data[:, j]))) / (num_cols - 1)
+
+
+def get_prices_covariance(prices: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    return np.cov(prices.T)

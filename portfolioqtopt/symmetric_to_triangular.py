@@ -1,10 +1,9 @@
-# coding=utf-8
-#                                              Symmetric Matrix to Triangular Matrix
-########################################################################################################################
-# Lo siguiente clase genera matrices triangulares (más fáciles de incrustar para el D-Wave)
-# a partir de matrices simétricas QUBO.
-########################################################################################################################
-# coding=utf-8
+"""This module implement to conversion from symmetric matrix to triangular
+matrix.
+
+Las siguiente clase genera matrices triangulares (más fáciles de incrustar
+para el D-Wave) a partir de matrices simétricas QUBO.
+"""
 import numpy as np
 import numpy.typing as npt
 

@@ -1,30 +1,32 @@
 # coding=utf-8
 
-import numpy
-import numpy as np
-import pandas as pd
-from dwave_solver import DWaveSolver
-from PortfolioSelection import PortfolioSelection
-from QuboBuilder import QUBO
+
+from .dwave_solver import DWaveSolver
+from .PortfolioSelection import PortfolioSelection
+from .QuboBuilder import QUBO
+from .reader import read_welzia_stocks_file
 
 
 def Portfolio_Calculation(
-    API,
-    slices_arg,
-    file_name,
-    sheet,
-    fondos,
+    API: str,  # clave acceso leap
+    slices_arg: int,
+    file_name: str,  # A path
+    sheet: str,  # sheet name in excel file
+    fondos: int,
     theta_one_arg=0.9,
     theta_two_arg=0.4,
     theta_three_arg=0.1,
     lista_fondos_invertidos=[],
 ):
 
+    # •	Número de fondos (45): el número de fondos que componen el universo. Es decir, los assets donde se puede llevar a cabo una inversión. En el fichero que os enviamos en este mail, por ejemplo, este número es de 45.
+
     ######### Los slices son las proporciones con las que vamos a poder jugar con nuestras acciones #########
     slice_nums = {1: 1, 2: 2, 4: 4, 5: 5, 6: 6, 8: 8, 10: 10}
     slices = slice_nums[slices_arg]
 
     ######### Elegimos el tipo de embedding #########
+    # TODO Seria interesante poner esto en una enumeration
     solver_types = {
         1: "Clique_Embedding",
         2: "Find_Embedding",
@@ -46,40 +48,33 @@ def Portfolio_Calculation(
     anneal_time_dict = {1: "1", 5: "5", 100: "100", 250: "250", 500: "500", 999: "999"}
     anneal_time = [500]
 
-    ######### Elegimos los parametros de penalizacion del hamiltoniano* #########
+    ######### Elegimos los parámetros de penalización del hamiltoniano* #########
     theta_one = theta_one_arg  # esta es la variable asociada al retorno
-    theta_two = theta_two_arg  # esta es la variable asociada a que se cumpla la restriccion del budget
+    theta_two = theta_two_arg  # esta es la variable asociada a que se cumpla la restricción del budget
     theta_three = theta_three_arg  # esta es la variable asociada al riesgo
 
     # print ('weights: (theta_one, theta_two, theta_three)', theta_one, theta_two, theta_three)
 
-    ######### Fijamos el número de dias y el numero de fondos que vamos a considerar del dataset completo #########
+    ######### Fijamos el número de días y el numero de fondos que vamos a considerar del dataset completo #########
     days = 8000
     assets = fondos
 
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # CARGAMOS LOS DATOS DEL PROBLEMA Y GENERAMOS UN DATAFRAME
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    df_price_data = pd.read_excel(file_name, sheet_name=sheet)
-    new_header = df_price_data.iloc[6]
-    df_price_data = df_price_data[8:]  ####PARA QUITAR LOS ENCABEZADOS
-
-    df_price_data.columns = np.arange(1, len(df_price_data.columns) + 1).astype(list)
-    df_price_data.columns = new_header
-    df_price_data = df_price_data[df_price_data.columns.dropna()]
-    df_price_data = df_price_data.drop(df_price_data.columns[[0]], axis=1)
+    df_price_data = read_welzia_stocks_file(file_path=file_name, sheet_name=sheet)
 
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # AQUI VAMOS A FILTRAR, EN CASO DE SER NECESARIO, EL DATASET
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     if len(lista_fondos_invertidos) == 0:
-        price_data = df_price_data[:days]
-        price_data = price_data.values[:, :assets]
+        price_data_df = df_price_data[:days]
     else:
-        price_data = df_price_data[lista_fondos_invertidos]
-        price_data = price_data.values[:, :assets]
+        price_data_df = df_price_data[lista_fondos_invertidos]
+    price_data = price_data_df.values[:, :assets]
+
+    # np.testing.assert_equal(df_price_data.to_numpy(), df.to_numpy())
 
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # OBTENEMOS LOS VALORES QUE VAN A COMPONER LA MATRIZ QUBO

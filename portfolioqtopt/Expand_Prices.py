@@ -71,6 +71,7 @@ def get_expand_prices_opt(
     prices: npt.NDArray[np.float64],
     slices_list: npt.NDArray[np.float64],
     budget: float = 1.0,
+    reversed: bool = False,
 ) -> npt.NDArray[np.float64]:
     """Optimized version of get_expand_prices.
     Speedup of 50X with the original ``get_expand_prices`` code.
@@ -89,9 +90,11 @@ def get_expand_prices_opt(
 
     # TODO ensure that prices values must be > 0 and not np.Nan
 
-    norm_price_factor = np.divide(
-        budget, prices[-1, :], dtype=np.float64, casting="unsafe"
-    )
+    factor = prices[-1, :]
+    if reversed:
+        factor = prices[0, :]
+
+    norm_price_factor = np.divide(budget, factor, dtype=np.float64, casting="unsafe")
     all_assert_prices = (
         np.expand_dims(prices, axis=2) * slices_list * norm_price_factor.reshape(-1, 1)
     )
@@ -162,3 +165,16 @@ class ExpandPriceData:
         self.price_data_expanded_reversed = get_expand_prices_reversed(
             raw_price_data, self.slices, self.slices_list, self.b
         )
+
+        price_data_expanded_reversed = get_expand_prices_opt(
+            raw_price_data,
+            self.slices_list,
+            self.b,
+            reversed=True,
+        )
+
+        if self.price_data_expanded_reversed is not None:
+            np.testing.assert_array_equal(
+                price_data_expanded_reversed[1, :],
+                self.price_data_expanded_reversed.astype(np.float64)[1, :],
+            )

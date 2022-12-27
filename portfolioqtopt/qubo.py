@@ -8,7 +8,7 @@ import itertools as it
 import numpy as np
 import numpy.typing as npt
 
-from .SymmetricToTriangular import get_upper_triangular
+from .symmetric_to_triangular import get_upper_triangular
 
 
 class QUBO:

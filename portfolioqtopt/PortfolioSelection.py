@@ -3,6 +3,7 @@
 ########################################################################################################################
 # ESTA ES LA CLASE QUE OBTIENE LOS DATOS Y GENERA LOS VALORES PARA CONFORMAR EL QUBO
 ########################################################################################################################
+
 import numpy as np
 import numpy.typing as npt
 
@@ -94,31 +95,34 @@ class PortfolioSelection:
         # OBTENEMOS EL EXPECTED RETURN
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-        ######### Obtenemos el retorno esperado utilizando los precios como base #########
+        # Obtenemos el retorno esperado utilizando los precios como base
 
-        ######### Calculamos el return esperado, utilizando una función de average #########
-
+        # Compute the mean of the daily returns
         self.expected_returns = get_expected_returns(self.price_data)
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # OBTENEMOS EL EXPECTED RETURN
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-        ######### Obtenemos los valores asociados al riesgo, es decir, la covariance #########
+        # Obtenemos los valores asociados al riesgo, es decir, la covariance
         self.QUBO_covariance = get_prices_covariance(self.price_data)
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # CONFORMACIÓN DE LOS VALORES DEL QUBO
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        ######### Generamos una matriz diagonal con los retornos, esta matriz la usaremos luego con el valor de theta_one #########
+
+        # Generamos una matriz diagonal con los retornos, esta matriz la
+        # usaremos luego con el valor de theta_one
         self.QUBO_returns = np.diag(self.expected_returns)
 
-        ######### Generamos una matriz diagonal con los precios posibles * 2. Esto se relacionara con los returns #########
+        # Generamos una matriz diagonal con los precios posibles * 2.
+        # Esto se relacionara con los returns
         self.QUBO_prices_linear = np.diag(
             [x * (2 * self.b) for x in self.prices]
         )  # (num_cols, num_cols)
 
-        ######### Generamos una matriz simétrica también relacionada con los precios posibles. Esto se relacionara con la diversidad #########
+        # Generamos una matriz simétrica también relacionada con los precios
+        # posibles. Esto se relacionara con la diversidad.
         self.QUBO_prices_quadratic = np.outer(
             self.prices, self.prices
         )  # (num_cols, num_cols)
@@ -127,12 +131,14 @@ class PortfolioSelection:
         # FORMACIÓN DEFINITIVA DEL QUBO, CON LOS VALORES DE BIAS Y PENALIZACIÓN INCLUIDOS
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-        ######### Primero conformamos los valores de la diagonal, relacionados con el return y los precios #########
+        # Primero conformamos los valores de la diagonal, relacionados con el
+        # return y los precios.
         self.qi = -(self.theta_one * self.QUBO_returns) - (
             self.theta_two * self.QUBO_prices_linear
         )
 
-        ######### Ahora conformamos los valores cuadráticos, relacionados con la diversidad ##########
+        # Ahora conformamos los valores cuadráticos, relacionados con la
+        # diversidad.
         self.qij = (self.theta_two * self.QUBO_prices_quadratic) + (
             self.theta_three * self.QUBO_covariance
         )

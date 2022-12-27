@@ -56,7 +56,7 @@ def Portfolio_Calculation(
     """
 
     # Número de fondos (45): el número de fondos que componen el universo.
-    # Es decir, los assets donde se puede llevar a cabo una inversión.
+    # Es decir, los fondos donde se puede llevar a cabo una inversión.
     # En el fichero que os enviamos en este mail, por ejemplo, este número es de 45.
 
     # Los slices son las proporciones con las que vamos a poder jugar con
@@ -80,7 +80,6 @@ def Portfolio_Calculation(
 
     ######### Fijamos el número de días y el numero de fondos que vamos a considerar del dataset completo #########
     days = 8000
-    assets = fondos
 
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # CARGAMOS LOS DATOS DEL PROBLEMA Y GENERAMOS UN DATAFRAME
@@ -95,7 +94,8 @@ def Portfolio_Calculation(
         price_data_df = df_price_data[:days]
     else:
         price_data_df = df_price_data[lista_fondos_invertidos]
-    price_data = price_data_df.values[:, :assets]
+        # NOTE: All this is redundant
+    price_data = price_data_df.values[:, :fondos]
 
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # OBTENEMOS LOS VALORES QUE VAN A COMPONER LA MATRIZ QUBO

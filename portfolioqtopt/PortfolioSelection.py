@@ -7,9 +7,17 @@
 import numpy as np
 import numpy.typing as npt
 
-from .Covariance_calculator import get_prices_covariance
 from .Expand_Prices import ExpandPriceData
 from .ExpectedReturn_calculator import get_expected_returns
+
+
+def get_prices_covariance(prices: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    """Calculate the inter-asset covariance matrix using historical price data.
+
+    The covariance matrix is used to implement the diversity term in the portfolio
+    selection problem.
+    """
+    return np.cov(prices.T)
 
 
 class PortfolioSelection:

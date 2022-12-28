@@ -1,5 +1,5 @@
-"""This class generates the QUBO from the weights (theta_one, theta_two, and 
-theta_three), the budget, the historical price data for each asset, and the
+"""This class generates the QUBO from the weights (theta1, theta2, and 
+theta3), the budget, the historical price data for each asset, and the
 expected returns of each asset as a matrix.
 """
 
@@ -88,7 +88,7 @@ def get_qubo(qi: npt.NDArray[np.float64], qij: npt.NDArray[np.float64]) -> Qubo:
             Shape (n, n).
 
     Returns:
-        Qubo: Dataclass that has the qubo matrix and dictionary as attributes.
+        Qubo: Tuple that has the qubo matrix and dictionary as attributes.
     """
     qubo = qi + qij
     qubo_matrix = get_upper_triangular(qubo)

@@ -18,7 +18,7 @@ class SolverTypes(Enum):
 
 def Portfolio_Calculation(
     api_token: str,  # clave acceso leap
-    num_slices: int,
+    slices_num: int,
     file_name: str,  # A path
     sheet: str,  # sheet name in excel file
     fondos: int,
@@ -35,7 +35,7 @@ def Portfolio_Calculation(
 
     Args:
         api_token (str): _description_
-        num_slices (int): Choose the number of slices. Must be >= 0.
+        slices_num (int): Choose the number of slices. Must be >= 0.
         file_name (str): Name of the welzia data file.
         theta1 (float, optional): La variable asociada al retorno.
             Defaults to 0.9.
@@ -59,8 +59,7 @@ def Portfolio_Calculation(
 
     # Los slices son las proporciones con las que vamos a poder jugar con
     # nuestras acciones
-    assert num_slices >= 1
-    slices_num = num_slices * 2  # NOTE: Is the num_slices alway pair?
+    assert slices_num >= 1
 
     # Elegimos el tipo de embedding.
     choose_solver = solver_type.value

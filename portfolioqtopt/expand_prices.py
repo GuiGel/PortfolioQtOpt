@@ -15,12 +15,12 @@ import numpy.typing as npt
 
 @dataclass
 class ExpandPrices:
-    data: npt.NDArray[np.float64]
-    reversed_data: npt.NDArray[np.float64]
+    data: npt.NDArray[np.float64]  # (m, p)
+    reversed_data: npt.NDArray[np.float64]  # (m, p)
 
     @property
     def last(self) -> npt.NDArray[np.float64]:
-        return self.data[-1, :]
+        return self.data[-1, :]  # (p, )
 
 
 def get_slices_list(slices: int) -> npt.NDArray[np.float64]:

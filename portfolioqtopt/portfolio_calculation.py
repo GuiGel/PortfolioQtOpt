@@ -1,10 +1,12 @@
-from enum import Enum, unique
-from typing import List, Optional
+from __future__ import annotations
 
-from .dwave_solver import DWaveSolver
-from .PortfolioSelection import PortfolioSelection
-from .qubo import get_qubo
-from .reader import read_welzia_stocks_file
+from enum import Enum, unique
+from typing import List, Optional, Union
+
+from portfolioqtopt.dwave_solver import DWaveSolver
+from portfolioqtopt.PortfolioSelection import PortfolioSelection
+from portfolioqtopt.qubo import get_qubo
+from portfolioqtopt.reader import read_welzia_stocks_file
 
 
 @unique
@@ -128,3 +130,134 @@ def Portfolio_Calculation(
     ) = dwave_solve.solve_DWAVE_Advantadge_QUBO()
 
     return dwave_raw_array, portfolio_selection, new_header, prices
+
+
+import numpy as np
+import numpy.typing as npt
+
+
+class Portfolio:
+    def __init__(
+        self,
+        api_token: str,  # clave acceso leap
+        prices: npt.NDArray[np.float64],
+        slices_num: int,
+        theta1: float = 0.9,
+        theta2: float = 0.4,
+        theta3: float = 0.1,
+        solver_type: SolverTypes = SolverTypes.hybrid_solver,
+        runs: Optional[int] = None,
+        anneal_time: Union[List[int], Optional[int]] = None,
+        chain_strength_arg: Optional[int] = None,
+    ) -> None:
+        self.api_token = api_token
+        self.prices = prices
+        self.slices_num = slices_num
+        self.theta1 = theta1
+        self.theta2 = theta2
+        self.theta3 = theta3
+        self.solver_type = solver_type
+
+        # TODO: Argument validation
+
+        assert slices_num > 1
+
+        # Initialize runs
+        if runs is None:
+            runs = 10000
+        assert runs > 0
+        self.runs = runs
+
+        # Initialize anneal_time
+        if anneal_time is None:
+            anneal_time = [500]
+        elif isinstance(anneal_time, int):
+            anneal_time = [anneal_time]
+        assert np.alltrue(np.array(anneal_time) > 0)
+        self.anneal_time = anneal_time
+
+        # Initialize chain strength
+        if chain_strength_arg is None:
+            chain_strength_arg = 3
+        assert chain_strength_arg > 0
+        self.chain_strength = chain_strength_arg * 0.25
+
+    @classmethod
+    def from_welzia(
+        cls,
+        api_token: str,
+        file_name: str,
+        sheet: str,
+        fondos: int,
+        slices_num: int,
+        lista_fondos_invertidos: Optional[List[str]] = None,
+        days: Optional[int] = None,
+        theta1: float = 0.9,
+        theta2: float = 0.4,
+        theta3: float = 0.1,
+        solver_type: SolverTypes = SolverTypes.hybrid_solver,
+        runs: Optional[int] = None,
+        anneal_time: Union[List[int], Optional[int]] = None,
+        chain_strength_arg: Optional[int] = None,
+    ) -> Portfolio:
+        # We set the number of days and the number of funds we are going to consider
+        # from the complete dataset.
+        if days is None:
+            days = 8000
+
+        # Load Welzia from excel file as a pd.DataFrame
+        prices_df = read_welzia_stocks_file(file_path=file_name, sheet_name=sheet)
+
+        # Filter prices_df if needed.
+        if lista_fondos_invertidos is None:
+            prices_df = prices_df[:days]
+        else:
+            prices_df = prices_df[lista_fondos_invertidos]
+            # NOTE: All this is redundant
+        prices = prices_df.values[:, :fondos]
+        return Portfolio(
+            api_token,
+            prices,
+            slices_num,
+            theta1,
+            theta2,
+            theta3,
+            solver_type,
+            runs,
+            anneal_time,
+            chain_strength_arg,
+        )
+
+    def __call__(self):
+        # Obtain the values that are going to compose the qubo matrix
+        portfolio_selection = PortfolioSelection(
+            self.theta1, self.theta2, self.theta3, self.prices, self.slices_num
+        )
+
+        # Generamos la clase QUBO y configuramos la matriz y el diccionario
+        # qi son los valores de la diagonal
+        # qij son los valores que se colocan por encima de la diagonal
+        qubo = get_qubo(portfolio_selection.qi, portfolio_selection.qij)
+
+        # Resolution of the problem
+
+        # 1. Configure the solver
+        dwave_solve = DWaveSolver(
+            qubo.matrix,
+            qubo.dictionary,
+            self.runs,
+            self.chain_strength,
+            self.anneal_time,
+            self.solver_type.value,
+            self.api_token,
+        )
+
+        # 2. Solve the problem
+        (
+            dwave_return,
+            dwave_raw_array,
+            num_occurrences,
+            energies,
+        ) = dwave_solve.solve_DWAVE_Advantadge_QUBO()
+
+        return dwave_raw_array, portfolio_selection, new_header, prices

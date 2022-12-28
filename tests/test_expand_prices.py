@@ -3,7 +3,7 @@ import numpy as np
 import numpy.typing as npt
 import pytest
 
-from portfolioqtopt.Expand_Prices import get_expand_prices_opt
+from portfolioqtopt.expand_prices import get_expand_prices_opt
 
 
 @pytest.mark.parametrize(

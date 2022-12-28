@@ -18,7 +18,7 @@ class SolverTypes(Enum):
 
 def Portfolio_Calculation(
     api_token: str,  # clave acceso leap
-    num_slices: int,
+    slices_num: int,
     file_name: str,  # A path
     sheet: str,  # sheet name in excel file
     fondos: int,
@@ -35,7 +35,7 @@ def Portfolio_Calculation(
 
     Args:
         api_token (str): _description_
-        num_slices (int): Choose the number of slices. Must be >= 0.
+        slices_num (int): Choose the number of slices. Must be >= 0.
         file_name (str): Name of the welzia data file.
         theta1 (float, optional): La variable asociada al retorno.
             Defaults to 0.9.
@@ -59,8 +59,7 @@ def Portfolio_Calculation(
 
     # Los slices son las proporciones con las que vamos a poder jugar con
     # nuestras acciones
-    assert num_slices >= 1
-    slices_num = num_slices * 2  # NOTE: Is the num_slices alway pair?
+    assert slices_num >= 1
 
     # Elegimos el tipo de embedding.
     choose_solver = solver_type.value
@@ -82,25 +81,23 @@ def Portfolio_Calculation(
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # CARGAMOS LOS DATOS DEL PROBLEMA Y GENERAMOS UN DATAFRAME
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    df_price_data = read_welzia_stocks_file(file_path=file_name, sheet_name=sheet)
+    prices_df = read_welzia_stocks_file(file_path=file_name, sheet_name=sheet)
 
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # AQUI VAMOS A FILTRAR, EN CASO DE SER NECESARIO, EL DATASET
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     if lista_fondos_invertidos is None:
-        price_data_df = df_price_data[:days]
+        prices_df = prices_df[:days]
     else:
-        price_data_df = df_price_data[lista_fondos_invertidos]
+        prices_df = prices_df[lista_fondos_invertidos]
         # NOTE: All this is redundant
-    price_data = price_data_df.values[:, :fondos]
+    prices = prices_df.values[:, :fondos]
 
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # OBTENEMOS LOS VALORES QUE VAN A COMPONER LA MATRIZ QUBO
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    portfolio_selection = PortfolioSelection(
-        theta1, theta2, theta3, price_data, slices_num
-    )
+    portfolio_selection = PortfolioSelection(theta1, theta2, theta3, prices, slices_num)
 
     # Generamos la clase QUBO y configuramos la matriz y el diccionario
     # qi son los valores de la diagonal
@@ -130,4 +127,4 @@ def Portfolio_Calculation(
         energies,
     ) = dwave_solve.solve_DWAVE_Advantadge_QUBO()
 
-    return dwave_raw_array, portfolio_selection, new_header, price_data
+    return dwave_raw_array, portfolio_selection, new_header, prices

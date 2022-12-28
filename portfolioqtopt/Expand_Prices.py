@@ -13,7 +13,7 @@ import numpy.typing as npt
 
 
 def get_slices_list(slices: int) -> npt.NDArray[np.float64]:
-    """Generate a list of slices.
+    """Compute the possible proportions of the budget that we can allocate to each fund.
 
     Example:
 
@@ -31,7 +31,7 @@ def get_slices_list(slices: int) -> npt.NDArray[np.float64]:
     return np.power(0.5, np.arange(slices))
 
 
-def get_expand_prices(
+def _get_expand_prices(
     prices,
     slices,
     slices_list,
@@ -103,7 +103,7 @@ def get_expand_prices_opt(
     return asset_prices.astype(np.float64)
 
 
-def get_expand_prices_reversed(raw_price_data, slices, slices_list, budget):
+def _get_expand_prices_reversed(raw_price_data, slices, slices_list, budget):
 
     num_rows, num_cols = raw_price_data.shape
 
@@ -140,32 +140,41 @@ def get_expand_prices_reversed(raw_price_data, slices, slices_list, budget):
 
 
 class ExpandPriceData:
-    def __init__(self, budget, slices, raw_price_data):
-        ######### Inicializamos los datos de entrada. El numero de slices es el numero de proporciones consideradas #########
-        self.slices = slices
-        self.b = budget
+    """Based on the prices and ratios, create the expanded prices."""
 
-        ######### Obtenemos las dimensiones del problema, num_rows = la profundidad historica de los datos #########
-        ######### num_cols = el numero de fondos * el numero de slices #########
-        num_rows, num_cols = raw_price_data.shape
+    def __init__(self, budget, slices, prices):
 
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # GENERAMOS LAS POSIBLES PROPORCIONES DEL BUDGET QUE PODEMOS ASIGNAR A CADA FONDO
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        self.slices_list = get_slices_list(slices)
+        slices_list = get_slices_list(slices)
 
-        ######### Inicializamos la variable self.price_data_expanded #########
-
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # EN FUNCIÓN DE LOS PRECIOS Y LAS PROPORCIONES, CREAMOS LOS PRECIOS EXPANDIDOS
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        self.price_data_expanded = get_expand_prices_opt(
-            raw_price_data, self.slices_list, self.b
-        )
+        self.price_data_expanded = get_expand_prices_opt(prices, slices_list, budget)
 
         self.price_data_expanded_reversed = get_expand_prices_opt(
-            raw_price_data,
-            self.slices_list,
-            self.b,
+            prices,
+            slices_list,
+            budget,
             reversed=True,
         )
+
+
+from dataclasses import dataclass
+
+
+@dataclass
+class ExpandPrices:
+    data: npt.NDArray[np.float64]
+    reversed_data: npt.NDArray[np.float64]
+
+
+def get_expand_prices(prices, budget, slices) -> ExpandPrices:
+    slices_list = get_slices_list(slices)
+
+    data = get_expand_prices_opt(prices, slices_list, budget)
+
+    reversed_data = get_expand_prices_opt(
+        prices,
+        slices_list,
+        budget,
+        reversed=True,
+    )
+
+    return ExpandPrices(data, reversed_data)

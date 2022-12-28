@@ -7,9 +7,17 @@
 import numpy as np
 import numpy.typing as npt
 
-from .Covariance_calculator import get_prices_covariance
 from .Expand_Prices import ExpandPriceData
 from .ExpectedReturn_calculator import get_expected_returns
+
+
+def get_prices_covariance(prices: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    """Calculate the inter-asset covariance matrix using historical price data.
+
+    The covariance matrix is used to implement the diversity term in the portfolio
+    selection problem.
+    """
+    return np.cov(prices.T)
 
 
 class PortfolioSelection:
@@ -59,7 +67,7 @@ class PortfolioSelection:
         self.price_data = price_data
         self.num_slices = num_slices
 
-        self.b = 1.0  # This is the budget, which is equal to 1 in all cases.
+        b = 1.0  # This is the budget, which is equal to 1 in all cases.
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # WE MAKE THE EXPANSION OF THE PRICES ACCORDING TO THE SLIDES
@@ -69,7 +77,7 @@ class PortfolioSelection:
         # last value recorded as a basis. Based on this value and depending on the
         # slides, the rest of the prices are composed as follows.
 
-        expand = ExpandPriceData(self.b, self.num_slices, self.price_data)
+        expand = ExpandPriceData(b, self.num_slices, self.price_data)
 
         # Prices in raw format are replaced by prices in standardized format.
 
@@ -81,7 +89,7 @@ class PortfolioSelection:
         # can invest for each of the funds. For example: 1.0, 0.5, 0.25, 0.125
         # NOTE: We talk about the final possible prices
 
-        self.prices = self.price_data[-1, :]  # (n * p, )
+        self.last_prices = self.price_data[-1, :]  # (n * p, )
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # COMPUTE THE EXPECTED RETURN
@@ -106,11 +114,11 @@ class PortfolioSelection:
 
         # We generate a diagonal matrix with the possible prices * 2. This will be
         # related to the returns.
-        qubo_prices_linear = 2.0 * self.b * np.diag(self.prices)  # (p, p)
+        qubo_prices_linear = 2.0 * b * np.diag(self.last_prices)  # (p, p)
 
         # We generate a symmetric matrix also related to the possible prices. This will
         # be related to diversity.
-        qubo_prices_quadratic = np.outer(self.prices, self.prices)  # (p, p)
+        qubo_prices_quadratic = np.outer(self.last_prices, self.last_prices)  # (p, p)
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # FINAL QUBO FORMATION, WITH BIAS AND PENALTY VALUES INCLUDED

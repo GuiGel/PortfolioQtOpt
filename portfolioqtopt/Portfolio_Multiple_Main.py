@@ -4,7 +4,8 @@ import time
 
 import numpy
 import pandas as pd
-import Portfolio_Calculation
+
+from . import portfolio_calculation
 
 
 def interpretarResultados(
@@ -105,7 +106,7 @@ def main():
             portfolio_selection,
             new_header,
             price_data,
-        ) = Portfolio_Calculation.Portfolio_Calculation(
+        ) = portfolio_calculation.Portfolio_Calculation(
             API, slices, file_name, sheet, fondos
         )
 
@@ -129,7 +130,7 @@ def main():
             portfolio_selection,
             new_header,
             price_data,
-        ) = Portfolio_Calculation.Portfolio_Calculation(
+        ) = portfolio_calculation.Portfolio_Calculation(
             API,
             slices,
             file_name,

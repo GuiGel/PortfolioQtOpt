@@ -23,6 +23,8 @@ def get_prices_covariance(prices: npt.NDArray[np.float64]) -> npt.NDArray[np.flo
 class PortfolioSelection:
     """The PortfolioSelection class.
 
+    The class is used to obtain the values that are going to compose the qubo matrix.
+
     Attributes:
         theta1 (float): The weight we give to return.
         theta2 (float): The weight we give to the penalty, to the constraint of

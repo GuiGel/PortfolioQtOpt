@@ -140,26 +140,17 @@ def get_expand_prices_reversed(raw_price_data, slices, slices_list, budget):
 
 
 class ExpandPriceData:
-    def __init__(self, budget, slices, prices):
-        ######### Inicializamos los datos de entrada. El numero de slices es el numero de proporciones consideradas #########
-        self.slices = slices
-        self.b = budget
+    """Based on the prices and ratios, create the expanded prices."""
 
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # GENERAMOS LAS POSIBLES PROPORCIONES DEL BUDGET QUE PODEMOS ASIGNAR A CADA FONDO
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    def __init__(self, budget, slices, prices):
+
         slices_list = get_slices_list(slices)
 
-        ######### Inicializamos la variable self.price_data_expanded #########
-
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # EN FUNCIÓN DE LOS PRECIOS Y LAS PROPORCIONES, CREAMOS LOS PRECIOS EXPANDIDOS
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        self.price_data_expanded = get_expand_prices_opt(prices, slices_list, self.b)
+        self.price_data_expanded = get_expand_prices_opt(prices, slices_list, budget)
 
         self.price_data_expanded_reversed = get_expand_prices_opt(
             prices,
             slices_list,
-            self.b,
+            budget,
             reversed=True,
         )

@@ -140,14 +140,14 @@ def get_expand_prices_reversed(raw_price_data, slices, slices_list, budget):
 
 
 class ExpandPriceData:
-    def __init__(self, budget, slices, raw_price_data):
+    def __init__(self, budget, slices, prices):
         ######### Inicializamos los datos de entrada. El numero de slices es el numero de proporciones consideradas #########
         self.slices = slices
         self.b = budget
 
         ######### Obtenemos las dimensiones del problema, num_rows = la profundidad historica de los datos #########
         ######### num_cols = el numero de fondos * el numero de slices #########
-        num_rows, num_cols = raw_price_data.shape
+        num_rows, num_cols = prices.shape
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # GENERAMOS LAS POSIBLES PROPORCIONES DEL BUDGET QUE PODEMOS ASIGNAR A CADA FONDO
@@ -160,11 +160,11 @@ class ExpandPriceData:
         # EN FUNCIÓN DE LOS PRECIOS Y LAS PROPORCIONES, CREAMOS LOS PRECIOS EXPANDIDOS
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         self.price_data_expanded = get_expand_prices_opt(
-            raw_price_data, self.slices_list, self.b
+            prices, self.slices_list, self.b
         )
 
         self.price_data_expanded_reversed = get_expand_prices_opt(
-            raw_price_data,
+            prices,
             self.slices_list,
             self.b,
             reversed=True,

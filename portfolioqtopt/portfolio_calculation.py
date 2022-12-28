@@ -104,14 +104,10 @@ def Portfolio_Calculation(
         theta1, theta2, theta3, price_data, slices_num
     )
 
-    # qi son los valores de la diagonal
-    qi = portfolio_selection.qi
-
-    # qij son los valores que se colocan por encima de la diagonal
-    qij = portfolio_selection.qij
-
     # Generamos la clase QUBO y configuramos la matriz y el diccionario
-    qubo = get_qubo(qi, qij)
+    # qi son los valores de la diagonal
+    # qij son los valores que se colocan por encima de la diagonal
+    qubo = get_qubo(portfolio_selection.qi, portfolio_selection.qij)
 
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # RESOLUCIÓN DEL PROBLEMA

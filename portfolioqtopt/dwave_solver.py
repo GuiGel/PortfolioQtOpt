@@ -22,7 +22,7 @@ def solve_dwave_advantage_cubo(
     # api_token = 'DEV-d9751cb50bc095c993f55b3255f728d5b2793c36'
     _URL = "https://na-west-1.cloud.dwavesys.com/sapi/v2/"
 
-    if solver == "hybrid_solver":
+    if solver.value == "hybrid_solver":
         sampler = LeapHybridSampler(token=api_token, endpoint=_URL)
         sampleset = sampler.sample_qubo(qubo.dictionary)  # type: ignore
         # mypy complains --> https://github.com/python/mypy/issues/2412

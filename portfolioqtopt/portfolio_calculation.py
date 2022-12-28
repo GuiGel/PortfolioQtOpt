@@ -81,18 +81,18 @@ def Portfolio_Calculation(
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # CARGAMOS LOS DATOS DEL PROBLEMA Y GENERAMOS UN DATAFRAME
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    df_price_data = read_welzia_stocks_file(file_path=file_name, sheet_name=sheet)
+    prices_df = read_welzia_stocks_file(file_path=file_name, sheet_name=sheet)
 
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # AQUI VAMOS A FILTRAR, EN CASO DE SER NECESARIO, EL DATASET
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     if lista_fondos_invertidos is None:
-        price_data_df = df_price_data[:days]
+        prices_df = prices_df[:days]
     else:
-        price_data_df = df_price_data[lista_fondos_invertidos]
+        prices_df = prices_df[lista_fondos_invertidos]
         # NOTE: All this is redundant
-    price_data = price_data_df.values[:, :fondos]
+    price_data = prices_df.values[:, :fondos]
 
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # OBTENEMOS LOS VALORES QUE VAN A COMPONER LA MATRIZ QUBO

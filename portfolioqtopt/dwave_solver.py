@@ -9,16 +9,12 @@ class DWaveSolver(object):
 
     _URL = "https://na-west-1.cloud.dwavesys.com/sapi/v2/"
 
-    def __init__(
-        self, qubo, qubo_dict, runs, chainstrength, anneal_time, solver, api_token
-    ):
+    def __init__(self, qubo, qubo_dict, chainstrength, solver, api_token):
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # OBTENEMOS LOS VALORES PARA RESOLVER EL PROBLEMA A TRAVES DE DWAVE
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         self.chainstrength = chainstrength
-        self.annealing_time = anneal_time
-        self.numruns = runs
         self.qubo = qubo
         self.qubo_dict = qubo_dict
         self.solver = solver

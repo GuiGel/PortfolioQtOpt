@@ -13,7 +13,7 @@ import numpy.typing as npt
 
 
 def get_slices_list(slices: int) -> npt.NDArray[np.float64]:
-    """Generate a list of slices.
+    """Compute the possible proportions of the budget that we can allocate to each fund.
 
     Example:
 
@@ -148,20 +148,18 @@ class ExpandPriceData:
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # GENERAMOS LAS POSIBLES PROPORCIONES DEL BUDGET QUE PODEMOS ASIGNAR A CADA FONDO
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        self.slices_list = get_slices_list(slices)
+        slices_list = get_slices_list(slices)
 
         ######### Inicializamos la variable self.price_data_expanded #########
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # EN FUNCIÓN DE LOS PRECIOS Y LAS PROPORCIONES, CREAMOS LOS PRECIOS EXPANDIDOS
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        self.price_data_expanded = get_expand_prices_opt(
-            prices, self.slices_list, self.b
-        )
+        self.price_data_expanded = get_expand_prices_opt(prices, slices_list, self.b)
 
         self.price_data_expanded_reversed = get_expand_prices_opt(
             prices,
-            self.slices_list,
+            slices_list,
             self.b,
             reversed=True,
         )

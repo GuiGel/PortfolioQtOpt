@@ -72,6 +72,10 @@ class ExpandPrices:
     data: npt.NDArray[np.float64]
     reversed_data: npt.NDArray[np.float64]
 
+    @property
+    def last(self) -> npt.NDArray[np.float64]:
+        return self.data[-1, :]
+
 
 def get_expand_prices(prices, budget, slices) -> ExpandPrices:
     slices_list = get_slices_list(slices)

@@ -52,6 +52,9 @@ class Qubo(NamedTuple):
 def get_qubo_dict(q: npt.NDArray[np.float64]) -> QuboDict:
     """Create a dictionary from a symmetric matrix.
 
+    This function is utilize to generate the qubo dictionary, which we will use to solve
+    the problem in DWAVE.
+
     Example:
         >>> q = np.array([[1, 2, 3], [2, 1, 4], [3, 4, 1]])
         >>> q
@@ -87,22 +90,7 @@ def get_qubo(qi: npt.NDArray[np.float64], qij: npt.NDArray[np.float64]) -> Qubo:
     Returns:
         Qubo: Dataclass that has the qubo matrix and dictionary as attributes.
     """
-    n = len(qij)
-
-    # >>>>>>>>>>>>>>
-    # COMPUTE QUBO
-    # >>>>>>>>>>>>>>
-
     qubo = qi + qij
-
-    # At first the matrix is complete, so with this method only the upper part of this
-    # matrix is obtained.
-
     qubo_matrix = get_upper_triangular(qubo)
-
-    # We generate the dictionary, which we will use to solve the problem in DWAVE.
-    qubo_dict: QuboDict = {z: qubo_matrix[z] for z in it.product(*(range(n),) * 2)}
-    np.testing.assert_equal(get_qubo_dict(qubo_matrix), qubo_dict)
-    print("OK qubo dict")
-
+    qubo_dict = get_qubo_dict(qubo_matrix)
     return Qubo(qubo_matrix, qubo_dict)

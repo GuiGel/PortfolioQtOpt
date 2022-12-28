@@ -49,6 +49,31 @@ class Qubo(NamedTuple):
     dictionary: QuboDict
 
 
+def get_qubo_dict(q: npt.NDArray[np.float64]) -> QuboDict:
+    """Create a dictionary from a symmetric matrix.
+
+    Example:
+        >>> q = np.array([[1, 2, 3], [2, 1, 4], [3, 4, 1]])
+        >>> q
+        array([[1, 2, 3],
+               [2, 1, 4],
+               [3, 4, 1]])
+        >>> get_qubo_dict(q)  # doctest: +NORMALIZE_WHITESPACE
+        {(0, 0): 1, (0, 1): 2, (0, 2): 3, (1, 0): 2, (1, 1): 1, (1, 2): 4, (2, 0): 3,
+        (2, 1): 4, (2, 2): 1}
+
+    Args:
+        q (npt.NDArray[np.float64]): A symmetric matrix. The qubo matrix for example.
+
+    Returns:
+        QuboDict: A dict with key the tuple of coordinate (i, j) and value the
+            corresponding matrix value q[i, j].
+    """
+    n = len(q)
+    qubo_dict: QuboDict = {z: q[z] for z in it.product(*(range(n),) * 2)}
+    return qubo_dict
+
+
 def get_qubo(qi: npt.NDArray[np.float64], qij: npt.NDArray[np.float64]) -> Qubo:
     """Compute the qubo matrix and the corresponding dictionary.
 
@@ -77,5 +102,7 @@ def get_qubo(qi: npt.NDArray[np.float64], qij: npt.NDArray[np.float64]) -> Qubo:
 
     # We generate the dictionary, which we will use to solve the problem in DWAVE.
     qubo_dict: QuboDict = {z: qubo_matrix[z] for z in it.product(*(range(n),) * 2)}
+    np.testing.assert_equal(get_qubo_dict(qubo_matrix), qubo_dict)
+    print("OK qubo dict")
 
     return Qubo(qubo_matrix, qubo_dict)

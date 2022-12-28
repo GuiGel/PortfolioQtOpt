@@ -23,7 +23,7 @@ def interpretarResultados(
 
     for i in range(fondos):
         zeros = dwave_raw_array[0][i * slices : i * slices + slices]
-        prices = portfolio_selection.prices[0:slices]
+        prices = portfolio_selection.last_prices[0:slices]
         if 1 in zeros:
             result = [num1 * num2 for num1, num2 in zip(zeros, prices)]
             # print(new_header[i + 2], sum(result))

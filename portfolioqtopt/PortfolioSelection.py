@@ -81,7 +81,7 @@ class PortfolioSelection:
         # can invest for each of the funds. For example: 1.0, 0.5, 0.25, 0.125
         # NOTE: We talk about the final possible prices
 
-        self.prices = self.price_data[-1, :]  # (n * p, )
+        self.last_prices = self.price_data[-1, :]  # (n * p, )
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # COMPUTE THE EXPECTED RETURN
@@ -106,11 +106,11 @@ class PortfolioSelection:
 
         # We generate a diagonal matrix with the possible prices * 2. This will be
         # related to the returns.
-        qubo_prices_linear = 2.0 * b * np.diag(self.prices)  # (p, p)
+        qubo_prices_linear = 2.0 * b * np.diag(self.last_prices)  # (p, p)
 
         # We generate a symmetric matrix also related to the possible prices. This will
         # be related to diversity.
-        qubo_prices_quadratic = np.outer(self.prices, self.prices)  # (p, p)
+        qubo_prices_quadratic = np.outer(self.last_prices, self.last_prices)  # (p, p)
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # FINAL QUBO FORMATION, WITH BIAS AND PENALTY VALUES INCLUDED

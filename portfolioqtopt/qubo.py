@@ -54,15 +54,15 @@ def get_qubo(qi: npt.NDArray[np.float64], qij: npt.NDArray[np.float64]) -> Qubo:
 
     Args:
         qi (npt.NDArray[np.float64]): Diagonal, related to expected returns. Shape
-            (m, n) where m is the historical depth of the data and
+            (n, n) where m is the historical depth of the data and
             n = number of funds * number of slices.
         qij (npt.NDArray[np.float64]): The quadratic part, related to variances.
+            Shape (n, n).
 
     Returns:
-        Qubo: _description_
+        Qubo: Dataclass that has the qubo matrix and dictionary as attributes.
     """
-    # TODO: Here there is an error. Mat sym
-    _, n = qij.shape
+    n = len(qij)
 
     # >>>>>>>>>>>>>>
     # COMPUTE QUBO

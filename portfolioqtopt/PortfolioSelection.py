@@ -56,10 +56,6 @@ class PortfolioSelection:
         # >>>>>>>>>>>>
         # INPUT VALUES
         # >>>>>>>>>>>>
-
-        self.theta1 = theta1
-        self.theta2 = theta2
-        self.theta3 = theta3
         self.price_data = price_data
         self.num_slices = num_slices
 
@@ -77,14 +73,15 @@ class PortfolioSelection:
 
         # Prices in raw format are replaced by prices in standardized format.
 
-        self.price_data = expand.price_data_expanded  # TODO: Change name to standardized_price
-        self.price_data_reversed = expand.price_data_expanded_reversed
+        # TODO: Change name to standardized_price. p = n * num_slices
+        self.price_data = expand.price_data_expanded  # (m, p)
+        self.price_data_reversed = expand.price_data_expanded_reversed  # (m, p)
 
         # Possible prices, this is actually a list of the proportion of the budget you
         # can invest for each of the funds. For example: 1.0, 0.5, 0.25, 0.125
         # NOTE: We talk about the final possible prices
-    
-        self.prices = self.price_data[-1, :]
+
+        self.prices = self.price_data[-1, :]  # (n * p, )
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # COMPUTE THE EXPECTED RETURN
@@ -94,10 +91,10 @@ class PortfolioSelection:
 
         # Compute the mean of the daily returns.
 
-        self.expected_returns = get_expected_returns(self.price_data)
+        self.expected_returns = get_expected_returns(self.price_data)  # (p, )
 
         # Obtenemos los valores asociados al riesgo, es decir, la covariance
-        qubo_covariance = get_prices_covariance(self.price_data)
+        qubo_covariance = get_prices_covariance(self.price_data)  # (p, p)
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # SHAPING THE VALUES OF THE QUBO
@@ -105,22 +102,22 @@ class PortfolioSelection:
 
         # We generate a diagonal matrix with the returns, this matrix will be used later
         # with the value of theta1.
-        qubo_returns = np.diag(self.expected_returns)
+        qubo_returns = np.diag(self.expected_returns)  # (p, p)
 
         # We generate a diagonal matrix with the possible prices * 2. This will be
         # related to the returns.
-        qubo_prices_linear = 2.0 * self.b * np.diag(self.prices)  # (m, n)
+        qubo_prices_linear = 2.0 * self.b * np.diag(self.prices)  # (p, p)
 
         # We generate a symmetric matrix also related to the possible prices. This will
         # be related to diversity.
-        qubo_prices_quadratic = np.outer(self.prices, self.prices)  # (m, n)
+        qubo_prices_quadratic = np.outer(self.prices, self.prices)  # (p, p)
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # FINAL QUBO FORMATION, WITH BIAS AND PENALTY VALUES INCLUDED
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
         # We form the diagonal values, related to return and prices.
-        self.qi = -self.theta1 * qubo_returns - self.theta2 * qubo_prices_linear
+        self.qi = -theta1 * qubo_returns - theta2 * qubo_prices_linear  # (p, p)
 
         # We now form the quadratic values, related to diversity.
-        self.qij = self.theta2 * qubo_prices_quadratic + self.theta3 * qubo_covariance
+        self.qij = theta2 * qubo_prices_quadratic + theta3 * qubo_covariance  # (p, p)

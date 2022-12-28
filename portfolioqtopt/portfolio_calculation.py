@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from .dwave_solver import DWaveSolver
 from .PortfolioSelection import PortfolioSelection
-from .qubo import QUBO
+from .qubo import get_qubo
 from .reader import read_welzia_stocks_file
 
 
@@ -111,9 +111,7 @@ def Portfolio_Calculation(
     qij = portfolio_selection.qij
 
     # Generamos la clase QUBO y configuramos la matriz y el diccionario
-    qubo = QUBO(qi, qij)
-    qubo_matrix = qubo.qubo
-    qubo_dict = qubo.qubo_dict
+    qubo = get_qubo(qi, qij)
 
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # RESOLUCIÓN DEL PROBLEMA
@@ -121,8 +119,8 @@ def Portfolio_Calculation(
 
     # Configuramos el solver
     dwave_solve = DWaveSolver(
-        qubo_matrix,
-        qubo_dict,
+        qubo.matrix,
+        qubo.dictionary,
         runs,
         chain_strength,
         anneal_time,

@@ -8,7 +8,7 @@ import itertools as it
 import numpy as np
 import numpy.typing as npt
 
-from .symmetric_to_triangular import get_upper_triangular
+from portfolioqtopt.symmetric_to_triangular import get_upper_triangular
 
 
 class QUBO:
@@ -41,7 +41,7 @@ class QUBO:
 
 from typing import Dict, NamedTuple, Tuple
 
-QuboDict = Dict[Tuple[int, int], npt.NDArray[np.float64]]
+QuboDict = Dict[Tuple[int, int], np.floating]
 
 
 class Qubo(NamedTuple):
@@ -73,7 +73,7 @@ def get_qubo_dict(q: npt.NDArray[np.float64]) -> QuboDict:
             corresponding matrix value q[i, j].
     """
     n = len(q)
-    qubo_dict: QuboDict = {z: q[z] for z in it.product(*(range(n),) * 2)}
+    qubo_dict: QuboDict = {(i, j): q[i, j] for i in range(n) for j in range(n)}
     return qubo_dict
 
 

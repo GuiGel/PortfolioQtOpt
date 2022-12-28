@@ -92,14 +92,12 @@ def Portfolio_Calculation(
     else:
         prices_df = prices_df[lista_fondos_invertidos]
         # NOTE: All this is redundant
-    price_data = prices_df.values[:, :fondos]
+    prices = prices_df.values[:, :fondos]
 
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # OBTENEMOS LOS VALORES QUE VAN A COMPONER LA MATRIZ QUBO
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    portfolio_selection = PortfolioSelection(
-        theta1, theta2, theta3, price_data, slices_num
-    )
+    portfolio_selection = PortfolioSelection(theta1, theta2, theta3, prices, slices_num)
 
     # Generamos la clase QUBO y configuramos la matriz y el diccionario
     # qi son los valores de la diagonal
@@ -129,4 +127,4 @@ def Portfolio_Calculation(
         energies,
     ) = dwave_solve.solve_DWAVE_Advantadge_QUBO()
 
-    return dwave_raw_array, portfolio_selection, new_header, price_data
+    return dwave_raw_array, portfolio_selection, new_header, prices

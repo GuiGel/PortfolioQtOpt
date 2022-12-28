@@ -145,10 +145,6 @@ class ExpandPriceData:
         self.slices = slices
         self.b = budget
 
-        ######### Obtenemos las dimensiones del problema, num_rows = la profundidad historica de los datos #########
-        ######### num_cols = el numero de fondos * el numero de slices #########
-        num_rows, num_cols = prices.shape
-
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # GENERAMOS LAS POSIBLES PROPORCIONES DEL BUDGET QUE PODEMOS ASIGNAR A CADA FONDO
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

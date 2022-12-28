@@ -31,7 +31,7 @@ def get_slices_list(slices: int) -> npt.NDArray[np.float64]:
     return np.power(0.5, np.arange(slices))
 
 
-def get_expand_prices(
+def _get_expand_prices(
     prices,
     slices,
     slices_list,
@@ -103,7 +103,7 @@ def get_expand_prices_opt(
     return asset_prices.astype(np.float64)
 
 
-def get_expand_prices_reversed(raw_price_data, slices, slices_list, budget):
+def _get_expand_prices_reversed(raw_price_data, slices, slices_list, budget):
 
     num_rows, num_cols = raw_price_data.shape
 
@@ -154,3 +154,27 @@ class ExpandPriceData:
             budget,
             reversed=True,
         )
+
+
+from dataclasses import dataclass
+
+
+@dataclass
+class ExpandPrices:
+    data: npt.NDArray[np.float64]
+    reversed_data: npt.NDArray[np.float64]
+
+
+def get_expand_prices(prices, budget, slices) -> ExpandPrices:
+    slices_list = get_slices_list(slices)
+
+    data = get_expand_prices_opt(prices, slices_list, budget)
+
+    reversed_data = get_expand_prices_opt(
+        prices,
+        slices_list,
+        budget,
+        reversed=True,
+    )
+
+    return ExpandPrices(data, reversed_data)

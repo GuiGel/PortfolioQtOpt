@@ -1,15 +1,26 @@
-"""Con esta clase se crean columnas de datos de precios históricos que representan
-varios porcentajes del presupuesto.
+"""Create columns of historical price data representing various percentages of the
+budget.
 
-Por ejemplo, si el presupuesto es 20 y el precio de un fondo es 100, se podrían analizar
-varios porcentajes del fondo en función del presupuesto: 5, 10, 15 y 20 para encontrar
-la mejor opción.
-NOTE:: Esto por supuesto, aumenta el espacio de búsqueda.
+For example, if the budget is 20 and the price of a fund is 100, you could analyze
+various percentages of the fund based on the budget: 5, 10, 15 and 20 to find the best
+option.
+
+NOTE:: This of course increases the search space.
 """
 from dataclasses import dataclass
 
 import numpy as np
 import numpy.typing as npt
+
+
+@dataclass
+class ExpandPrices:
+    data: npt.NDArray[np.float64]
+    reversed_data: npt.NDArray[np.float64]
+
+    @property
+    def last(self) -> npt.NDArray[np.float64]:
+        return self.data[-1, :]
 
 
 def get_slices_list(slices: int) -> npt.NDArray[np.float64]:
@@ -65,16 +76,6 @@ def get_expand_prices_opt(
     _, num_cols, num_slices = all_assert_prices.shape
     asset_prices = all_assert_prices.reshape(-1, num_cols * num_slices)
     return asset_prices.astype(np.float64)
-
-
-@dataclass
-class ExpandPrices:
-    data: npt.NDArray[np.float64]
-    reversed_data: npt.NDArray[np.float64]
-
-    @property
-    def last(self) -> npt.NDArray[np.float64]:
-        return self.data[-1, :]
 
 
 def get_expand_prices(prices, budget, slices) -> ExpandPrices:

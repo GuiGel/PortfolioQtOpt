@@ -5,7 +5,7 @@ import time
 import numpy
 import pandas as pd
 
-from . import portfolio_calculation
+from portfolioqtopt import portfolio_calculation
 
 
 def interpretarResultados(

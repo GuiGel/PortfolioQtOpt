@@ -7,8 +7,8 @@
 import numpy as np
 import numpy.typing as npt
 
-from .Expand_Prices import ExpandPriceData
-from .ExpectedReturn_calculator import get_expected_returns
+from portfolioqtopt.Expand_Prices import ExpandPriceData
+from portfolioqtopt.ExpectedReturn_calculator import get_expected_returns
 
 
 def get_prices_covariance(prices: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:

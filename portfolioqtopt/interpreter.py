@@ -1,3 +1,5 @@
+import typing
+
 import numpy as np
 import numpy.typing as npt
 
@@ -7,7 +9,7 @@ from portfolioqtopt.expand_prices import get_slices_list
 def get_investment(
     dwave_array: npt.NDArray[np.int8],
     slices_nb: int,
-) -> npt.NDArray[np.floating]:
+) -> npt.NDArray[np.floating[typing.Any]]:
     """Get the investment per fund.
 
     Example:
@@ -28,12 +30,12 @@ def get_investment(
         slices_nb (int): The number of slices values that determines the granularity.
 
     Returns:
-        npt.NDArray[np.floating]: The total investment for each funds.
+        npt.NDArray[np.floating[typing.Any]]: The total investment for each funds.
             Shape (p/slices_nb,).
     """
     qbits = dwave_array.reshape(-1, slices_nb)
     slices = get_slices_list(slices_nb).reshape(1, -1)
-    investments: npt.NDArray[np.floating] = (qbits * slices).sum(axis=1)
+    investments: npt.NDArray[np.floating[typing.Any]] = (qbits * slices).sum(axis=1)
 
     total = investments.sum()
     assert (
@@ -44,7 +46,8 @@ def get_investment(
 
 
 def get_deviation(
-    investments: npt.NDArray[np.floating], prices: npt.NDArray[np.floating]
+    investments: npt.NDArray[np.floating[typing.Any]],
+    prices: npt.NDArray[np.floating[typing.Any]],
 ) -> float:
     """Compute the deviation.
 
@@ -64,19 +67,20 @@ def get_deviation(
         0.852
 
     Args:
-        investments (npt.NDArray[np.floating]): The investment for each fund.
+        investments (npt.NDArray[np.floating[typing.Any]]): The investment for each fund.
             Shape (n,).
-        prices (npt.NDArray[np.floating]): The funds prices. Shape (m, n).
+        prices (npt.NDArray[np.floating[typing.Any]]): The funds prices. Shape (m, n).
 
     Returns:
         float: The compute deviation.
     """
     deviation = ((np.std(prices, axis=0) ** 2) * (investments**2)).sum()
-    return deviation
+    return typing.cast(float, deviation)
 
 
 def get_covariance(
-    investments: npt.NDArray[np.floating], prices: npt.NDArray[np.floating]
+    investments: npt.NDArray[np.floating[typing.Any]],
+    prices: npt.NDArray[np.floating[typing.Any]],
 ) -> float:
     """Compute the covariances. TODO: Add a better documentation.
 
@@ -92,9 +96,9 @@ def get_covariance(
         0.2499999999999999
 
     Args:
-        investments (npt.NDArray[np.floating]): The investment for each fund.
+        investments (npt.NDArray[np.floating[typing.Any]]): The investment for each fund.
             Shape (n,).
-        prices (npt.NDArray[np.floating]): The funds prices. Shape (m, n).
+        prices (npt.NDArray[np.floating[typing.Any]]): The funds prices. Shape (m, n).
 
     Returns:The compute covariance.
     """
@@ -107,8 +111,9 @@ def get_covariance(
 
 
 def get_returns(
-    dwave_array: npt.NDArray[np.int8], data_reversed: npt.NDArray[np.floating]
-) -> npt.NDArray[np.floating]:
+    dwave_array: npt.NDArray[np.int8],
+    data_reversed: npt.NDArray[np.floating[typing.Any]],
+) -> npt.NDArray[np.floating[typing.Any]]:
     """Get the final return for each fund weighted by the value of each slice.
 
     Example:
@@ -122,11 +127,11 @@ def get_returns(
     Args:
         dwave_array (npt.NDArray[np.int8]): The dwave output array made of 0 and 1.
             Shape (p,)
-        data_reversed (npt.NDArray[np.floating]): The sliced prices multiplied by the
+        data_reversed (npt.NDArray[np.floating[typing.Any]]): The sliced prices multiplied by the
             ratio between the budget and the first price. Shape (m, p)
 
     Returns:
-        npt.NDArray[np.floating]: The expected return for each fund. Shape (p,)
+        npt.NDArray[np.floating[typing.Any]]: The expected return for each fund. Shape (p,)
     """
     returns = dwave_array * (data_reversed[-1] - data_reversed[0])  # (p,)
-    return returns
+    return typing.cast(npt.NDArray[np.floating[typing.Any]], returns)

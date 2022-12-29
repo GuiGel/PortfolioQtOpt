@@ -1,4 +1,4 @@
-"""This module contains tests for the Expand_Prices module."""
+"""This module contains tests for the expand_prices module."""
 import numpy as np
 import numpy.typing as npt
 import pytest

@@ -7,7 +7,7 @@
 import numpy as np
 import numpy.typing as npt
 
-from portfolioqtopt.Expand_Prices import ExpandPriceData
+from portfolioqtopt.expand_prices import get_expand_prices
 from portfolioqtopt.ExpectedReturn_calculator import get_expected_returns
 
 
@@ -79,13 +79,13 @@ class PortfolioSelection:
         # last value recorded as a basis. Based on this value and depending on the
         # slides, the rest of the prices are composed as follows.
 
-        expand = ExpandPriceData(b, self.num_slices, self.price_data)
+        expand = get_expand_prices(self.price_data, num_slices, b)
 
         # Prices in raw format are replaced by prices in standardized format.
 
         # TODO: Change name to standardized_price. p = n * num_slices
-        self.price_data = expand.price_data_expanded  # (m, p)
-        self.price_data_reversed = expand.price_data_expanded_reversed  # (m, p)
+        self.price_data = expand.data  # (m, p)
+        self.price_data_reversed = expand.reversed_data  # (m, p)
 
         # Possible prices, this is actually a list of the proportion of the budget you
         # can invest for each of the funds. For example: 1.0, 0.5, 0.25, 0.125

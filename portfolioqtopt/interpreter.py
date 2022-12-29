@@ -135,3 +135,13 @@ def get_returns(
     """
     returns = dwave_array * (data_reversed[-1] - data_reversed[0])  # (p,)
     return typing.cast(npt.NDArray[np.floating[typing.Any]], returns)
+
+
+def get_risk(
+    investments: npt.NDArray[np.floating[typing.Any]],
+    prices: npt.NDArray[np.floating[typing.Any]],
+) -> float:
+    deviation = get_deviation(investments, prices)
+    covariance = get_covariance(investments, prices)
+    risk = np.sqrt(deviation + covariance)
+    return typing.cast(float, risk)

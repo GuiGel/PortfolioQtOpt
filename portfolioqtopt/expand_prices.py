@@ -51,6 +51,15 @@ def get_expand_prices_opt(
     """Optimized version of get_expand_prices.
     Speedup of 50X with the original ``get_expand_prices`` code.
 
+    Examples:
+
+        >>> prices = np.array([[100, 50, 10, 5], [10, 5, 1, 0.5]]).T
+        >>> get_expand_prices_opt(prices, [1, 0.5, 0.25], 1)  # doctest: +NORMALIZE_WHITESPACE
+        array([[20.  , 10.  ,  5.  , 20.  , 10.  ,  5.  ],
+               [10.  ,  5.  ,  2.5 , 10.  ,  5.  ,  2.5 ],
+               [ 2.  ,  1.  ,  0.5 ,  2.  ,  1.  ,  0.5 ],
+               [ 1.  ,  0.5 ,  0.25,  1.  ,  0.5 ,  0.25]])
+
     Args:
         prices (npt.NDArray[np.float64]): The fund prices with shape
             (prices number, funds number).
@@ -78,7 +87,35 @@ def get_expand_prices_opt(
     return asset_prices.astype(np.float64)
 
 
-def get_expand_prices(prices, budget, slices) -> ExpandPrices:
+def get_expand_prices(
+    prices: npt.NDArray[np.float64],
+    slices: int,
+    budget: float = 1.0,
+) -> ExpandPrices:
+    """Expand the prices with the slices and normalized them.
+
+    Example:
+
+        >>> slices = 3
+        >>> budget = 1.0
+        >>> prices = np.array([[100, 50, 10], [10, 5, 1]]).T
+        >>> prices.shape
+        (3, 2)
+        >>> get_expand_prices(prices, budget, slices)  # doctest: +NORMALIZE_WHITESPACE
+        ExpandPrices(data=array([[30., 30.], [15., 15.], [ 3.,  3.]]),
+        reversed_data=array([[3. , 3. ], [1.5, 1.5], [0.3, 0.3]]))
+
+    Args:
+        prices (npt.NDArray[np.float64]): The fund prices. Shape (m, n)
+            where m is the prices number and n the funds number.
+        slices (int): The number of slices is the granularity that we are
+            going to give to each fund. That is, the amount of the budget we
+            will be able to invest.
+        budget (int, optional): The initial budget. Defaults to 1.
+
+    Returns:
+        ExpandPrices: A ExpandPrices ``dataclass``.
+    """
     slices_list = get_slices_list(slices)
 
     data = get_expand_prices_opt(prices, slices_list, budget)

@@ -4,6 +4,8 @@
 # ESTA ES LA CLASE QUE OBTIENE LOS DATOS Y GENERA LOS VALORES PARA CONFORMAR EL QUBO
 ########################################################################################################################
 
+import typing
+
 import numpy as np
 import numpy.typing as npt
 
@@ -11,7 +13,9 @@ from portfolioqtopt.expand_prices import get_expand_prices
 from portfolioqtopt.expected_return import get_granular_mean_daily_returns
 
 
-def get_prices_covariance(prices: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+def get_prices_covariance(
+    prices: npt.NDArray[np.floating[typing.Any]],
+) -> npt.NDArray[np.floating[typing.Any]]:
     """Calculate the inter-asset covariance matrix using historical price data.
 
     The covariance matrix is used to implement the diversity term in the portfolio
@@ -30,7 +34,7 @@ class PortfolioSelection:
         theta2 (float): The weight we give to the penalty, to the constraint of
             not exceeding the budget.
         theta3 (float): The weight we give to covariance, i.e. to diversity.
-        price_data (npt.NDArray[np.float64]): At this point in the execution, prices
+        price_data (npt.NDArray[np.floating[typing.Any]]): At this point in the execution, prices
             are the values of the funds in raw format, without normalizing.
             Shape (m, n) where m is the historical depth of the data and
             n = funds number * slices number.
@@ -45,7 +49,7 @@ class PortfolioSelection:
         theta1: float,
         theta2: float,
         theta3: float,
-        price_data: npt.NDArray[np.float64],
+        price_data: npt.NDArray[np.floating[typing.Any]],
         num_slices: int,
     ) -> None:
         """Initialized the ``PortfolioSelection`` class.
@@ -55,10 +59,10 @@ class PortfolioSelection:
             theta2 (float): The weight we give to the penalty, to the constraint of
                 not exceeding the budget.
             theta3 (float): The weight we give to covariance, i.e. to diversity.
-            price_data (npt.NDArray[np.float64]): At this point in the execution, prices
-                are the values of the funds in raw format, without normalizing.
-                Shape (m, n) where m is the historical depth of the data and
-                n = funds number * slices number.
+            price_data (npt.NDArray[np.floating[typing.Any]]): At this point in the
+                execution, prices are the values of the funds in raw format, without
+                normalizing. Shape (m, n) where m is the historical depth of the data
+                and n = funds number * slices number.
             num_slices (int): The number of slices is the granularity we are going to
                 give to each fund. That is, the amount of the budget that we will be
                 able to invest. For example, a 0.5, a 0.25, a 0.125...
@@ -136,14 +140,14 @@ class PortfolioSelection:
 
 
 def compute_qubo(
-    prices: npt.NDArray[np.float64],
-    price_data: npt.NDArray[np.float64],
-    expected_returns: npt.NDArray[np.float64],
+    prices: npt.NDArray[np.floating[typing.Any]],
+    price_data: npt.NDArray[np.floating[typing.Any]],
+    expected_returns: npt.NDArray[np.floating[typing.Any]],
     b: int,
     theta1: float,
     theta2: float,
     theta3: float,
-) -> npt.NDArray[np.float64]:
+) -> npt.NDArray[np.floating[typing.Any]]:
 
     # Obtenemos los valores asociados al riesgo, es decir, la covariance
     qubo_covariance = get_prices_covariance(price_data)  # (p, p)
@@ -173,3 +177,15 @@ def compute_qubo(
     qubo = qii + qij
 
     return qubo
+
+
+if __name__ == "__main__":
+    prices = np.array(
+        [
+            [100, 104, 102, 104, 100],
+            [10, 10.2, 10.4, 10.5, 10.4],
+            [50, 51, 52, 52.5, 52],
+            [1.0, 1.02, 1.04, 1.05, 1.04],
+        ]
+    ).T
+    print(f"{prices.shape=}")

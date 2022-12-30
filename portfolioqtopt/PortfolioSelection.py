@@ -101,7 +101,9 @@ class PortfolioSelection:
 
         # Compute the mean of the daily returns.
 
-        self.expected_returns = get_granular_mean_daily_returns(price_data, num_slices)  # (p, )
+        self.expected_returns = get_granular_mean_daily_returns(
+            price_data, num_slices
+        )  # (p, )
 
         # Obtenemos los valores asociados al riesgo, es decir, la covariance
         qubo_covariance = get_prices_covariance(self.price_data)  # (p, p)

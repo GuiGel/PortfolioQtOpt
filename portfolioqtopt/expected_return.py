@@ -1,7 +1,7 @@
 """This module calculates the expected return (based on estimates from Modern Portfolio
 Theory) from historical price data.
 
-TODO: This code seems to be more correct than the one in the module ``ExpectedReturn_calculator`` but need a verification by Tecnalia.
+TODO: This code seems to be more correct than the one in the module ``expected_return_calculator`` but need a verification by Tecnalia.
 """
 import typing
 

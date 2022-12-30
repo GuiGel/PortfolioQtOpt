@@ -3,7 +3,7 @@ import numpy as np
 import numpy.typing as npt
 import pytest
 
-from portfolioqtopt.ExpectedReturn_calculator import get_expected_returns
+from portfolioqtopt.expected_return_calculator import get_expected_returns
 
 
 @pytest.mark.parametrize(

@@ -95,7 +95,7 @@ class PortfolioSelection:
         # can invest for each of the funds. For example: 1.0, 0.5, 0.25, 0.125
         # NOTE: We talk about the final possible prices
 
-        self.last_prices = self.price_data[-1, :]  # (n * p, )
+        self.last_prices = self.price_data[-1, :]  # (p,)
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # COMPUTE THE EXPECTED RETURN
@@ -137,55 +137,3 @@ class PortfolioSelection:
 
         # We now form the quadratic values, related to diversity.
         self.qij = theta2 * qubo_prices_quadratic + theta3 * qubo_covariance  # (p, p)
-
-
-def compute_qubo(
-    prices: npt.NDArray[np.floating[typing.Any]],
-    price_data: npt.NDArray[np.floating[typing.Any]],
-    expected_returns: npt.NDArray[np.floating[typing.Any]],
-    b: int,
-    theta1: float,
-    theta2: float,
-    theta3: float,
-) -> npt.NDArray[np.floating[typing.Any]]:
-
-    # Obtenemos los valores asociados al riesgo, es decir, la covariance
-    qubo_covariance = get_prices_covariance(price_data)  # (p, p)
-
-    # We generate a diagonal matrix with the returns, this matrix will be used later
-    # with the value of theta1.
-    qubo_returns = np.diag(expected_returns)  # (p, p)
-
-    # We generate a diagonal matrix with the possible prices * 2. This will be
-    # related to the returns.
-    qubo_prices_linear = 2.0 * b * np.diag(prices)  # (p, p)
-
-    # We generate a symmetric matrix also related to the possible prices. This will
-    # be related to diversity.
-    qubo_prices_quadratic = np.outer(prices, prices)  # (p, p)
-
-    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    # FINAL QUBO FORMATION, WITH BIAS AND PENALTY VALUES INCLUDED
-    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    # We form the diagonal values, related to return and prices.
-    qii = -theta1 * qubo_returns - theta2 * qubo_prices_linear  # (p, p)
-
-    # We now form the quadratic values, related to diversity.
-    qij = theta2 * qubo_prices_quadratic + theta3 * qubo_covariance  # (p, p)
-
-    qubo = qii + qij
-
-    return qubo
-
-
-if __name__ == "__main__":
-    prices = np.array(
-        [
-            [100, 104, 102, 104, 100],
-            [10, 10.2, 10.4, 10.5, 10.4],
-            [50, 51, 52, 52.5, 52],
-            [1.0, 1.02, 1.04, 1.05, 1.04],
-        ]
-    ).T
-    print(f"{prices.shape=}")

@@ -166,27 +166,16 @@ class Selection:
 
         # ----- SHAPING THE VALUES OF THE QUBO
 
-        # We generate a diagonal matrix with the returns, this matrix will be used later
-        # with the value of theta1.
         qubo_returns = np.diag(self.expected_returns)  # (p, p)
-
-        # We generate a diagonal matrix with the possible prices * 2. This will be
-        # related to the returns.
         qubo_prices_linear = 2.0 * self.b * np.diag(self.npp_last)  # (p, p)
-
-        # We generate a symmetric matrix also related to the possible prices. This will
-        # be related to diversity.
         qubo_prices_quadratic = np.outer(self.npp_last, self.npp_last)  # (p, p)
 
         # ----- Final QUBO formation, with bias and penalty values included
 
-        # We form the diagonal values, related to return and prices.
-        qi = -theta1 * qubo_returns - theta2 * qubo_prices_linear  # (p, p)
-
-        # We now form the quadratic values, related to diversity.
-        qij = theta2 * qubo_prices_quadratic + theta3 * qubo_covariance  # (p, p)
-
+        qi = -theta1 * qubo_returns - theta2 * qubo_prices_linear  # (p, p).  eq (21a)
+        qij = theta2 * qubo_prices_quadratic + theta3 * qubo_covariance  # (p, p). eq (21b)
         qubo = typing.cast(npt.NDArray[np.floating[typing.Any]], qi + qij)
+
         qubo_matrix = get_upper_triangular(qubo)
         qubo_dict = get_qubo_dict(qubo_matrix)
         return Qubo(qubo_matrix, qubo_dict)
@@ -236,8 +225,62 @@ if __name__ == "__main__":
 
     from portfolioqtopt.interpreter import get_selected_funds_indexes
 
+
+
+    # I'm nor sure that's what Tecnalia is doing by reading their code ``Portfolio_Multiple_Main``.
+    # Before the SHARPE there is not prices filtering just an accumulation of all the selected assets.
+    # The selection seems to be after in the second step
+    # This code could be more or less for the second step.
+
     w, b = 6, 1.0
     selection = Selection(prices, w, b)
+
+    # Fake qbits
+    qubits_mock = [
+        np.array([
+         0, 1, 0, 0 , 0 , 0,
+         0, 0, 1, 0 , 0 , 0,
+         0, 0, 0, 1 , 0 , 0,
+         0, 0, 0, 1 , 0 , 0]),
+        np.array([0, 0, 1, 0 , 0 , 0,
+         0, 0, 1, 0 , 0 , 0,
+         0, 0, 1, 1 , 0 , 0,
+         0, 0, 0, 1 , 0 , 0]),
+        np.array([0, 1, 0, 0 , 0 , 0,
+         0, 0, 1, 0 , 0 , 0,
+         0, 0, 0, 0 , 0 , 0,
+         0, 0, 1, 0 , 0 , 0]),
+        np.array([0, 1, 0, 0 , 0 , 0,
+         0, 0, 0, 0 , 0 , 0,
+         0, 1, 0, 0 , 0 , 0,
+         0, 0, 0, 0 , 0 , 0])
+    ]
+
+    runs = 4
+    funds_indexes = np.array([0, 1, 2, 3])
     for i in range(runs):
-        qbits = selection.solve(0.3, 0.2, 0.2, "aa", SolverTypes.hybrid_solver)
+        # qbits = selection.solve(0.3, 0.2, 0.2, "aa", SolverTypes.hybrid_solver)
+        qbits = qubits_mock[i]
         indexes = get_selected_funds_indexes(qbits, w)
+        funds_indexes = funds_indexes[indexes]
+        # If there is some indexes, we select only this ones to create a new prices array
+        prices = prices[indexes]
+        selection = Selection(prices, w, b)
+    print(f"{funds_indexes=}")
+
+    # The first step is perhaps something like this ... The better is to look closely to Tecnalia code!
+    # In the first step there is just a collection of all the assets that are selectionated by various runs!
+
+    runs = 4
+    from collections import Counter
+    c = Counter()
+    for i in range(runs):
+        # qbits = selection.solve(0.3, 0.2, 0.2, "aa", SolverTypes.hybrid_solver)
+        qbits = qubits_mock[i]
+        indexes = get_selected_funds_indexes(qbits, w)
+        if not i:
+            c = Counter(indexes)
+        else:
+            c.update(Counter(indexes))
+    print(c)
+

@@ -1,8 +1,49 @@
 import typing
+from dataclasses import dataclass
 from functools import cached_property
+from typing import Dict, Tuple
 
 import numpy as np
 import numpy.typing as npt
+
+from portfolioqtopt.symmetric_to_triangular import get_upper_triangular
+
+
+QuboDict = Dict[Tuple[int, int], np.floating[typing.Any]]
+
+
+@dataclass
+class Qubo:
+    matrix: npt.NDArray[np.float64]
+    dictionary: QuboDict
+
+
+def get_qubo_dict(q: npt.NDArray[np.float64]) -> QuboDict:
+    """Create a dictionary from a symmetric matrix.
+
+    This function is utilize to generate the qubo dictionary, which we will use to solve
+    the problem in DWAVE.
+
+    Example:
+        >>> q = np.array([[1, 2, 3], [2, 1, 4], [3, 4, 1]])
+        >>> q
+        array([[1, 2, 3],
+               [2, 1, 4],
+               [3, 4, 1]])
+        >>> get_qubo_dict(q)  # doctest: +NORMALIZE_WHITESPACE
+        {(0, 0): 1, (0, 1): 2, (0, 2): 3, (1, 0): 2, (1, 1): 1, (1, 2): 4, (2, 0): 3,
+        (2, 1): 4, (2, 2): 1}
+
+    Args:
+        q (npt.NDArray[np.float64]): A symmetric matrix. The qubo matrix for example.
+
+    Returns:
+        QuboDict: A dict with key the tuple of coordinate (i, j) and value the
+            corresponding matrix value q[i, j].
+    """
+    n = len(q)
+    qubo_dict: QuboDict = {(i, j): q[i, j] for i in range(n) for j in range(n)}
+    return qubo_dict
 
 
 def get_partitions(w: int) -> npt.NDArray[np.floating[typing.Any]]:
@@ -73,7 +114,7 @@ class Selection:
             * normalized_prices.reshape(-1, 1)
         )
         asset_prices = all_assert_prices.reshape(-1, self.m * self.w)
-        return asset_prices.astype(np.float64)
+        return typing.cast(npt.NDArray[np.floating[typing.Any]], asset_prices)
 
     @cached_property
     def ppn(self) -> npt.NDArray[np.floating[typing.Any]]:
@@ -103,6 +144,20 @@ class Selection:
 
     @cached_property
     def ppn_last(self) -> npt.NDArray[np.floating[typing.Any]]:
+        """Get the partitions of the last normalized prices for each assets.
+
+        Example:
+
+            >>> prices = np.array([[100, 50, 10, 5], [10, 5, 1, 0.5]]).T
+            >>> selection = Selection(prices, 6, 1)
+            >>> selection.ppn_last  # doctest: +NORMALIZE_WHITESPACE
+            array([1. , 0.5 , 0.25 , 0.125 , 0.0625 , 0.03125,
+                   1. , 0.5 , 0.25 , 0.125 , 0.0625 , 0.03125])
+
+        Returns:
+            npt.NDArray[np.floating[typing.Any]]: Partitions of the last normalized
+                prices.
+        """
         return self.ppn[-1, :]  # (p, )
 
     @cached_property
@@ -127,14 +182,58 @@ class Selection:
             daily_returns[:, np.newaxis] * self.granularity[np.newaxis, :]
         ).reshape(-1, self.p)
         expected_returns = granular_daily_returns.mean(axis=0)
-        return expected_returns
+        return typing.cast(npt.NDArray[np.floating[typing.Any]], expected_returns)
+
+    def get_qubo(self, theta1: float, theta2: float, theta3: float) -> Qubo:
+        """Compute the qubo matrix and it's corresponding dictionary.
+
+        Args:
+            theta1 (float): First Lagrange multiplier.
+            theta2 (float): Second Lagrange multiplier
+            theta3 (float): Third Lagrange multiplier
+
+        Returns:
+            Qubo: A dataclass that have the qubo matrix and the qubo index dictionary
+                as attributes.
+        """
+        # Obtenemos los valores asociados al riesgo, es decir, la covariance
+        qubo_covariance = np.cov(self.ppn.T)  # (p, p)
+
+        # ----- SHAPING THE VALUES OF THE QUBO
+
+        # We generate a diagonal matrix with the returns, this matrix will be used later
+        # with the value of theta1.
+        qubo_returns = np.diag(self.expected_returns)  # (p, p)
+
+        # We generate a diagonal matrix with the possible prices * 2. This will be
+        # related to the returns.
+        qubo_prices_linear = 2.0 * self.b * np.diag(self.ppn_last)  # (p, p)
+
+        # We generate a symmetric matrix also related to the possible prices. This will
+        # be related to diversity.
+        qubo_prices_quadratic = np.outer(self.ppn_last, self.ppn_last)  # (p, p)
+
+        # ----- Final QUBO formation, with bias and penalty values included
+
+        # We form the diagonal values, related to return and prices.
+        qi = -theta1 * qubo_returns - theta2 * qubo_prices_linear  # (p, p)
+
+        # We now form the quadratic values, related to diversity.
+        qij = theta2 * qubo_prices_quadratic + theta3 * qubo_covariance  # (p, p)
+
+        qubo = typing.cast(npt.NDArray[np.floating[typing.Any]], qi + qij)
+        qubo_matrix = get_upper_triangular(qubo)
+        qubo_dict = get_qubo_dict(qubo_matrix)
+        return Qubo(qubo_matrix, qubo_dict)
 
 
 # https://stackoverflow.com/questions/69178071/cached-property-doctest-is-not-detected
 __test__ = {
     "Selection.pnn": Selection.ppn,
     "Selection.expected_returns": Selection.expected_returns,
+    "Selection.ppn_last": Selection.ppn_last,
 }
+
 
 if __name__ == "__main__":
     prices = np.array(
@@ -143,10 +242,11 @@ if __name__ == "__main__":
             [10, 10.2, 10.4, 10.5, 10.4],
             [50, 51, 52, 52.5, 52],
             [1.0, 1.02, 1.04, 1.05, 1.04],
-        ]
+        ], dtype=np.float64
     ).T
     selection = Selection(prices, 6, 1.0)
     print(f"{selection.granularity=}")
     print(f"{selection.ppn=}")
     print(f"{selection.ppn_last=}")
     print(f"{selection.expected_returns=}")
+    print(f"{selection.get_qubo(0.3, 0.2, 0.1)=}")

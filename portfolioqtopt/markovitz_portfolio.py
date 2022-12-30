@@ -1,48 +1,12 @@
 import typing
-from dataclasses import dataclass
 from functools import cache, cached_property
-from typing import Dict, Tuple
 
 import numpy as np
 import numpy.typing as npt
 
+from portfolioqtopt.dwave_solver import SolverTypes, solve_dwave_advantage_cubo
+from portfolioqtopt.qubo import Qubo, get_qubo_dict
 from portfolioqtopt.symmetric_to_triangular import get_upper_triangular
-
-QuboDict = Dict[Tuple[int, int], np.floating[typing.Any]]
-
-
-@dataclass
-class Qubo:
-    matrix: npt.NDArray[np.float64]
-    dictionary: QuboDict
-
-
-def get_qubo_dict(q: npt.NDArray[np.float64]) -> QuboDict:
-    """Create a dictionary from a symmetric matrix.
-
-    This function is utilize to generate the qubo dictionary, which we will use to solve
-    the problem in DWAVE.
-
-    Example:
-        >>> q = np.array([[1, 2, 3], [2, 1, 4], [3, 4, 1]])
-        >>> q
-        array([[1, 2, 3],
-               [2, 1, 4],
-               [3, 4, 1]])
-        >>> get_qubo_dict(q)  # doctest: +NORMALIZE_WHITESPACE
-        {(0, 0): 1, (0, 1): 2, (0, 2): 3, (1, 0): 2, (1, 1): 1, (1, 2): 4, (2, 0): 3,
-        (2, 1): 4, (2, 2): 1}
-
-    Args:
-        q (npt.NDArray[np.float64]): A symmetric matrix. The qubo matrix for example.
-
-    Returns:
-        QuboDict: A dict with key the tuple of coordinate (i, j) and value the
-            corresponding matrix value q[i, j].
-    """
-    n = len(q)
-    qubo_dict: QuboDict = {(i, j): q[i, j] for i in range(n) for j in range(n)}
-    return qubo_dict
 
 
 def get_partitions(w: int) -> npt.NDArray[np.floating[typing.Any]]:
@@ -197,7 +161,6 @@ class Selection:
             Qubo: A dataclass that have the qubo matrix and the qubo index dictionary
                 as attributes.
         """
-        print("inside get_qubo!!")
         # Obtenemos los valores asociados al riesgo, es decir, la covariance
         qubo_covariance = np.cov(self.npp.T)  # (p, p)
 
@@ -228,6 +191,18 @@ class Selection:
         qubo_dict = get_qubo_dict(qubo_matrix)
         return Qubo(qubo_matrix, qubo_dict)
 
+    def solve(
+        self,
+        theta1: float,
+        theta2: float,
+        theta3: float,
+        token: str,
+        solver: SolverTypes,
+    ):
+        qubo = self.get_qubo(theta1, theta2, theta3)
+        sampleset = solve_dwave_advantage_cubo(qubo, solver, token)
+        return sampleset.record.sample
+
 
 # https://stackoverflow.com/questions/69178071/cached-property-doctest-is-not-detected
 __test__ = {
@@ -252,7 +227,7 @@ if __name__ == "__main__":
     print(f"{selection.npp=}")
     print(f"{selection.npp_last=}")
     print(f"{selection.expected_returns=}")
-    print(f"{selection.get_qubo(0.3, 0.2, 0.1)=}")
-    print(f"{selection.get_qubo(0.3, 0.2, 0.1)=}")
-    print(f"{selection.get_qubo(0.3, 0.2, 0.1)=}")
     print(f"{selection.get_qubo(0.3, 0.2, 0.2)=}")
+    print(f"{selection.solve(0.3, 0.2, 0.2, 'aa', SolverTypes.hybrid_solver)=}")
+
+    #

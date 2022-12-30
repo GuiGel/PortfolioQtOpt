@@ -117,16 +117,17 @@ class Selection:
         return typing.cast(npt.NDArray[np.floating[typing.Any]], asset_prices)
 
     @cached_property
-    def ppn(self) -> npt.NDArray[np.floating[typing.Any]]:
-        """Compute the each partitions of the normalize prices.
+    def npp(self) -> npt.NDArray[np.floating[typing.Any]]:
+        """Compute each partitions of the normalize prices.
 
-        Normalize all au,l by au,Nf to keep all asset prices to a similar range.
+        Normalize all au,l by au,Nf to keep all asset prices to a similar range. The
+        acronym n.p.p stands for normalized price partitions.
 
         Examples:
 
             >>> prices = np.array([[100, 50, 10, 5], [10, 5, 1, 0.5]]).T
             >>> selection = Selection(prices, 3, 1)
-            >>> selection.ppn  # doctest: +NORMALIZE_WHITESPACE
+            >>> selection.npp  # doctest: +NORMALIZE_WHITESPACE
             array([[20.  , 10.  ,  5.  , 20.  , 10.  ,  5.  ],
                 [10.  ,  5.  ,  2.5 , 10.  ,  5.  ,  2.5 ],
                 [ 2.  ,  1.  ,  0.5 ,  2.  ,  1.  ,  0.5 ],
@@ -139,18 +140,18 @@ class Selection:
         return self._get_expand_prices(reversed=False)
 
     @cached_property
-    def ppn_rev(self) -> npt.NDArray[np.floating[typing.Any]]:
+    def npp_rev(self) -> npt.NDArray[np.floating[typing.Any]]:
         return self._get_expand_prices(reversed=True)
 
     @cached_property
-    def ppn_last(self) -> npt.NDArray[np.floating[typing.Any]]:
+    def npp_last(self) -> npt.NDArray[np.floating[typing.Any]]:
         """Get the partitions of the last normalized prices for each assets.
 
         Example:
 
             >>> prices = np.array([[100, 50, 10, 5], [10, 5, 1, 0.5]]).T
             >>> selection = Selection(prices, 6, 1)
-            >>> selection.ppn_last  # doctest: +NORMALIZE_WHITESPACE
+            >>> selection.npp_last  # doctest: +NORMALIZE_WHITESPACE
             array([1. , 0.5 , 0.25 , 0.125 , 0.0625 , 0.03125,
                    1. , 0.5 , 0.25 , 0.125 , 0.0625 , 0.03125])
 
@@ -158,7 +159,7 @@ class Selection:
             npt.NDArray[np.floating[typing.Any]]: Partitions of the last normalized
                 prices.
         """
-        return self.ppn[-1, :]  # (p, )
+        return self.npp[-1, :]  # (p, )
 
     @cached_property
     def expected_returns(self) -> npt.NDArray[np.floating[typing.Any]]:
@@ -197,7 +198,7 @@ class Selection:
                 as attributes.
         """
         # Obtenemos los valores asociados al riesgo, es decir, la covariance
-        qubo_covariance = np.cov(self.ppn.T)  # (p, p)
+        qubo_covariance = np.cov(self.npp.T)  # (p, p)
 
         # ----- SHAPING THE VALUES OF THE QUBO
 
@@ -207,11 +208,11 @@ class Selection:
 
         # We generate a diagonal matrix with the possible prices * 2. This will be
         # related to the returns.
-        qubo_prices_linear = 2.0 * self.b * np.diag(self.ppn_last)  # (p, p)
+        qubo_prices_linear = 2.0 * self.b * np.diag(self.npp_last)  # (p, p)
 
         # We generate a symmetric matrix also related to the possible prices. This will
         # be related to diversity.
-        qubo_prices_quadratic = np.outer(self.ppn_last, self.ppn_last)  # (p, p)
+        qubo_prices_quadratic = np.outer(self.npp_last, self.npp_last)  # (p, p)
 
         # ----- Final QUBO formation, with bias and penalty values included
 
@@ -229,9 +230,9 @@ class Selection:
 
 # https://stackoverflow.com/questions/69178071/cached-property-doctest-is-not-detected
 __test__ = {
-    "Selection.pnn": Selection.ppn,
+    "Selection.pnn": Selection.npp,
     "Selection.expected_returns": Selection.expected_returns,
-    "Selection.ppn_last": Selection.ppn_last,
+    "Selection.npp_last": Selection.npp_last,
 }
 
 
@@ -246,7 +247,7 @@ if __name__ == "__main__":
     ).T
     selection = Selection(prices, 6, 1.0)
     print(f"{selection.granularity=}")
-    print(f"{selection.ppn=}")
-    print(f"{selection.ppn_last=}")
+    print(f"{selection.npp=}")
+    print(f"{selection.npp_last=}")
     print(f"{selection.expected_returns=}")
     print(f"{selection.get_qubo(0.3, 0.2, 0.1)=}")

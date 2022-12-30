@@ -198,10 +198,11 @@ class Selection:
         theta3: float,
         token: str,
         solver: SolverTypes,
-    ):
+    ) -> npt.NDArray[np.int8]:
         qubo = self.get_qubo(theta1, theta2, theta3)
         sampleset = solve_dwave_advantage_cubo(qubo, solver, token)
-        return sampleset.record.sample
+        qubits: npt.NDArray[np.int8] = sampleset.record.sample
+        return qubits
 
 
 # https://stackoverflow.com/questions/69178071/cached-property-doctest-is-not-detected
@@ -220,7 +221,7 @@ if __name__ == "__main__":
             [50, 51, 52, 52.5, 52],
             [1.0, 1.02, 1.04, 1.05, 1.04],
         ],
-        dtype=np.float64,
+        dtype=np.floating,
     ).T
     selection = Selection(prices, 6, 1.0)
     print(f"{selection.granularity=}")
@@ -228,6 +229,15 @@ if __name__ == "__main__":
     print(f"{selection.npp_last=}")
     print(f"{selection.expected_returns=}")
     print(f"{selection.get_qubo(0.3, 0.2, 0.2)=}")
-    print(f"{selection.solve(0.3, 0.2, 0.2, 'aa', SolverTypes.hybrid_solver)=}")
+    # print(f"{selection.solve(0.3, 0.2, 0.2, 'aa', SolverTypes.hybrid_solver)=}")
 
-    #
+    # How to simulate def Selection.solve output?
+    runs = 10
+
+    from portfolioqtopt.interpreter import get_selected_funds_indexes
+
+    w, b = 6, 1.0
+    selection = Selection(prices, w, b)
+    for i in range(runs):
+        qbits = selection.solve(0.3, 0.2, 0.2, "aa", SolverTypes.hybrid_solver)
+        indexes = get_selected_funds_indexes(qbits, w)

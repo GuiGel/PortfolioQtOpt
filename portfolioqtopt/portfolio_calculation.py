@@ -6,7 +6,7 @@ import numpy as np
 import numpy.typing as npt
 
 from portfolioqtopt.dwave_solver import SolverTypes, solve_dwave_advantage_cubo
-from portfolioqtopt.PortfolioSelection import PortfolioSelection
+from portfolioqtopt.portfolio_selection import PortfolioSelection
 from portfolioqtopt.qubo import get_qubo
 from portfolioqtopt.reader import read_welzia_stocks_file
 

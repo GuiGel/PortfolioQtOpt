@@ -8,7 +8,7 @@ import numpy as np
 import numpy.typing as npt
 
 from portfolioqtopt.expand_prices import get_expand_prices
-from portfolioqtopt.ExpectedReturn_calculator import get_expected_returns
+from portfolioqtopt.expected_return import get_granular_mean_daily_returns
 
 
 def get_prices_covariance(prices: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
@@ -101,7 +101,9 @@ class PortfolioSelection:
 
         # Compute the mean of the daily returns.
 
-        self.expected_returns = get_expected_returns(self.price_data)  # (p, )
+        self.expected_returns = get_granular_mean_daily_returns(
+            price_data, num_slices
+        )  # (p, )
 
         # Obtenemos los valores asociados al riesgo, es decir, la covariance
         qubo_covariance = get_prices_covariance(self.price_data)  # (p, p)

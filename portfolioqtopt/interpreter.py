@@ -179,7 +179,7 @@ def get_selected_funds_indexes(
 
         >>> dwave_array = np.array([0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0], \
             dtype=np.int8)
-        >>> indexes = get_selected_funds_index(dwave_array, 5)
+        >>> indexes = get_selected_funds_indexes(dwave_array, 5)
         >>> indexes
         array([0, 1, 2])
 

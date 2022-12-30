@@ -32,7 +32,10 @@ jupytext = "^1.14.4"
 nbsphinx = "^0.8.11"
 sphinx-copybutton = "^0.5.1"
 myst-parser = "^0.18.1"
-sphinx-book-theme = "^0.3.3"
+
+
+[tool.poetry.group.docs.dependencies]
+furo = "^2022.12.7"
 
 [build-system]
 requires = ["poetry-core"]

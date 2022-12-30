@@ -1,13 +1,12 @@
 import typing
 from dataclasses import dataclass
-from functools import cached_property
+from functools import cache, cached_property
 from typing import Dict, Tuple
 
 import numpy as np
 import numpy.typing as npt
 
 from portfolioqtopt.symmetric_to_triangular import get_upper_triangular
-
 
 QuboDict = Dict[Tuple[int, int], np.floating[typing.Any]]
 
@@ -185,6 +184,7 @@ class Selection:
         expected_returns = granular_daily_returns.mean(axis=0)
         return typing.cast(npt.NDArray[np.floating[typing.Any]], expected_returns)
 
+    @cache
     def get_qubo(self, theta1: float, theta2: float, theta3: float) -> Qubo:
         """Compute the qubo matrix and it's corresponding dictionary.
 
@@ -197,6 +197,7 @@ class Selection:
             Qubo: A dataclass that have the qubo matrix and the qubo index dictionary
                 as attributes.
         """
+        print("inside get_qubo!!")
         # Obtenemos los valores asociados al riesgo, es decir, la covariance
         qubo_covariance = np.cov(self.npp.T)  # (p, p)
 
@@ -243,7 +244,8 @@ if __name__ == "__main__":
             [10, 10.2, 10.4, 10.5, 10.4],
             [50, 51, 52, 52.5, 52],
             [1.0, 1.02, 1.04, 1.05, 1.04],
-        ], dtype=np.float64
+        ],
+        dtype=np.float64,
     ).T
     selection = Selection(prices, 6, 1.0)
     print(f"{selection.granularity=}")
@@ -251,3 +253,6 @@ if __name__ == "__main__":
     print(f"{selection.npp_last=}")
     print(f"{selection.expected_returns=}")
     print(f"{selection.get_qubo(0.3, 0.2, 0.1)=}")
+    print(f"{selection.get_qubo(0.3, 0.2, 0.1)=}")
+    print(f"{selection.get_qubo(0.3, 0.2, 0.1)=}")
+    print(f"{selection.get_qubo(0.3, 0.2, 0.2)=}")

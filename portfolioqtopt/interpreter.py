@@ -168,3 +168,30 @@ def get_risk(
     covariance = get_covariance(investments, prices)
     risk = np.sqrt(deviation + covariance)
     return typing.cast(float, risk)
+
+
+def get_selected_funds_indexes(
+    dwave_array: npt.NDArray[np.int8], slices_nb: int
+) -> npt.NDArray[np.integer[typing.Any]]:
+    """Get the positional index of the selected funds in the prices array.
+
+    Example:
+
+        >>> dwave_array = np.array([0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0], \
+            dtype=np.int8)
+        >>> indexes = get_selected_funds_index(dwave_array, 5)
+        >>> indexes
+        array([0, 1, 2])
+
+    Args:
+        dwave_array (npt.NDArray[np.int8]): The dwave output array made of 0 and 1.
+            Shape (p,).
+        slices_nb (int): The depth of granularity.
+
+    Returns:
+        npt.NDArray[np.floating[typing.Any]]: The total investment for each funds.
+            Shape (p/slices_nb,).
+    """
+    investments = get_investment(dwave_array, slices_nb)
+    selected_funds = investments.nonzero()[0]  # We know that investment is a 1D array
+    return selected_funds

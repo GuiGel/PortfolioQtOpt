@@ -26,6 +26,14 @@ isort = "^5.11.4"
 black = "^22.12.0"
 mypy = "^0.991"
 
+
+[tool.poetry.group.doc.dependencies]
+jupytext = "^1.14.4"
+nbsphinx = "^0.8.11"
+sphinx-copybutton = "^0.5.1"
+myst-parser = "^0.18.1"
+sphinx-book-theme = "^0.3.3"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

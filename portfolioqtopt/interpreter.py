@@ -27,7 +27,7 @@ def get_investment(
     Args:
         dwave_array (npt.NDArray[np.int8]): The dwave output array made of 0 and 1.
             Shape (p,).
-        slices_nb (int): The number of slices values that determines the granularity.
+        slices_nb (int): The depth of granularity.
 
     Returns:
         npt.NDArray[np.floating[typing.Any]]: The total investment for each funds.
@@ -118,6 +118,7 @@ def get_returns(
 
     Example:
 
+        >>> from portfolioqtopt.expand_prices import get_expand_prices
         >>> prices = np.array([[100, 50, 10, 5], [10, 5, 1, 0.5]]).T
         >>> dwave_array = np.array([0, 1, 1, 0, 0, 1], dtype=np.int8)
         >>> expand = get_expand_prices(prices, slices=3, budget=1)
@@ -141,6 +142,28 @@ def get_risk(
     investments: npt.NDArray[np.floating[typing.Any]],
     prices: npt.NDArray[np.floating[typing.Any]],
 ) -> float:
+    """Compute the Risk.
+
+    Example:
+
+        >>> investments = np.array([0.5, 0.25, 0.25, 0.])
+        >>> prices = np.array([\
+            [100, 104, 102, 104, 100],\
+            [10, 10.2, 10.4, 10.5, 10.4],\
+            [50, 51, 52, 52.5, 52],\
+            [1., 1.02, 1.04, 1.05, 1.04],\
+        ]).T
+        >>> get_risk(investments, prices)
+        1.0497618777608566
+
+    Args:
+        investments (npt.NDArray[np.floating[typing.Any]]): The investment for each fund.
+            Shape (n,).
+        prices (npt.NDArray[np.floating[typing.Any]]): The funds prices. Shape (m, n).
+
+    Returns:
+        float: The compute risk.
+    """
     deviation = get_deviation(investments, prices)
     covariance = get_covariance(investments, prices)
     risk = np.sqrt(deviation + covariance)

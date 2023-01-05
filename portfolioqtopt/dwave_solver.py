@@ -28,7 +28,6 @@ def solve_dwave_advantage_cubo(
     if solver.value == "hybrid_solver":
         sampler = LeapHybridSampler(token=api_token, endpoint=_URL)
         sampleset: SampleSet = sampler.sample_qubo(qubo.dictionary)
-        # mypy complains --> https://github.com/python/mypy/issues/2412
         return sampleset
     else:
         raise ValueError(f"Bad solver. Solver must be hybrid_solver.")

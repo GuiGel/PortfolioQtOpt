@@ -4,9 +4,11 @@ expected returns of each asset as a matrix.
 """
 
 import itertools as it
+import typing
 
 import numpy as np
 import numpy.typing as npt
+from dimod.typing import Bias, Variable
 
 from portfolioqtopt.symmetric_to_triangular import get_upper_triangular
 
@@ -39,12 +41,10 @@ class QUBO:
         self.qubo_dict = {z: self.qubo[z] for z in it.product(range(n), range(n))}
 
 
-from typing import Dict, NamedTuple, Tuple
-
-QuboDict = Dict[Tuple[int, int], np.floating]
+QuboDict = typing.Mapping[typing.Tuple[Variable, Variable], Bias]
 
 
-class Qubo(NamedTuple):
+class Qubo(typing.NamedTuple):
     matrix: npt.NDArray[np.float64]
     dictionary: QuboDict
 

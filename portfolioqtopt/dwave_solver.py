@@ -1,8 +1,11 @@
+from collections import Counter
 from enum import Enum, unique
 
 from dimod.sampleset import SampleSet
 from dwave.system import LeapHybridSampler
 
+from portfolioqtopt.interpreter import get_selected_funds_indexes
+from portfolioqtopt.markovitz_portfolio import Selection
 from portfolioqtopt.qubo import Qubo
 
 
@@ -24,8 +27,29 @@ def solve_dwave_advantage_cubo(
 
     if solver.value == "hybrid_solver":
         sampler = LeapHybridSampler(token=api_token, endpoint=_URL)
-        sampleset = sampler.sample_qubo(qubo.dictionary)  # type: ignore
+        sampleset: SampleSet = sampler.sample_qubo(qubo.dictionary)
         # mypy complains --> https://github.com/python/mypy/issues/2412
         return sampleset
     else:
         raise ValueError(f"Bad solver. Solver must be hybrid_solver.")
+
+
+def dimension_reduction(
+    selection: Selection,
+    runs: int,
+    w: int,
+    theta1: float,
+    theta2: float,
+    theta3: float,
+    token: str,
+    solver: SolverTypes,
+) -> Counter[int]:
+    c: Counter[int] = Counter()
+    for i in range(runs):
+        qbits = selection.solve(theta1, theta2, theta3, token, solver)
+        indexes = get_selected_funds_indexes(qbits, w)
+        if not i:
+            c = Counter(indexes)
+        else:
+            c.update(Counter(indexes))
+    return c

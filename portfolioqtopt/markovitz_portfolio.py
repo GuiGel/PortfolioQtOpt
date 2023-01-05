@@ -1,10 +1,12 @@
 import typing
+from collections import Counter
 from functools import cache, cached_property
 
 import numpy as np
 import numpy.typing as npt
 
 from portfolioqtopt.dwave_solver import SolverTypes, solve_dwave_advantage_cubo
+from portfolioqtopt.interpreter import get_selected_funds_indexes
 from portfolioqtopt.qubo import Qubo, get_qubo_dict
 from portfolioqtopt.symmetric_to_triangular import get_upper_triangular
 
@@ -173,7 +175,9 @@ class Selection:
         # ----- Final QUBO formation, with bias and penalty values included
 
         qi = -theta1 * qubo_returns - theta2 * qubo_prices_linear  # (p, p).  eq (21a)
-        qij = theta2 * qubo_prices_quadratic + theta3 * qubo_covariance  # (p, p). eq (21b)
+        qij = (
+            theta2 * qubo_prices_quadratic + theta3 * qubo_covariance
+        )  # (p, p). eq (21b)
         qubo = typing.cast(npt.NDArray[np.floating[typing.Any]], qi + qij)
 
         qubo_matrix = get_upper_triangular(qubo)
@@ -202,6 +206,27 @@ __test__ = {
 }
 
 
+def dimension_reduction(
+    selection: Selection,
+    runs: int,
+    w: int,
+    theta1: float,
+    theta2: float,
+    theta3: float,
+    token: str,
+    solver: SolverTypes,
+) -> Counter[int]:
+    c: Counter[int] = Counter()
+    for i in range(runs):
+        qbits = selection.solve(theta1, theta2, theta3, token, solver)
+        indexes = get_selected_funds_indexes(qbits, w)
+        if not i:
+            c = Counter(indexes)
+        else:
+            c.update(Counter(indexes))
+    return c
+
+
 if __name__ == "__main__":
     prices = np.array(
         [
@@ -225,8 +250,6 @@ if __name__ == "__main__":
 
     from portfolioqtopt.interpreter import get_selected_funds_indexes
 
-
-
     # I'm nor sure that's what Tecnalia is doing by reading their code ``Portfolio_Multiple_Main``.
     # Before the SHARPE there is not prices filtering just an accumulation of all the selected assets.
     # The selection seems to be after in the second step
@@ -237,23 +260,18 @@ if __name__ == "__main__":
 
     # Fake qbits
     qubits_mock = [
-        np.array([
-         0, 1, 0, 0 , 0 , 0,
-         0, 0, 1, 0 , 0 , 0,
-         0, 0, 0, 1 , 0 , 0,
-         0, 0, 0, 1 , 0 , 0]),
-        np.array([0, 0, 1, 0 , 0 , 0,
-         0, 0, 1, 0 , 0 , 0,
-         0, 0, 1, 1 , 0 , 0,
-         0, 0, 0, 1 , 0 , 0]),
-        np.array([0, 1, 0, 0 , 0 , 0,
-         0, 0, 1, 0 , 0 , 0,
-         0, 0, 0, 0 , 0 , 0,
-         0, 0, 1, 0 , 0 , 0]),
-        np.array([0, 1, 0, 0 , 0 , 0,
-         0, 0, 0, 0 , 0 , 0,
-         0, 1, 0, 0 , 0 , 0,
-         0, 0, 0, 0 , 0 , 0])
+        np.array(
+            [0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0]
+        ),
+        np.array(
+            [0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0]
+        ),
+        np.array(
+            [0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+        ),
+        np.array(
+            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ),
     ]
 
     runs = 4
@@ -273,6 +291,7 @@ if __name__ == "__main__":
 
     runs = 4
     from collections import Counter
+
     c = Counter()
     for i in range(runs):
         # qbits = selection.solve(0.3, 0.2, 0.2, "aa", SolverTypes.hybrid_solver)
@@ -283,4 +302,3 @@ if __name__ == "__main__":
         else:
             c.update(Counter(indexes))
     print(c)
-

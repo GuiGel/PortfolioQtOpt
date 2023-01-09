@@ -170,6 +170,45 @@ def get_risk(
     return typing.cast(float, risk)
 
 
+def get_sharpe_ratio(
+    dwave_array: npt.NDArray[np.int8],
+    data_reversed: npt.NDArray[np.floating[typing.Any]],
+    prices: npt.NDArray[np.floating[typing.Any]],
+    slices_nb: int,
+) -> float:
+    """Compute the Sharpe Ratio.
+
+    Example:
+
+            >>> from portfolioqtopt.expand_prices import get_expand_prices
+            >>> prices = np.array([[100, 50, 10, 5], [10, 5, 1, 0.5]]).T
+            >>> dwave_array = np.array([0, 1, 1, 0, 0, 1], dtype=np.int8)
+            >>> slices_nb = 3
+            >>> expand = get_expand_prices(prices, slices=slices_nb, budget=1)
+            >>> get_sharpe_ratio(dwave_array, expand.reversed_data, prices, slices_nb)
+            -3.1810041773302586
+
+    Args:
+        dwave_array (npt.NDArray[np.int8]): The dwave output array made of 0 and 1.
+            Shape (p,)
+        data_reversed (npt.NDArray[np.floating[typing.Any]]): The sliced prices multiplied by the
+            ratio between the budget and the first price. Shape (m, p)
+        prices (npt.NDArray[np.floating[typing.Any]]): The funds prices. Shape (m, n).
+        slices_nb (int): The depth of granularity.
+
+    Returns:
+        float: A float representing the Sharpe Ratio.
+    """
+    returns = get_returns(dwave_array, data_reversed)
+    investments = get_investment(dwave_array, slices_nb)
+    risk = get_risk(investments, prices)
+    try:
+        sharpe_ratio: float = 100 * returns.sum() / risk
+    except ZeroDivisionError:
+        raise
+    return sharpe_ratio
+
+
 def get_selected_funds_indexes(
     dwave_array: npt.NDArray[np.int8], slices_nb: int
 ) -> npt.NDArray[np.integer[typing.Any]]:

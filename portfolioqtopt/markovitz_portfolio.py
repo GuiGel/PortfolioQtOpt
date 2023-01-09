@@ -5,9 +5,8 @@ import numpy as np
 import numpy.typing as npt
 
 from portfolioqtopt.dwave_solver import SolverTypes, solve_dwave_advantage_cubo
-from portfolioqtopt.qubo import Qubo, get_qubo_dict
-from portfolioqtopt.symmetric_to_triangular import get_upper_triangular
-from portfolioqtopt.utils import get_partitions
+from portfolioqtopt.utils import (Qubo, get_partitions, get_qubo_dict,
+                                  get_upper_triangular)
 
 
 class Selection:

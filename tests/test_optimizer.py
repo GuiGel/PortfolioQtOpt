@@ -3,7 +3,8 @@ from unittest.mock import Mock
 
 import numpy as np
 
-from portfolioqtopt.markovitz_portfolio import SolverTypes, dimension_reduction
+from portfolioqtopt.markovitz_portfolio import SolverTypes
+from portfolioqtopt.optimizer import dimension_reduction
 
 
 def test_dimension_reduction():

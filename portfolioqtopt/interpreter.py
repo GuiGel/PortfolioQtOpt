@@ -3,7 +3,7 @@ import typing
 import numpy as np
 import numpy.typing as npt
 
-from portfolioqtopt.expand_prices import get_slices_list
+from portfolioqtopt.utils import get_partitions
 
 
 def get_investment(
@@ -34,7 +34,7 @@ def get_investment(
             Shape (p/slices_nb,).
     """
     qbits = dwave_array.reshape(-1, slices_nb)
-    slices = get_slices_list(slices_nb).reshape(1, -1)
+    slices = get_partitions(slices_nb).reshape(1, -1)
     investments: npt.NDArray[np.floating[typing.Any]] = (qbits * slices).sum(axis=1)
 
     total = investments.sum()
@@ -118,11 +118,11 @@ def get_returns(
 
     Example:
 
-        >>> from portfolioqtopt.expand_prices import get_expand_prices
+        >>> from portfolioqtopt.markovitz_portfolio import Selection
         >>> prices = np.array([[100, 50, 10, 5], [10, 5, 1, 0.5]]).T
         >>> dwave_array = np.array([0, 1, 1, 0, 0, 1], dtype=np.int8)
-        >>> expand = get_expand_prices(prices, slices=3, budget=1)
-        >>> get_returns(dwave_array, expand.reversed_data)  # doctest: +NORMALIZE_WHITESPACE
+        >>> selection = Selection(prices, w=3, budget=1)
+        >>> get_returns(dwave_array, selection.npp_rev)  # doctest: +NORMALIZE_WHITESPACE
         array([-0. , -0.475 , -0.2375, -0. , -0. , -0.2375])
 
     Args:
@@ -180,12 +180,12 @@ def get_sharpe_ratio(
 
     Example:
 
-            >>> from portfolioqtopt.expand_prices import get_expand_prices
+            >>> from portfolioqtopt.markovitz_portfolio import Selection
             >>> prices = np.array([[100, 50, 10, 5], [10, 5, 1, 0.5]]).T
             >>> dwave_array = np.array([0, 1, 1, 0, 0, 1], dtype=np.int8)
             >>> slices_nb = 3
-            >>> expand = get_expand_prices(prices, slices=slices_nb, budget=1)
-            >>> get_sharpe_ratio(dwave_array, expand.reversed_data, prices, slices_nb)
+            >>> selection = Selection(prices, w=slices_nb, budget=1)
+            >>> get_sharpe_ratio(dwave_array, selection.npp_rev, prices, slices_nb)
             -3.1810041773302586
 
     Args:

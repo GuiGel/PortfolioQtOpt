@@ -1,33 +1,13 @@
 import typing
-from collections import Counter
 from functools import cache, cached_property
 
 import numpy as np
 import numpy.typing as npt
 
 from portfolioqtopt.dwave_solver import SolverTypes, solve_dwave_advantage_cubo
-from portfolioqtopt.interpreter import get_selected_funds_indexes
 from portfolioqtopt.qubo import Qubo, get_qubo_dict
 from portfolioqtopt.symmetric_to_triangular import get_upper_triangular
-
-
-def get_partitions(w: int) -> npt.NDArray[np.floating[typing.Any]]:
-    """Compute the possible proportions of the budget that we can allocate to each fund.
-
-    Example:
-
-    >>> get_partitions(5)
-    array([1.    , 0.5   , 0.25  , 0.125 , 0.0625])
-
-    Args:
-        w (int): The partitions number that determine the granularity that we are
-            going to give to each fund. That is, the amount of the budget we
-            will be able to invest.
-
-    Returns:
-        npt.NDArray[np.floating[typing.Any]]: List of fraction values.
-    """
-    return np.power(0.5, np.arange(w))
+from portfolioqtopt.utils import get_partitions
 
 
 class Selection:
@@ -204,101 +184,3 @@ __test__ = {
     "Selection.expected_returns": Selection.expected_returns,
     "Selection.npp_last": Selection.npp_last,
 }
-
-
-def dimension_reduction(
-    selection: Selection,
-    runs: int,
-    w: int,
-    theta1: float,
-    theta2: float,
-    theta3: float,
-    token: str,
-    solver: SolverTypes,
-) -> Counter[int]:
-    c: Counter[int] = Counter()
-    for i in range(runs):
-        qbits = selection.solve(theta1, theta2, theta3, token, solver)
-        indexes = get_selected_funds_indexes(qbits, w)
-        if not i:
-            c = Counter(indexes)
-        else:
-            c.update(Counter(indexes))
-    return c
-
-
-if __name__ == "__main__":
-    prices = np.array(
-        [
-            [100, 104, 102, 104, 100],
-            [10, 10.2, 10.4, 10.5, 10.4],
-            [50, 51, 52, 52.5, 52],
-            [1.0, 1.02, 1.04, 1.05, 1.04],
-        ],
-        dtype=np.floating,
-    ).T
-    selection = Selection(prices, 6, 1.0)
-    print(f"{selection.granularity=}")
-    print(f"{selection.npp=}")
-    print(f"{selection.npp_last=}")
-    print(f"{selection.expected_returns=}")
-    print(f"{selection.get_qubo(0.3, 0.2, 0.2)=}")
-    # print(f"{selection.solve(0.3, 0.2, 0.2, 'aa', SolverTypes.hybrid_solver)=}")
-
-    # How to simulate def Selection.solve output?
-    runs = 10
-
-    from portfolioqtopt.interpreter import get_selected_funds_indexes
-
-    # I'm nor sure that's what Tecnalia is doing by reading their code ``Portfolio_Multiple_Main``.
-    # Before the SHARPE there is not prices filtering just an accumulation of all the selected assets.
-    # The selection seems to be after in the second step
-    # This code could be more or less for the second step.
-
-    w, b = 6, 1.0
-    selection = Selection(prices, w, b)
-
-    # Fake qbits
-    qubits_mock = [
-        np.array(
-            [0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0]
-        ),
-        np.array(
-            [0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0]
-        ),
-        np.array(
-            [0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
-        ),
-        np.array(
-            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        ),
-    ]
-
-    runs = 4
-    funds_indexes = np.array([0, 1, 2, 3])
-    for i in range(runs):
-        # qbits = selection.solve(0.3, 0.2, 0.2, "aa", SolverTypes.hybrid_solver)
-        qbits = qubits_mock[i]
-        indexes = get_selected_funds_indexes(qbits, w)
-        funds_indexes = funds_indexes[indexes]
-        # If there is some indexes, we select only this ones to create a new prices array
-        prices = prices[indexes]
-        selection = Selection(prices, w, b)
-    print(f"{funds_indexes=}")
-
-    # The first step is perhaps something like this ... The better is to look closely to Tecnalia code!
-    # In the first step there is just a collection of all the assets that are selectionated by various runs!
-
-    runs = 4
-    from collections import Counter
-
-    c = Counter()
-    for i in range(runs):
-        # qbits = selection.solve(0.3, 0.2, 0.2, "aa", SolverTypes.hybrid_solver)
-        qbits = qubits_mock[i]
-        indexes = get_selected_funds_indexes(qbits, w)
-        if not i:
-            c = Counter(indexes)
-        else:
-            c.update(Counter(indexes))
-    print(c)

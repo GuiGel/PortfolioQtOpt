@@ -11,7 +11,7 @@ from portfolioqtopt.interpreter import (get_selected_funds_indexes,
 from portfolioqtopt.markovitz_portfolio import Selection
 
 
-def dimension_reduction(
+def reduce_dimension(
     selection: Selection,
     runs: int,
     w: int,
@@ -46,16 +46,16 @@ def chose_funds(
 ) -> npt.NDArray[np.signedinteger[typing.Any]]:
 
     # 1. Initialization
-    m, n = prices.shape
-    chosen_indexes = np.arange(n)
+    _, m = prices.shape
+    chosen_indexes = np.arange(m)
     max_positive_sharpe_ratio = sys.float_info.min
     reduce_prices_dimension: float = True
 
-    for _ in range(runs):
-
+    for i in range(runs):
         # 2. Reduce prices dimension
         if reduce_prices_dimension:
-            prices = prices[[*indexes]]
+            prices = prices[:, indexes]
+            n, m = prices.shape
 
         # 3. Atomic portfolio optimization
         selection = Selection(prices, w, budget)
@@ -93,6 +93,7 @@ if __name__ == "__main__":
         ],
         dtype=np.float64,
     ).T
+    print(prices[:, -1])
     w, b = 6, 1.0
     selection = Selection(prices, w, b)
     qubits_mock = [
@@ -118,17 +119,12 @@ if __name__ == "__main__":
                 [0, 1, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0],
             ]
-        ).flatten(),
+        ).flatten(),  # In this case not a better sharpe ratio. Better with a mock of the sharpe returns!
         np.array(
             [
-                [0, 1, 1, 0, 0, 0],
+                [0, 1, 0, 1, 0, 0],
+                [0, 0, 0, 1, 0, 0],
                 [0, 0, 1, 0, 0, 0],
-            ]
-        ).flatten(),
-        np.array(
-            [
-                [0, 1, 0, 0, 0, 0],
-                [0, 1, 0, 0, 0, 0],
             ]
         ).flatten(),
     ]
@@ -150,29 +146,23 @@ if __name__ == "__main__":
     ) -> npt.NDArray[np.signedinteger[typing.Any]]:
 
         # 1. Initialization
-        print(f"initialize")
         n, m = prices.shape
-        print(f"{prices.shape=}")
-        print(prices)
         chosen_indexes = np.arange(m)
         max_positive_sharpe_ratio = sys.float_info.min
         reduce_prices_dimension: float = True
 
         for i in range(runs):
-            print(f"----- {i=}")
+            print(f"----- {i=} -----")
             # 2. Reduce prices dimension
             if reduce_prices_dimension:
-                print(f"{reduce_prices_dimension=}")
-                prices = prices[indexes]
-                print(f"{prices.shape=}")
-                print(prices)
+                prices = prices[:, indexes]
+                n, m = prices.shape
 
             # 3. Atomic portfolio optimization
             print(f"Solve atomic portfolio optimization")
             selection = Selection(prices, w, budget)
             # qbits = selection.solve(theta1, theta2, theta3, token, solver)
             qbits = qubits_mock[i]
-            print(f"{qbits.shape=}")
 
             # 4. Interpret results
             print(f"compute sharpe ratio")
@@ -187,7 +177,7 @@ if __name__ == "__main__":
 
                 # 6. Record selected fund indexes
                 indexes = get_selected_funds_indexes(qbits, w)
-                print(f"----- {indexes=}")
+                print(f"----- selected indexes: {indexes}")
 
                 # 7. Reduce fund indexes
                 chosen_indexes = chosen_indexes[indexes]
@@ -202,4 +192,4 @@ if __name__ == "__main__":
     chosen_funds = chose_funds_mock(
         prices, w, b, 0.1, 0.3, 0.4, "", SolverTypes.hybrid_solver, indexes, runs
     )
-    print(chosen_funds)
+    print(f"{chosen_funds=}")

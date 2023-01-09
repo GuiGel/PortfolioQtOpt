@@ -1,3 +1,4 @@
+"""Module that extract relevant information from the optimization results"""
 import typing
 
 import numpy as np
@@ -234,3 +235,84 @@ def get_selected_funds_indexes(
     investments = get_investment(dwave_array, slices_nb)
     selected_funds = investments.nonzero()[0]  # We know that investment is a 1D array
     return selected_funds
+
+
+from dataclasses import dataclass
+from functools import cached_property
+
+from portfolioqtopt.markovitz_portfolio import Selection
+
+
+@dataclass
+class InterpretData:
+    investment: typing.List[float]
+    selected_indexes: typing.List[int]
+    risk: float
+    sharpe_ratio: float
+
+
+class Interpret:
+    def __init__(self, selection: Selection, qbits: npt.NDArray[np.int8]) -> None:
+        self.selection = selection
+        self.qbits = qbits
+
+    @cached_property
+    def investment(self) -> npt.NDArray[np.floating[typing.Any]]:
+        return get_investment(self.qbits, self.selection.w)
+
+    @cached_property
+    def selected_indexes(self) -> npt.NDArray[np.signedinteger[typing.Any]]:
+        return get_selected_funds_indexes(self.qbits, self.selection.w)
+
+    def _deviation(self):
+        return get_deviation(self.investment, self.selection.prices)
+
+    def _covariance(self) -> float:
+        return get_covariance(self.investment, self.selection.prices)
+
+    @cached_property
+    def risk(self) -> float:
+        return get_risk(self.investment, self.selection.prices)
+
+    @cached_property
+    def sharpe_ratio(self) -> float:
+        return get_sharpe_ratio(
+            self.qbits, self.selection.npp_rev, self.selection.prices, self.selection.w
+        )
+
+    @cached_property
+    def data(self) -> InterpretData:
+        """Get the interpretation results as a DataClass.
+
+        Example:
+            >>> prices = np.array(
+            ...    [
+            ...        [100, 104, 102, 104, 100],
+            ...        [10, 10.2, 10.4, 10.5, 10.4],
+            ...        [50, 51, 52, 52.5, 52],
+            ...        [1.0, 1.02, 1.04, 1.05, 1.04],
+            ...    ],
+            ...    dtype=np.floating,
+            ... ).T
+            >>> selection = Selection(prices, 6, 1.0)
+            >>> qbits = np.array(
+            ...     [0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0]
+            ... )
+            >>> interpret = Interpret(selection, qbits)
+            >>> interpret.data  # doctest: +NORMALIZE_WHITESPACE
+            InterpretData(investment=[0.5, 0.25, 0.125, 0.125], \
+                selected_indexes=[0, 1, 2, 3], risk=0.9803086248727999, \
+                sharpe_ratio=2.0401738281752975)
+
+        Returns:
+            InterpretData: An InterpretData dataclass.
+        """
+        return InterpretData(
+            self.investment.tolist(),
+            self.selected_indexes.tolist(),
+            self.risk,
+            self.sharpe_ratio,
+        )
+
+
+__test__ = {"Interpret.data": Interpret.data}

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing
 from functools import cache, cached_property
 
@@ -59,6 +61,29 @@ class Selection:
         )
         asset_prices = all_assert_prices.reshape(-1, self.m * self.w)
         return typing.cast(npt.NDArray[np.floating[typing.Any]], asset_prices)
+
+    def __getitem__(self, key: typing.Any) -> Selection:
+        """Get new Selection object from self.prices[:, key]
+
+        Example:
+
+        >>> selection = Selection(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).T, 6, 1)
+        >>> new_selection = selection[1, -1]
+        >>> new_selection.prices
+        array([[4, 7],
+               [5, 8],
+               [6, 9]])
+        >>> new_selection.npp.shape
+        (3, 12)
+
+        Args:
+            key (typing.Any): The selected index.
+
+        Returns:
+            Selection: A new Selection instance.
+        """
+        new_prices = self.prices[:, key]
+        return Selection(new_prices, self.w, self.b)
 
     @cached_property
     def npp(self) -> npt.NDArray[np.floating[typing.Any]]:

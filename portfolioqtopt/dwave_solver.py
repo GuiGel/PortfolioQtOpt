@@ -3,7 +3,7 @@ from enum import Enum, unique
 from dimod.sampleset import SampleSet
 from dwave.system import LeapHybridSampler
 
-from portfolioqtopt.qubo import Qubo
+from portfolioqtopt.utils import Qubo
 
 
 @unique

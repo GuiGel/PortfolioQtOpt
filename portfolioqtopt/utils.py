@@ -1,5 +1,5 @@
 import typing
-from typing import Dict, NamedTuple, Tuple
+from typing import NamedTuple
 
 import numpy as np
 import numpy.typing as npt
@@ -64,7 +64,10 @@ def get_lower_triangular(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     return np.tril(a, -1) + np.tril(a, 0)
 
 
-QuboDict = Dict[Tuple[int, int], np.floating]
+# QuboDict = Dict[Tuple[int, int], np.floating]
+from dimod.typing import Bias, Variable
+
+QuboDict = typing.Mapping[typing.Tuple[Variable, Variable], Bias]
 
 
 class Qubo(NamedTuple):

@@ -64,7 +64,6 @@ def get_lower_triangular(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     return np.tril(a, -1) + np.tril(a, 0)
 
 
-# QuboDict = Dict[Tuple[int, int], np.floating]
 from dimod.typing import Bias, Variable
 
 QuboDict = typing.Mapping[typing.Tuple[Variable, Variable], Bias]

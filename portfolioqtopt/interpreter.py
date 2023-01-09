@@ -211,7 +211,7 @@ def get_sharpe_ratio(
 
 def get_selected_funds_indexes(
     dwave_array: npt.NDArray[np.int8], slices_nb: int
-) -> npt.NDArray[np.integer[typing.Any]]:
+) -> npt.NDArray[np.signedinteger[typing.Any]]:
     """Get the positional index of the selected funds in the prices array.
 
     Example:

@@ -17,29 +17,39 @@ from collections import Counter
 import numpy as np
 import numpy.typing as npt
 
-from portfolioqtopt.dwave_solver import SolverTypes
+from portfolioqtopt.dwave_solver import SolverTypes, solve_dwave_advantage_cubo
 from portfolioqtopt.interpreter import Interpret
-from portfolioqtopt.markovitz_portfolio import Selection
+from portfolioqtopt.qubo import QuboFactory
 
 Indexes = npt.NDArray[np.signedinteger[typing.Any]]
 
 
-class Optimize:
+class Optimizer:
     def __init__(
         self,
-        selection: Selection,
-        theta1: float,
-        theta2: float,
-        theta3: float,
+        qubo_factory: QuboFactory,
         token: str,
         solver: SolverTypes,
     ) -> None:
-        self.selection = selection
-        self.theta1 = theta1
-        self.theta2 = theta2
-        self.theta3 = theta3
+        self._qubo_factory = qubo_factory
         self.token = token
         self.solver = solver
+
+    @property
+    def qubo_factory(self) -> QuboFactory:
+        return self._qubo_factory
+
+    @qubo_factory.setter
+    def qubo_factory(self, qubo_factory: QuboFactory) -> None:
+        self._qubo_factory = qubo_factory
+
+    @property
+    def qbits(self) -> npt.NDArray[np.int8]:
+        sampleset = solve_dwave_advantage_cubo(
+            self.qubo_factory.qubo, self.solver, self.token
+        )
+        qubits: npt.NDArray[np.int8] = sampleset.record.sample
+        return qubits
 
     def reduce_dimension(
         self,
@@ -61,29 +71,21 @@ class Optimize:
         """
         c: Counter[int] = Counter()
         for i in range(steps):
-            qbits = selection.solve(
-                self.theta1, self.theta2, self.theta3, self.token, self.solver
-            )
-            interpret = Interpret(selection, qbits)
+            interpret = Interpret(self)
             if not i:
                 c = Counter(interpret.selected_indexes)
             else:
                 c.update(Counter(interpret.selected_indexes))
         return c
 
-    def optimizer_step(
+    def _opt_step(
         self,
         indexes: Indexes,
         sharpe_ratio: float,
-        runs: int,
     ) -> typing.Tuple[Indexes, typing.Optional[Interpret],]:
 
-        selection = self.selection[indexes]
-        qbits = selection.solve(
-            self.theta1, self.theta2, self.theta3, self.token, self.solver
-        )
-        # qbits = qubits_mock[runs]
-        interpret = Interpret(selection, qbits)
+        self.qubo_factory = self.qubo_factory[indexes]
+        interpret = Interpret(self)
 
         if interpret.sharpe_ratio > sharpe_ratio:
             selected_indexes = interpret.selected_indexes
@@ -101,7 +103,7 @@ class Optimize:
         interpreter: typing.Optional[Interpret] = None
         for i in range(steps):
             print(f"-------------- {i}")
-            indexes, _interpreter = self.optimizer_step(indexes, sharpe_ratio, i)
+            indexes, _interpreter = self._opt_step(indexes, sharpe_ratio)
             if _interpreter is not None:
                 sharpe_ratio = _interpreter.sharpe_ratio
                 interpreter = _interpreter
@@ -113,63 +115,3 @@ class Optimize:
         indexes: Indexes = np.array(c.keys())
         interpreter, indexes = self.optimize(indexes, steps)
         return indexes, interpreter
-
-
-if __name__ == "__main__":
-    prices = np.array(
-        [
-            [100, 104, 102, 104, 100],
-            [10, 10.2, 10.4, 10.5, 10.4],
-            [50, 51, 52, 52.5, 52],
-            [1.0, 1.02, 1.04, 1.05, 1.04],
-        ],
-        dtype=np.float64,
-    ).T
-    w, b = 6, 1.0
-    selection = Selection(prices, w, b)
-    qubits_mock = [
-        np.array(
-            [
-                [0, 1, 0, 0, 0, 0],
-                [0, 0, 1, 0, 0, 0],
-                [0, 0, 0, 1, 0, 0],
-                [0, 0, 0, 1, 0, 0],
-            ]
-        ).flatten(),
-        np.array(
-            [
-                [0, 0, 1, 0, 0, 0],
-                [0, 0, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0],
-                [0, 1, 0, 0, 0, 0],
-            ]
-        ).flatten(),
-        np.array(
-            [
-                [0, 1, 0, 0, 0, 0],
-                [0, 0, 1, 0, 0, 0],
-                [0, 0, 1, 0, 0, 0],
-            ]
-        ).flatten(),  # In this case not a better sharpe ratio. Better with a mock of the sharpe returns!
-        np.array(
-            [
-                [0, 0, 1, 0, 0, 0],
-                [0, 0, 1, 1, 0, 0],
-                [0, 0, 1, 1, 0, 0],
-            ]
-        ).flatten(),
-    ]
-
-    runs = 4
-    indexes = np.array([0, 1, 2, 3])
-
-    from portfolioqtopt.markovitz_portfolio import Selection
-
-    selection = Selection(prices, w, b)
-
-    print("-------------" * 10)
-    opt = Optimize(selection, 0.1, 0.3, 0.4, "", SolverTypes.hybrid_solver)
-    interpreter, indexes = opt.optimize(indexes, 4)
-    print("-------------" * 10)
-    if interpreter is not None:
-        print(interpreter.data, indexes)

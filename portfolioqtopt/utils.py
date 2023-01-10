@@ -1,5 +1,4 @@
 import typing
-from typing import NamedTuple
 
 import numpy as np
 import numpy.typing as npt
@@ -22,81 +21,3 @@ def get_partitions(w: int) -> npt.NDArray[np.floating[typing.Any]]:
         npt.NDArray[np.floating[typing.Any]]: List of fraction values.
     """
     return np.power(0.5, np.arange(w))
-
-
-def get_upper_triangular(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-    """Extract an upper triangular matrix.
-
-    Example:
-        >>> a = np.array([[1, 2, 3], [2, 1, 4], [3, 4, 1]])
-        >>> get_upper_triangular(a)
-        array([[1, 4, 6],
-               [0, 1, 8],
-               [0, 0, 1]])
-
-
-    Args:
-        a (npt.NDArray[np.float64]): A numpy array.
-
-    Returns:
-        npt.NDArray[np.float64]: A numpy array.
-    """
-    return np.triu(a, 1) + np.triu(a, 0)
-
-
-def get_lower_triangular(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-    """Extract a lower triangular matrix.
-
-    Example:
-        >>> a = np.array([[1, 2, 3], [2, 1, 4], [3, 4, 1]])
-        >>> get_lower_triangular(a)
-        array([[1, 0, 0],
-               [4, 1, 0],
-               [6, 8, 1]])
-
-
-    Args:
-        a (npt.NDArray[np.float64]): A numpy array.
-
-    Returns:
-        npt.NDArray[np.float64]: A numpy array.
-    """
-    return np.tril(a, -1) + np.tril(a, 0)
-
-
-from dimod.typing import Bias, Variable
-
-QuboDict = typing.Mapping[typing.Tuple[Variable, Variable], Bias]
-
-
-class Qubo(NamedTuple):
-    matrix: npt.NDArray[np.float64]
-    dictionary: QuboDict
-
-
-def get_qubo_dict(q: npt.NDArray[np.float64]) -> QuboDict:
-    """Create a dictionary from a symmetric matrix.
-
-    This function is utilize to generate the qubo dictionary, which we will use to solve
-    the problem in DWAVE.
-
-    Example:
-        >>> q = np.array([[1, 2, 3], [2, 1, 4], [3, 4, 1]])
-        >>> q
-        array([[1, 2, 3],
-               [2, 1, 4],
-               [3, 4, 1]])
-        >>> get_qubo_dict(q)  # doctest: +NORMALIZE_WHITESPACE
-        {(0, 0): 1, (0, 1): 2, (0, 2): 3, (1, 0): 2, (1, 1): 1, (1, 2): 4, (2, 0): 3,
-        (2, 1): 4, (2, 2): 1}
-
-    Args:
-        q (npt.NDArray[np.float64]): A symmetric matrix. The qubo matrix for example.
-
-    Returns:
-        QuboDict: A dict with key the tuple of coordinate (i, j) and value the
-            corresponding matrix value q[i, j].
-    """
-    n = len(q)
-    qubo_dict: QuboDict = {(i, j): q[i, j] for i in range(n) for j in range(n)}
-    return qubo_dict

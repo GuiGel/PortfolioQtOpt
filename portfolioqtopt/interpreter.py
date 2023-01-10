@@ -240,7 +240,7 @@ def get_selected_funds_indexes(
 from dataclasses import dataclass
 from functools import cached_property
 
-from portfolioqtopt.markovitz_portfolio import Selection
+from portfolioqtopt.optimizer import Optimizer
 
 
 @dataclass
@@ -252,32 +252,42 @@ class InterpretData:
 
 
 class Interpret:
-    def __init__(self, selection: Selection, qbits: npt.NDArray[np.int8]) -> None:
-        self.selection = selection
-        self.qbits = qbits
+    def __init__(self, optimizer: Optimizer) -> None:
+        self.optimizer = optimizer
 
     @cached_property
     def investment(self) -> npt.NDArray[np.floating[typing.Any]]:
-        return get_investment(self.qbits, self.selection.w)
+        return get_investment(
+            self.optimizer.qbits, self.optimizer.qubo_factory.selection.w
+        )
 
     @cached_property
     def selected_indexes(self) -> npt.NDArray[np.signedinteger[typing.Any]]:
-        return get_selected_funds_indexes(self.qbits, self.selection.w)
+        return get_selected_funds_indexes(
+            self.optimizer.qbits, self.optimizer.qubo_factory.selection.w
+        )
 
     def _deviation(self):
-        return get_deviation(self.investment, self.selection.prices)
+        return get_deviation(
+            self.investment, self.optimizer.qubo_factory.selection.prices
+        )
 
     def _covariance(self) -> float:
-        return get_covariance(self.investment, self.selection.prices)
+        return get_covariance(
+            self.investment, self.optimizer.qubo_factory.selection.prices
+        )
 
     @cached_property
     def risk(self) -> float:
-        return get_risk(self.investment, self.selection.prices)
+        return get_risk(self.investment, self.optimizer.qubo_factory.selection.prices)
 
     @cached_property
     def sharpe_ratio(self) -> float:
         return get_sharpe_ratio(
-            self.qbits, self.selection.npp_rev, self.selection.prices, self.selection.w
+            self.optimizer.qbits,
+            self.optimizer.qubo_factory.selection.npp_rev,
+            self.optimizer.qubo_factory.selection.prices,
+            self.optimizer.qubo_factory.selection.w,
         )
 
     @cached_property

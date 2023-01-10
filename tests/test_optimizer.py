@@ -7,7 +7,6 @@ import numpy.typing as npt
 import pytest
 
 from portfolioqtopt.markovitz_portfolio import Selection
-from portfolioqtopt.optimizer import Interpret  # reduce_dimension
 from portfolioqtopt.optimizer import Optimizer, SolverTypes
 from portfolioqtopt.qubo import QuboFactory
 

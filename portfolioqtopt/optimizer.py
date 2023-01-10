@@ -88,10 +88,12 @@ class Optimizer:
         Returns:
             npt.NDArray[np.int8]: _description_
         """
+        logger.info(f"Solve qubo with {self.solver.value}")
         sampleset = solve_dwave_advantage_cubo(
             self.qubo_factory.qubo, self.solver, self.token
         )
         qubits: npt.NDArray[np.int8] = sampleset.record.sample
+        logger.info(f"{qubits=}")
         return qubits
 
     def reduce_dimension(
@@ -112,35 +114,40 @@ class Optimizer:
             Counter[int]: The selected funds indexes as well as the number of times they
                 have been selected.
         """
+        logger.info(f"reduce the size of the solution space")
         selected_indexes = lambda: Interpret(self).selected_indexes
         c: Counter[int] = Counter(it.chain(*(selected_indexes() for _ in range(steps))))
+        logger.info(f"Selected indexes distribution: {c}")
         return c
 
     def _opt_step(
         self,
         indexes: Indexes,
         sharpe_ratio: float,
-    ) -> typing.Tuple[Indexes, typing.Optional[Interpret],]:
-
+    ) -> typing.Tuple[Indexes, typing.Optional[Interpret]]:
+        logger.info(f"input indexes: {indexes}")
         self.qubo_factory = self.qubo_factory[indexes]
         interpret = Interpret(self)
 
         if interpret.sharpe_ratio > sharpe_ratio:
+            logger.info(f"new sharpe ratio bigger than precedent")
             selected_indexes = interpret.selected_indexes
+            logger.info(f"{selected_indexes=}")
             indexes = indexes[selected_indexes]
             sharpe_ratio = interpret.sharpe_ratio
             return indexes, interpret
         else:
+            logger.info(f"new sharpe ratio smaller than precedent")
             return indexes, None
 
     def optimize(
         self, indexes: Indexes, steps: int
     ) -> typing.Tuple[typing.Optional[Interpret], Indexes]:
-        """Look for the best sharpe ration with quantum computing."""
+        """Iterate to found the best sharpe ratio."""
         sharpe_ratio = 0.0
         interpreter: typing.Optional[Interpret] = None
         for i in range(steps):
-            print(f"-------------- {i}")
+            logger.info(f"-------------- {i}")
             indexes, _interpreter = self._opt_step(indexes, sharpe_ratio)
             if _interpreter is not None:
                 sharpe_ratio = _interpreter.sharpe_ratio
@@ -150,7 +157,7 @@ class Optimizer:
 
     def __call__(self, steps: int) -> typing.Tuple[Indexes, typing.Optional[Interpret]]:
         c = self.reduce_dimension(steps)
-        indexes: Indexes = np.array(c.keys())
+        indexes: Indexes = np.array([k for k in c])
         interpreter, indexes = self.optimize(indexes, steps)
         return indexes, interpreter
 
@@ -167,6 +174,7 @@ class Interpret:
 
     @cached_property
     def selected_indexes(self) -> npt.NDArray[np.signedinteger[typing.Any]]:
+        logger.info(f"select indexes")
         return get_selected_funds_indexes(
             self.optimizer.qbits, self.optimizer.qubo_factory.selection.w
         )
@@ -230,3 +238,32 @@ class Interpret:
 
 
 __test__ = {"Interpret.data": Interpret.data}
+
+
+if __name__ == "__main__":
+    import numpy as np
+
+from loguru import logger
+
+from portfolioqtopt.markovitz_portfolio import Selection
+from portfolioqtopt.optimizer import Optimizer, SolverTypes
+from portfolioqtopt.qubo import QuboFactory
+
+if __name__ == "__main__":
+    from portfolioqtopt.reader import read_welzia_stocks_file
+
+    file_path = "/home/ggelabert/Projects/PortfolioQtOpt/data/Histórico carteras Welzia Completo.xlsm"
+    sheet_name = "BBG (valores)"
+    df = read_welzia_stocks_file(file_path, sheet_name)
+    logger.info(f"{df.shape=}")
+    selection = Selection(df.to_numpy(), 5, 1.0)
+    qubo_factory = QuboFactory(selection, 0.9, 0.4, 0.1)
+    optimize = Optimizer(
+        qubo_factory,
+        "DEV-d9751cb50bc095c993f55b3255f728d5b2793c36",
+        solver=SolverTypes.hybrid_solver,
+    )
+    indexes, interpret = optimize(3)
+    if interpret is not None:
+        logger.info(f"{indexes=}")
+        logger.info(f"{interpret.data}")

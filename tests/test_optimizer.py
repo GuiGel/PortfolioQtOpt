@@ -59,20 +59,26 @@ class TestOptimizer:
             assert optimizer.reduce_dimension(steps) == expected_counter
 
     @pytest.mark.parametrize(
-        "indexes, sharpe_ratio, fake_indexes, fake_sharpe_ratio, expected_indexes, interpreter_is_none",
+        (
+            "outer_indexes, inner_indexes, sharpe_ratio, fake_inner_indexes, "
+            "fake_sharpe_ratio, expected_outer_indexes, expected_inner_indexes, "
+            "interpreter_is_none"
+        ),
         [
-            ([0, 1, 2, 3], 1.0, [0, 1, 3], 2.0, [0, 1, 3], False),
-            ([0, 1, 2, 3], 1.0, [0, 1, 3], 0.5, [0, 1, 2, 3], True),
+            ([0, 10, 23], [0, 1, 3], 1.0, [0, 2], 2.0, [0, 23], [0, 2], False),
+            ([0, 10, 23], [0, 1, 3], 1.0, [0, 2], 0.5, [0, 10, 23], [0, 1, 3], True),
         ],
     )
     def test_opt_step(
         self,
         qubo_factory,
-        indexes: typing.List[int],
+        outer_indexes: typing.List[int],
+        inner_indexes: typing.List[int],
         sharpe_ratio: float,
-        fake_indexes: typing.List[int],
+        fake_inner_indexes: typing.List[int],
         fake_sharpe_ratio: float,
-        expected_indexes: typing.List[int],
+        expected_outer_indexes: typing.List[int],
+        expected_inner_indexes: typing.List[int],
         interpreter_is_none: bool,
     ) -> None:
         # In the first test we have initial indexes of [0, 1, 2, 3] and a sharpe ratio of 1.0
@@ -92,14 +98,21 @@ class TestOptimizer:
         ) as mocked_interpreter_sharpe_ratio:
 
             # gives a value to the properties of the simulated interpreter
-            mocked_interpreter_selected_indexes.return_value = np.array(fake_indexes)
+            mocked_interpreter_selected_indexes.return_value = np.array(
+                fake_inner_indexes
+            )
             mocked_interpreter_sharpe_ratio.return_value = fake_sharpe_ratio
 
             # test the function with the mock properties
-            selected_indexes, interpret = optimizer._opt_step(
-                np.array(indexes), sharpe_ratio
+            (
+                selected_outer_indexes,
+                selected_inner_indexes,
+                interpret,
+            ) = optimizer._opt_step(
+                np.array(outer_indexes), np.array(inner_indexes), sharpe_ratio
             )
-            assert selected_indexes.tolist() == expected_indexes
+            assert selected_outer_indexes.tolist() == expected_outer_indexes
+            assert selected_inner_indexes.tolist() == expected_inner_indexes
             assert (interpret is None) == interpreter_is_none
 
 

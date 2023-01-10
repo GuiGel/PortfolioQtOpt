@@ -122,23 +122,25 @@ class Optimizer:
 
     def _opt_step(
         self,
-        indexes: Indexes,
+        outer_indexes: Indexes,
+        inner_indexes: Indexes,
         sharpe_ratio: float,
-    ) -> typing.Tuple[Indexes, typing.Optional[Interpret]]:
-        logger.info(f"input indexes: {indexes}")
-        self.qubo_factory = self.qubo_factory[indexes]
+    ) -> typing.Tuple[Indexes, Indexes, typing.Optional[Interpret]]:
+        logger.info(f"input outer indexes: {outer_indexes}")
+        logger.info(f"input inner indexes: {inner_indexes}")
+        self.qubo_factory = self.qubo_factory[inner_indexes]
         interpret = Interpret(self)
 
         if interpret.sharpe_ratio > sharpe_ratio:
             logger.info(f"new sharpe ratio bigger than precedent")
-            selected_indexes = interpret.selected_indexes
-            logger.info(f"{selected_indexes=}")
-            indexes = indexes[selected_indexes]
+            selected_inner_indexes = interpret.selected_indexes
+            logger.info(f"{selected_inner_indexes=}")
+            outer_indexes = outer_indexes[selected_inner_indexes]
             sharpe_ratio = interpret.sharpe_ratio
-            return indexes, interpret
+            return outer_indexes, selected_inner_indexes, interpret
         else:
             logger.info(f"new sharpe ratio smaller than precedent")
-            return indexes, None
+            return outer_indexes, inner_indexes, None
 
     def optimize(
         self, indexes: Indexes, steps: int
@@ -146,9 +148,12 @@ class Optimizer:
         """Iterate to found the best sharpe ratio."""
         sharpe_ratio = 0.0
         interpreter: typing.Optional[Interpret] = None
+        inner_indexes = indexes  # At beginning the inner and outer indexes are the same
         for i in range(steps):
-            logger.info(f"-------------- {i}")
-            indexes, _interpreter = self._opt_step(indexes, sharpe_ratio)
+            logger.info(f"step {i}")
+            indexes, inner_indexes, _interpreter = self._opt_step(
+                indexes, inner_indexes, sharpe_ratio
+            )
             if _interpreter is not None:
                 sharpe_ratio = _interpreter.sharpe_ratio
                 interpreter = _interpreter

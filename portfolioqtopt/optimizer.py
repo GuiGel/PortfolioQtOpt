@@ -13,6 +13,7 @@ way.
 """
 from __future__ import annotations
 
+import itertools as it
 import typing
 from collections import Counter
 from enum import Enum, unique
@@ -22,10 +23,13 @@ import numpy as np
 import numpy.typing as npt
 from dimod.sampleset import SampleSet
 from dwave.system import LeapHybridSampler  # type: ignore
-from interpreter_utils import (InterpretData, get_covariance, get_deviation,
-                               get_investment, get_risk,
-                               get_selected_funds_indexes, get_sharpe_ratio)
+from loguru import logger
 
+from portfolioqtopt.interpreter_utils import (InterpretData, get_covariance,
+                                              get_deviation, get_investment,
+                                              get_risk,
+                                              get_selected_funds_indexes,
+                                              get_sharpe_ratio)
 from portfolioqtopt.qubo import Qubo, QuboFactory
 
 
@@ -69,10 +73,12 @@ class Optimizer:
 
     @property
     def qubo_factory(self) -> QuboFactory:
+        logger.info("retrieve qubo_factory")
         return self._qubo_factory
 
     @qubo_factory.setter
     def qubo_factory(self, qubo_factory: QuboFactory) -> None:
+        logger.info("set qubo_factory")
         self._qubo_factory = qubo_factory
 
     @property
@@ -106,13 +112,8 @@ class Optimizer:
             Counter[int]: The selected funds indexes as well as the number of times they
                 have been selected.
         """
-        c: Counter[int] = Counter()
-        for i in range(steps):
-            interpret = Interpret(self)
-            if not i:
-                c = Counter(interpret.selected_indexes)
-            else:
-                c.update(Counter(interpret.selected_indexes))
+        selected_indexes = lambda: Interpret(self).selected_indexes
+        c: Counter[int] = Counter(it.chain(*(selected_indexes() for _ in range(steps))))
         return c
 
     def _opt_step(

@@ -8,7 +8,7 @@ import pytest
 from loguru import logger
 
 from portfolioqtopt.markovitz_portfolio import Selection
-from portfolioqtopt.optimizer import Indexes, Optimizer, SolverTypes
+from portfolioqtopt.optimizer import Optimizer, SolverTypes
 from portfolioqtopt.qubo import QuboFactory
 
 
@@ -47,18 +47,33 @@ class TestOptimizer:
         # Prepare test inputs
         selected_indexes = list(map(np.array, selected_indexes))
         steps = len(selected_indexes)
-
         optimizer = Optimizer(qubo_factory, "", SolverTypes.hybrid_solver)
+
+        # Test the portfolioqtopt.optimizer.reduce_dimension methods.
         with patch(
             "portfolioqtopt.optimizer.Interpret.selected_indexes",
             new_callable=PropertyMock,
         ) as mocked_interpreter_selected_indexes:
             mocked_interpreter_selected_indexes.side_effect = selected_indexes
+            logger.info(f"{np.array([k for k in expected_counter])=}")
             assert optimizer.reduce_dimension(steps) == expected_counter
 
-    @pytest.mark.parametrize("indexes, sharpe_ratio", [([0, 1, 2, 3], 1.0)])
+    @pytest.mark.parametrize(
+        "indexes, sharpe_ratio, fake_indexes, fake_sharpe_ratio, expected_indexes, interpreter_is_none",
+        [
+            ([0, 1, 2, 3], 1.0, [0, 1, 3], 2.0, [0, 1, 3], False),
+            ([0, 1, 2, 3], 1.0, [0, 1, 3], 0.5, [0, 1, 2, 3], True),
+        ],
+    )
     def test_opt_step(
-        self, qubo_factory, indexes: Indexes, sharpe_ratio: float
+        self,
+        qubo_factory,
+        indexes: typing.List[int],
+        sharpe_ratio: float,
+        fake_indexes: typing.List[int],
+        fake_sharpe_ratio: float,
+        expected_indexes: typing.List[int],
+        interpreter_is_none: bool,
     ) -> None:
         # In the first test we have initial indexes of [0, 1, 2, 3] and a sharpe ratio of 1.0
         # Then we say that the new selected indexes are [0, 1, 3] and the new sharpe ratio is bigger than that the initial one.
@@ -77,14 +92,15 @@ class TestOptimizer:
         ) as mocked_interpreter_sharpe_ratio:
 
             # gives a value to the properties of the simulated interpreter
-            mocked_interpreter_selected_indexes.return_value = np.array([0, 1, 3])
-            mocked_interpreter_sharpe_ratio.return_value = 2.0
+            mocked_interpreter_selected_indexes.return_value = np.array(fake_indexes)
+            mocked_interpreter_sharpe_ratio.return_value = fake_sharpe_ratio
 
             # test the function with the mock properties
-            indexes, interpret = optimizer._opt_step(np.array(indexes), sharpe_ratio)
-            logger.info(f"Return indexes: {indexes}")
-            assert indexes.tolist() == [0, 1, 3]
-            assert interpret is not None
+            selected_indexes, interpret = optimizer._opt_step(
+                np.array(indexes), sharpe_ratio
+            )
+            assert selected_indexes.tolist() == expected_indexes
+            assert (interpret is None) == interpreter_is_none
 
 
 """def test_reduce_dimension():

@@ -11,7 +11,6 @@ the reduced universe of funds as input. In this way, and with a smaller universe
 algorithm can arrive at better results with a higher probability and in a more robust
 way.
 """
-import sys
 import typing
 from collections import Counter
 
@@ -19,120 +18,158 @@ import numpy as np
 import numpy.typing as npt
 
 from portfolioqtopt.dwave_solver import SolverTypes
-from portfolioqtopt.interpreter import (get_selected_funds_indexes,
-                                        get_sharpe_ratio)
+from portfolioqtopt.interpreter import Interpret
 from portfolioqtopt.markovitz_portfolio import Selection
 
+Indexes = npt.NDArray[np.signedinteger[typing.Any]]
 
-def reduce_dimension(
-    selection: Selection,
-    runs: int,
-    w: int,
-    theta1: float,
-    theta2: float,
-    theta3: float,
-    token: str,
-    solver: SolverTypes,
-) -> Counter[int]:
-    """Reduce the entire universe of possibilities.
 
-    At first the whole problem is executed a number of times equal to the number of
-    repetitions introduced as a parameter. Once these first runs have been carried out,
-    the universe of funds is reduced to only those in which in some of the runs an
-    investment has been made.
+class Optimize:
+    def __init__(
+        self,
+        selection: Selection,
+        theta1: float,
+        theta2: float,
+        theta3: float,
+        token: str,
+        solver: SolverTypes,
+    ) -> None:
+        self.selection = selection
+        self.theta1 = theta1
+        self.theta2 = theta2
+        self.theta3 = theta3
+        self.token = token
+        self.solver = solver
 
-    Args:
-        selection (Selection): A Selection object.
-        runs (int): The number of repetitions.
-        w (int):  The number of slices is the granularity that we are going to give to
-            each fund. That is, the amount of the budget we will be able to invest.
-        theta1 (float): First Lagrange multiplier.
-        theta2 (float): Second Lagrange multiplier.
-        theta3 (float): Third Lagrange multiplier.
-        token (str): The D-Wave api token.
-        solver (SolverTypes): The chosen solver.
+    def reduce_dimension(
+        self,
+        steps: int,
+    ) -> Counter[int]:
+        """Reduce the universe of possibilities.
 
-    Returns:
-        Counter[int]: The selected funds indexes as well as the number of times they
-            have been selected.
-    """
-    c: Counter[int] = Counter()
-    for i in range(runs):
-        qbits = selection.solve(theta1, theta2, theta3, token, solver)
-        indexes = get_selected_funds_indexes(qbits, w)
-        if not i:
-            c = Counter(indexes)
+        At first the whole problem is executed a number of times equal to the number of
+        repetitions introduced as a parameter. Once these first steps have been carried
+        out, the universe of funds is reduced to only those in which in some of the runs
+        an investment has been made.
+
+        Args:
+            steps (int): The number of repetitions.
+
+        Returns:
+            Counter[int]: The selected funds indexes as well as the number of times they
+                have been selected.
+        """
+        c: Counter[int] = Counter()
+        for i in range(steps):
+            qbits = selection.solve(
+                self.theta1, self.theta2, self.theta3, self.token, self.solver
+            )
+            interpret = Interpret(selection, qbits)
+            if not i:
+                c = Counter(interpret.selected_indexes)
+            else:
+                c.update(Counter(interpret.selected_indexes))
+        return c
+
+    def optimizer_step(
+        self,
+        indexes: Indexes,
+        sharpe_ratio: float,
+        runs: int,
+    ) -> typing.Tuple[Indexes, typing.Optional[Interpret],]:
+
+        selection = self.selection[indexes]
+        qbits = selection.solve(
+            self.theta1, self.theta2, self.theta3, self.token, self.solver
+        )
+        # qbits = qubits_mock[runs]
+        interpret = Interpret(selection, qbits)
+
+        if interpret.sharpe_ratio > sharpe_ratio:
+            selected_indexes = interpret.selected_indexes
+            indexes = indexes[selected_indexes]
+            sharpe_ratio = interpret.sharpe_ratio
+            return indexes, interpret
         else:
-            c.update(Counter(indexes))
-    return c
+            return indexes, None
+
+    def optimize(
+        self, indexes: Indexes, steps: int
+    ) -> typing.Tuple[typing.Optional[Interpret], Indexes]:
+        """Look for the best sharpe ration with quantum computing."""
+        sharpe_ratio = 0.0
+        interpreter: typing.Optional[Interpret] = None
+        for i in range(steps):
+            print(f"-------------- {i}")
+            indexes, _interpreter = self.optimizer_step(indexes, sharpe_ratio, i)
+            if _interpreter is not None:
+                sharpe_ratio = _interpreter.sharpe_ratio
+                interpreter = _interpreter
+                print(f"{interpreter.data}")
+        return interpreter, indexes
+
+    def __call__(self, steps: int) -> typing.Tuple[Indexes, typing.Optional[Interpret]]:
+        c = self.reduce_dimension(steps)
+        indexes: Indexes = np.array(c.keys())
+        interpreter, indexes = self.optimize(indexes, steps)
+        return indexes, interpreter
 
 
-def chose_funds(
-    prices: npt.NDArray[np.floating[typing.Any]],
-    w: int,
-    budget: float,
-    theta1: float,
-    theta2: float,
-    theta3: float,
-    token: str,
-    solver: SolverTypes,
-    indexes: npt.NDArray[np.signedinteger[typing.Any]],
-    runs: int,
-) -> npt.NDArray[np.signedinteger[typing.Any]]:
-    """Look for the best sharpe ration with quantum computing.
+if __name__ == "__main__":
+    prices = np.array(
+        [
+            [100, 104, 102, 104, 100],
+            [10, 10.2, 10.4, 10.5, 10.4],
+            [50, 51, 52, 52.5, 52],
+            [1.0, 1.02, 1.04, 1.05, 1.04],
+        ],
+        dtype=np.float64,
+    ).T
+    w, b = 6, 1.0
+    selection = Selection(prices, w, b)
+    qubits_mock = [
+        np.array(
+            [
+                [0, 1, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0],
+                [0, 0, 0, 1, 0, 0],
+                [0, 0, 0, 1, 0, 0],
+            ]
+        ).flatten(),
+        np.array(
+            [
+                [0, 0, 1, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0],
+                [0, 1, 0, 0, 0, 0],
+            ]
+        ).flatten(),
+        np.array(
+            [
+                [0, 1, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0],
+            ]
+        ).flatten(),  # In this case not a better sharpe ratio. Better with a mock of the sharpe returns!
+        np.array(
+            [
+                [0, 0, 1, 0, 0, 0],
+                [0, 0, 1, 1, 0, 0],
+                [0, 0, 1, 1, 0, 0],
+            ]
+        ).flatten(),
+    ]
 
-    Args:
-        prices (npt.NDArray[np.floating[typing.Any]]): The funds prices. Shape (n, m)
-        w (int):  The number of slices is the granularity that we are going to give to
-            each fund. That is, the amount of the budget we will be able to invest.
-        budget (float): The initial budget of the portfolio optimization.
-        theta1 (float): First Lagrange multiplier.
-        theta2 (float): Second Lagrange multiplier.
-        theta3 (float): Third Lagrange multiplier.
-        token (str): The D-Wave api token.
-        solver (SolverTypes): The chosen solver.
-        indexes (npt.NDArray[np.signedinteger[typing.Any]]): The indexes for initial
-            dimension reduction. Chose only the funds with the given indexes.
-        runs (int): The number of repetitions.
+    runs = 4
+    indexes = np.array([0, 1, 2, 3])
 
-    Returns:
-        npt.NDArray[np.signedinteger[typing.Any]]: The chosen indexes.
-    """
+    from portfolioqtopt.markovitz_portfolio import Selection
 
-    # 1. Initialization
-    _, m = prices.shape
-    chosen_indexes = np.arange(m)
+    selection = Selection(prices, w, b)
 
-    max_positive_sharpe_ratio = sys.float_info.min
-
-    reduce_prices_dimension: float = True
-
-    for _ in range(runs):
-        # 2. Reduce prices dimension
-        if reduce_prices_dimension:
-            prices = prices[:, indexes]
-
-        # 3. Atomic portfolio optimization
-        selection = Selection(prices, w, budget)
-        qbits = selection.solve(theta1, theta2, theta3, token, solver)
-
-        # 4. Interpret results
-        sharpe_ratio = get_sharpe_ratio(qbits, selection.npp_rev, prices, w)
-
-        # 5. Select max positive sharpe ratio
-        if max_positive_sharpe_ratio < sharpe_ratio:
-
-            reduce_prices_dimension = True
-
-            # 6. Record selected fund indexes
-            indexes = get_selected_funds_indexes(qbits, w)
-
-            # 7. Reduce fund indexes
-            chosen_indexes = chosen_indexes[indexes]
-
-            # 8. Update max positive sharpe ratio
-            max_positive_sharpe_ratio = sharpe_ratio
-        else:
-            reduce_prices_dimension = False
-
-    return chosen_indexes
+    print("-------------" * 10)
+    opt = Optimize(selection, 0.1, 0.3, 0.4, "", SolverTypes.hybrid_solver)
+    interpreter, indexes = opt.optimize(indexes, 4)
+    print("-------------" * 10)
+    if interpreter is not None:
+        print(interpreter.data, indexes)

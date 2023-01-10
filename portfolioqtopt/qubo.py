@@ -90,7 +90,7 @@ def get_qubo_dict(q: npt.NDArray[np.float64]) -> QuboDict:
 
 
 class QuboFactory:
-    """This class generates the QUBO from the weights (theta1, theta2, and  theta3)"""
+    """Generates the QUBO from the Lagrange multipliers theta1, theta2, and theta3"""
 
     def __init__(
         self, selection: Selection, theta1: float, theta2: float, theta3: float
@@ -108,10 +108,30 @@ class QuboFactory:
     def qubo(self) -> Qubo:
         """Compute the qubo matrix and it's corresponding dictionary.
 
-        Args:
-            theta1 (float): First Lagrange multiplier.
-            theta2 (float): Second Lagrange multiplier
-            theta3 (float): Third Lagrange multiplier
+        Example:
+
+            >>> prices = np.array(
+            ...     [
+            ...         [100, 104, 102],
+            ...         [10, 10.2, 10.4],
+            ...     ],
+            ...     dtype=np.floating,
+            ... ).T
+            >>> selection = Selection(prices, 2, 1.0)
+            >>> qubo_factory = QuboFactory(selection, 0.1, 0.2, 0.3)
+            >>> qubo = qubo_factory.qubo
+            >>> qubo.matrix
+            array([[-0.20092312,  0.20011534,  0.40011312,  0.20005656],
+                   [ 0.        , -0.1504904 ,  0.20005656,  0.10002828],
+                   [ 0.        ,  0.        , -0.20186945,  0.20011095],
+                   [ 0.        ,  0.        ,  0.        , -0.15096246]])
+            >>> qubo.dictionary
+            {(0, 0): -0.20092312128471299, (0, 1): 0.20011534025374858, (0, 2): \
+0.4001131221719457, (0, 3): 0.20005656108597286, (1, 0): 0.0, (1, 1): \
+-0.15049039570579364, (1, 2): 0.20005656108597286, (1, 3): 0.10002828054298643, \
+(2, 0): 0.0, (2, 1): 0.0, (2, 2): -0.2018694454113006, (2, 3): 0.20011094674556215, \
+(3, 0): 0.0, (3, 1): 0.0, (3, 2): 0.0, (3, 3): -0.15096245939204084}
+
 
         Returns:
             Qubo: A dataclass that have the qubo matrix and the qubo index dictionary

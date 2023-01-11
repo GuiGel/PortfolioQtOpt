@@ -116,6 +116,31 @@ class TestOptimizer:
             assert (interpret is None) == interpreter_is_none
 
 
+from portfolioqtopt.optimizer import Interpret
+
+
+class TestInterpret:
+    def test_investment(self, qubo_factory):
+        optimizer = Optimizer(qubo_factory, "", SolverTypes.hybrid_solver)
+        with patch(
+            "portfolioqtopt.optimizer.Optimizer.qbits",
+            new_callable=PropertyMock,
+        ) as mocked_optimizer_qbits:
+            mocked_qbits = np.array(
+                [
+                    [0, 1, 0, 0, 0, 0],
+                    [0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 0],
+                    [0, 0, 0, 1, 0, 0],
+                ],
+            ).flatten()
+
+            mocked_optimizer_qbits.return_value = mocked_qbits
+            obtained_investment = Interpret(optimizer).investment
+            expected_investment = np.array([0.5, 0.25, 0.125, 0.125])
+            np.testing.assert_equal(obtained_investment, expected_investment)
+
+
 """def test_reduce_dimension():
     runs = 4
     w = 6

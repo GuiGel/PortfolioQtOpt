@@ -12,7 +12,7 @@ from portfolioqtopt.optimizer import Optimizer, SolverTypes
 from portfolioqtopt.qubo import QuboFactory
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def qubo_factory() -> QuboFactory:
     prices = np.array(
         [
@@ -119,26 +119,31 @@ class TestOptimizer:
 from portfolioqtopt.optimizer import Interpret
 
 
-class TestInterpret:
-    def test_investment(self, qubo_factory):
-        optimizer = Optimizer(qubo_factory, "", SolverTypes.hybrid_solver)
-        with patch(
-            "portfolioqtopt.optimizer.Optimizer.qbits",
-            new_callable=PropertyMock,
-        ) as mocked_optimizer_qbits:
-            mocked_qbits = np.array(
-                [
-                    [0, 1, 0, 0, 0, 0],
-                    [0, 0, 1, 0, 0, 0],
-                    [0, 0, 0, 1, 0, 0],
-                    [0, 0, 0, 1, 0, 0],
-                ],
-            ).flatten()
+@pytest.fixture(scope="class")
+def mocked_qbits():
+    with patch(
+        "portfolioqtopt.optimizer.Optimizer.qbits",
+        new_callable=PropertyMock,
+    ) as mocked_optimizer_qbits:
+        mocked_qbits = np.array(
+            [
+                [0, 1, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0],
+                [0, 0, 0, 1, 0, 0],
+                [0, 0, 0, 1, 0, 0],
+            ],
+        ).flatten()
+        mocked_optimizer_qbits.return_value = mocked_qbits
+        yield mocked_optimizer_qbits
 
-            mocked_optimizer_qbits.return_value = mocked_qbits
-            obtained_investment = Interpret(optimizer).investment
-            expected_investment = np.array([0.5, 0.25, 0.125, 0.125])
-            np.testing.assert_equal(obtained_investment, expected_investment)
+
+class TestInterpret:
+    def test_investment(self, qubo_factory, mocked_qbits):
+        optimizer = Optimizer(qubo_factory, "", SolverTypes.hybrid_solver)
+        interpret = Interpret(optimizer)
+        obtained_investment = interpret.investment
+        expected_investment = np.array([0.5, 0.25, 0.125, 0.125])
+        np.testing.assert_equal(obtained_investment, expected_investment)
 
 
 """def test_reduce_dimension():

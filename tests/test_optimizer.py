@@ -8,7 +8,7 @@ import pytest
 from loguru import logger
 
 from portfolioqtopt.markovitz_portfolio import Selection
-from portfolioqtopt.optimizer import Optimizer, SolverTypes
+from portfolioqtopt.optimizer import Interpret, Optimizer, SolverTypes
 from portfolioqtopt.qubo import QuboFactory
 
 
@@ -116,9 +116,6 @@ class TestOptimizer:
             assert (interpret is None) == interpreter_is_none
 
 
-from portfolioqtopt.optimizer import Interpret
-
-
 @pytest.fixture(scope="class")
 def mocked_qbits():
     with patch(
@@ -137,8 +134,9 @@ def mocked_qbits():
         yield mocked_optimizer_qbits
 
 
+@pytest.mark.usefixtures("mocked_qbits")
 class TestInterpret:
-    def test_investment(self, qubo_factory, mocked_qbits):
+    def test_investment(self, qubo_factory):
         optimizer = Optimizer(qubo_factory, "", SolverTypes.hybrid_solver)
         interpret = Interpret(optimizer)
         obtained_investment = interpret.investment

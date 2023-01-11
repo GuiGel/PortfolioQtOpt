@@ -1,5 +1,6 @@
 """Module that extract relevant information from the optimization results"""
 import typing
+from dataclasses import dataclass
 
 import numpy as np
 import numpy.typing as npt
@@ -242,12 +243,10 @@ def get_selected_funds_indexes(
     return selected_funds
 
 
-from dataclasses import dataclass
-
-
 @dataclass
 class InterpretData:
     investment: typing.List[float]
+    expected_returns: typing.List[float]
     selected_indexes: typing.List[int]
     risk: float
     sharpe_ratio: float
@@ -255,11 +254,13 @@ class InterpretData:
     def __init__(
         self,
         investment: typing.List[float],
+        expected_returns: typing.List[float],
         selected_indexes: typing.List[int],
         risk: float,
         sharpe_ratio: float,
     ) -> None:
         self.investment = investment
+        self.expected_returns = expected_returns
         self.selected_indexes = selected_indexes
         self.risk = risk
         self.sharpe_ratio = sharpe_ratio

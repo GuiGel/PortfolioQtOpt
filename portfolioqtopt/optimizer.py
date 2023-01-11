@@ -27,7 +27,7 @@ from loguru import logger
 
 from portfolioqtopt.interpreter_utils import (InterpretData, get_covariance,
                                               get_deviation, get_investment,
-                                              get_risk,
+                                              get_returns, get_risk,
                                               get_selected_funds_indexes,
                                               get_sharpe_ratio)
 from portfolioqtopt.qubo import Qubo, QuboFactory
@@ -178,6 +178,12 @@ class Interpret:
         )
 
     @cached_property
+    def expected_returns(self) -> npt.NDArray[np.floating[typing.Any]]:
+        return get_returns(
+            self.optimizer.qbits, self.optimizer.qubo_factory.selection.npp_rev
+        )
+
+    @cached_property
     def selected_indexes(self) -> npt.NDArray[np.signedinteger[typing.Any]]:
         logger.info(f"select indexes")
         return get_selected_funds_indexes(
@@ -236,6 +242,7 @@ class Interpret:
         """
         return InterpretData(
             self.investment.tolist(),
+            self.expected_returns.tolist(),
             self.selected_indexes.tolist(),
             self.risk,
             self.sharpe_ratio,
@@ -247,7 +254,6 @@ __test__ = {"Interpret.data": Interpret.data}
 
 if __name__ == "__main__":
     import numpy as np
-
     from loguru import logger
 
     from portfolioqtopt.markovitz_portfolio import Selection

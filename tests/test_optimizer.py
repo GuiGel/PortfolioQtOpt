@@ -7,6 +7,7 @@ import numpy.typing as npt
 import pytest
 from loguru import logger
 
+from portfolioqtopt.interpreter_utils import InterpretData
 from portfolioqtopt.markovitz_portfolio import Selection
 from portfolioqtopt.optimizer import Interpret, Optimizer, SolverTypes
 from portfolioqtopt.qubo import QuboFactory
@@ -142,6 +143,46 @@ class TestInterpret:
         obtained_investment = interpret.investment
         expected_investment = np.array([0.5, 0.25, 0.125, 0.125])
         np.testing.assert_equal(obtained_investment, expected_investment)
+
+    def test_data(self, qubo_factory):
+        optimizer = Optimizer(qubo_factory, "", SolverTypes.hybrid_solver)
+        interpret = Interpret(optimizer)
+        obtained_data = interpret.data
+
+        # Prepare expected results
+        expected_data = InterpretData(
+            investment=[0.5, 0.25, 0.125, 0.125],
+            expected_returns=[
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.010000000000000009,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0050000000000000044,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0050000000000000044,
+                0.0,
+                0.0,
+            ],
+            selected_indexes=[0, 1, 2, 3],
+            risk=0.9803086248727999,
+            sharpe_ratio=2.0401738281752975,
+        )
+        assert obtained_data == expected_data
 
 
 """def test_reduce_dimension():

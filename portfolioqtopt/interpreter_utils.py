@@ -123,6 +123,11 @@ def get_returns(
         >>> prices = np.array([[100, 50, 10, 5], [10, 5, 1, 0.5]]).T
         >>> dwave_array = np.array([0, 1, 1, 0, 0, 1], dtype=np.int8)
         >>> selection = Selection(prices, w=3, budget=1)
+        >>> selection.npp_rev
+        array([[1.    , 0.5   , 0.25  , 1.    , 0.5   , 0.25  ],
+               [0.5   , 0.25  , 0.125 , 0.5   , 0.25  , 0.125 ],
+               [0.1   , 0.05  , 0.025 , 0.1   , 0.05  , 0.025 ],
+               [0.05  , 0.025 , 0.0125, 0.05  , 0.025 , 0.0125]])
         >>> get_returns(dwave_array, selection.npp_rev)  # doctest: +NORMALIZE_WHITESPACE
         array([-0. , -0.475 , -0.2375, -0. , -0. , -0.2375])
 

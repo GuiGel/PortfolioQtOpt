@@ -132,7 +132,6 @@ class QuboFactory:
 (2, 0): 0.0, (2, 1): 0.0, (2, 2): -0.2018694454113006, (2, 3): 0.20011094674556215, \
 (3, 0): 0.0, (3, 1): 0.0, (3, 2): 0.0, (3, 3): -0.15096245939204084}
 
-
         Returns:
             Qubo: A dataclass that have the qubo matrix and the qubo index dictionary
                 as attributes.

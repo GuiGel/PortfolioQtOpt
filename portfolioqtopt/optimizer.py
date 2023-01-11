@@ -86,15 +86,15 @@ class Optimizer:
         """Solve the qubo problem.
 
         Returns:
-            npt.NDArray[np.int8]: _description_
+            npt.NDArray[np.int8]: A numpy array of 0 and 1.
         """
         logger.info(f"Solve qubo with {self.solver.value}")
         sampleset = solve_dwave_advantage_cubo(
             self.qubo_factory.qubo, self.solver, self.token
         )
-        qubits: npt.NDArray[np.int8] = sampleset.record.sample
-        logger.info(f"{qubits=}")
-        return qubits
+        qbits: npt.NDArray[np.int8] = sampleset.record.sample
+        logger.info(f"{qbits=}")
+        return qbits
 
     def reduce_dimension(
         self,
@@ -135,16 +135,16 @@ class Optimizer:
             logger.info(f"new sharpe ratio bigger than precedent")
             selected_inner_indexes = interpret.selected_indexes
             logger.info(f"{selected_inner_indexes=}")
-            outer_indexes = outer_indexes[selected_inner_indexes]
+            selected_outer_indexes = outer_indexes[selected_inner_indexes]
             sharpe_ratio = interpret.sharpe_ratio
-            return outer_indexes, selected_inner_indexes, interpret
+            return selected_outer_indexes, selected_inner_indexes, interpret
         else:
             logger.info(f"new sharpe ratio smaller than precedent")
             return outer_indexes, inner_indexes, None
 
     def optimize(
         self, indexes: Indexes, steps: int
-    ) -> typing.Tuple[typing.Optional[Interpret], Indexes]:
+    ) -> typing.Tuple[Indexes, typing.Optional[Interpret]]:
         """Iterate to found the best sharpe ratio."""
         sharpe_ratio = 0.0
         interpreter: typing.Optional[Interpret] = None
@@ -157,13 +157,13 @@ class Optimizer:
             if _interpreter is not None:
                 sharpe_ratio = _interpreter.sharpe_ratio
                 interpreter = _interpreter
-                print(f"{interpreter.data}")
-        return interpreter, indexes
+                logger.info(f"{interpreter.data}")
+        return indexes, interpreter
 
     def __call__(self, steps: int) -> typing.Tuple[Indexes, typing.Optional[Interpret]]:
         c = self.reduce_dimension(steps)
         indexes: Indexes = np.array([k for k in c])
-        interpreter, indexes = self.optimize(indexes, steps)
+        indexes, interpreter = self.optimize(indexes, steps)
         return indexes, interpreter
 
 
@@ -248,17 +248,16 @@ __test__ = {"Interpret.data": Interpret.data}
 if __name__ == "__main__":
     import numpy as np
 
-from loguru import logger
+    from loguru import logger
 
-from portfolioqtopt.markovitz_portfolio import Selection
-from portfolioqtopt.optimizer import Optimizer, SolverTypes
-from portfolioqtopt.qubo import QuboFactory
-
-if __name__ == "__main__":
+    from portfolioqtopt.markovitz_portfolio import Selection
+    from portfolioqtopt.optimizer import Optimizer, SolverTypes
+    from portfolioqtopt.qubo import QuboFactory
     from portfolioqtopt.reader import read_welzia_stocks_file
 
     file_path = "/home/ggelabert/Projects/PortfolioQtOpt/data/Histórico carteras Welzia Completo.xlsm"
     sheet_name = "BBG (valores)"
+
     df = read_welzia_stocks_file(file_path, sheet_name)
     logger.info(f"{df.shape=}")
     selection = Selection(df.to_numpy(), 5, 1.0)

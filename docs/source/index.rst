@@ -10,7 +10,8 @@ Welcome to PortfolioQtOpt's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   api
+   markovitz_portfolio
+   qubo
 
 Indices and tables
 ==================

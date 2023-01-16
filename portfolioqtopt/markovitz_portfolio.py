@@ -12,8 +12,8 @@ def get_partitions(w: int) -> npt.NDArray[np.floating[typing.Any]]:
 
     Example:
 
-    >>> get_partitions(5)
-    array([1.    , 0.5   , 0.25  , 0.125 , 0.0625])
+        >>> get_partitions(5)
+        array([1.    , 0.5   , 0.25  , 0.125 , 0.0625])
 
     Args:
         w (int): The partitions number that determine the granularity that we are
@@ -27,6 +27,8 @@ def get_partitions(w: int) -> npt.NDArray[np.floating[typing.Any]]:
 
 
 class Selection:
+    """Class with various attributes that help in the Qubo creation.
+    """
     def __init__(
         self, prices: npt.NDArray[np.floating[typing.Any]], w: int, budget: float
     ) -> None:

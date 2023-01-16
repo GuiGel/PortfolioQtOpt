@@ -1,14 +1,29 @@
 from __future__ import annotations
 
 import typing
-from functools import cache, cached_property
+from functools import cached_property
 
 import numpy as np
 import numpy.typing as npt
 
-from portfolioqtopt.dwave_solver import SolverTypes, solve_dwave_advantage_cubo
-from portfolioqtopt.utils import (Qubo, get_partitions, get_qubo_dict,
-                                  get_upper_triangular)
+
+def get_partitions(w: int) -> npt.NDArray[np.floating[typing.Any]]:
+    """Compute the possible proportions of the budget that we can allocate to each fund.
+
+    Example:
+
+    >>> get_partitions(5)
+    array([1.    , 0.5   , 0.25  , 0.125 , 0.0625])
+
+    Args:
+        w (int): The partitions number that determine the granularity that we are
+            going to give to each fund. That is, the amount of the budget we
+            will be able to invest.
+
+    Returns:
+        npt.NDArray[np.floating[typing.Any]]: List of fraction values.
+    """
+    return np.power(0.5, np.arange(w))
 
 
 class Selection:
@@ -34,11 +49,16 @@ class Selection:
 
             >>> prices = np.array([[100, 50, 10, 5], [10, 5, 1, 0.5]]).T
             >>> selection = Selection(prices, 3, 1)
-            >>> selection._get_expand_prices()  # doctest: +NORMALIZE_WHITESPACE
+            >>> selection._get_expand_prices()
             array([[20.  , 10.  ,  5.  , 20.  , 10.  ,  5.  ],
-                [10.  ,  5.  ,  2.5 , 10.  ,  5.  ,  2.5 ],
-                [ 2.  ,  1.  ,  0.5 ,  2.  ,  1.  ,  0.5 ],
-                [ 1.  ,  0.5 ,  0.25,  1.  ,  0.5 ,  0.25]])
+                   [10.  ,  5.  ,  2.5 , 10.  ,  5.  ,  2.5 ],
+                   [ 2.  ,  1.  ,  0.5 ,  2.  ,  1.  ,  0.5 ],
+                   [ 1.  ,  0.5 ,  0.25,  1.  ,  0.5 ,  0.25]])
+            >>> selection._get_expand_prices(reversed=True)
+            array([[1.    , 0.5   , 0.25  , 1.    , 0.5   , 0.25  ],
+                   [0.5   , 0.25  , 0.125 , 0.5   , 0.25  , 0.125 ],
+                   [0.1   , 0.05  , 0.025 , 0.1   , 0.05  , 0.025 ],
+                   [0.05  , 0.025 , 0.0125, 0.05  , 0.025 , 0.0125]])
 
         Args:
             reversed (bool, optional): Normalized each asset prices by it's beginning
@@ -153,53 +173,6 @@ class Selection:
         ).reshape(-1, self.p)
         expected_returns = granular_daily_returns.mean(axis=0)
         return typing.cast(npt.NDArray[np.floating[typing.Any]], expected_returns)
-
-    @cache
-    def get_qubo(self, theta1: float, theta2: float, theta3: float) -> Qubo:
-        """Compute the qubo matrix and it's corresponding dictionary.
-
-        Args:
-            theta1 (float): First Lagrange multiplier.
-            theta2 (float): Second Lagrange multiplier
-            theta3 (float): Third Lagrange multiplier
-
-        Returns:
-            Qubo: A dataclass that have the qubo matrix and the qubo index dictionary
-                as attributes.
-        """
-        # Obtenemos los valores asociados al riesgo, es decir, la covariance
-        qubo_covariance = np.cov(self.npp.T)  # (p, p)
-
-        # ----- SHAPING THE VALUES OF THE QUBO
-
-        qubo_returns = np.diag(self.expected_returns)  # (p, p)
-        qubo_prices_linear = 2.0 * self.b * np.diag(self.npp_last)  # (p, p)
-        qubo_prices_quadratic = np.outer(self.npp_last, self.npp_last)  # (p, p)
-
-        # ----- Final QUBO formation, with bias and penalty values included
-
-        qi = -theta1 * qubo_returns - theta2 * qubo_prices_linear  # (p, p).  eq (21a)
-        qij = (
-            theta2 * qubo_prices_quadratic + theta3 * qubo_covariance
-        )  # (p, p). eq (21b)
-        qubo = typing.cast(npt.NDArray[np.floating[typing.Any]], qi + qij)
-
-        qubo_matrix = get_upper_triangular(qubo)
-        qubo_dict = get_qubo_dict(qubo_matrix)
-        return Qubo(qubo_matrix, qubo_dict)
-
-    def solve(
-        self,
-        theta1: float,
-        theta2: float,
-        theta3: float,
-        token: str,
-        solver: SolverTypes,
-    ) -> npt.NDArray[np.int8]:
-        qubo = self.get_qubo(theta1, theta2, theta3)
-        sampleset = solve_dwave_advantage_cubo(qubo, solver, token)
-        qubits: npt.NDArray[np.int8] = sampleset.record.sample
-        return qubits
 
 
 # https://stackoverflow.com/questions/69178071/cached-property-doctest-is-not-detected

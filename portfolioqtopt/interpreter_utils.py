@@ -1,5 +1,6 @@
 """Module that extract relevant information from the optimization results"""
 import typing
+from dataclasses import dataclass
 
 import numpy as np
 import numpy.typing as npt
@@ -123,6 +124,11 @@ def get_returns(
         >>> prices = np.array([[100, 50, 10, 5], [10, 5, 1, 0.5]]).T
         >>> dwave_array = np.array([0, 1, 1, 0, 0, 1], dtype=np.int8)
         >>> selection = Selection(prices, w=3, budget=1)
+        >>> selection.npp_rev
+        array([[1.    , 0.5   , 0.25  , 1.    , 0.5   , 0.25  ],
+               [0.5   , 0.25  , 0.125 , 0.5   , 0.25  , 0.125 ],
+               [0.1   , 0.05  , 0.025 , 0.1   , 0.05  , 0.025 ],
+               [0.05  , 0.025 , 0.0125, 0.05  , 0.025 , 0.0125]])
         >>> get_returns(dwave_array, selection.npp_rev)  # doctest: +NORMALIZE_WHITESPACE
         array([-0. , -0.475 , -0.2375, -0. , -0. , -0.2375])
 
@@ -237,82 +243,24 @@ def get_selected_funds_indexes(
     return selected_funds
 
 
-from dataclasses import dataclass
-from functools import cached_property
-
-from portfolioqtopt.markovitz_portfolio import Selection
-
-
 @dataclass
 class InterpretData:
     investment: typing.List[float]
+    expected_returns: typing.List[float]
     selected_indexes: typing.List[int]
     risk: float
     sharpe_ratio: float
 
-
-class Interpret:
-    def __init__(self, selection: Selection, qbits: npt.NDArray[np.int8]) -> None:
-        self.selection = selection
-        self.qbits = qbits
-
-    @cached_property
-    def investment(self) -> npt.NDArray[np.floating[typing.Any]]:
-        return get_investment(self.qbits, self.selection.w)
-
-    @cached_property
-    def selected_indexes(self) -> npt.NDArray[np.signedinteger[typing.Any]]:
-        return get_selected_funds_indexes(self.qbits, self.selection.w)
-
-    def _deviation(self):
-        return get_deviation(self.investment, self.selection.prices)
-
-    def _covariance(self) -> float:
-        return get_covariance(self.investment, self.selection.prices)
-
-    @cached_property
-    def risk(self) -> float:
-        return get_risk(self.investment, self.selection.prices)
-
-    @cached_property
-    def sharpe_ratio(self) -> float:
-        return get_sharpe_ratio(
-            self.qbits, self.selection.npp_rev, self.selection.prices, self.selection.w
-        )
-
-    @cached_property
-    def data(self) -> InterpretData:
-        """Get the interpretation results as a DataClass.
-
-        Example:
-            >>> prices = np.array(
-            ...    [
-            ...        [100, 104, 102, 104, 100],
-            ...        [10, 10.2, 10.4, 10.5, 10.4],
-            ...        [50, 51, 52, 52.5, 52],
-            ...        [1.0, 1.02, 1.04, 1.05, 1.04],
-            ...    ],
-            ...    dtype=np.floating,
-            ... ).T
-            >>> selection = Selection(prices, 6, 1.0)
-            >>> qbits = np.array(
-            ...     [0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0]
-            ... )
-            >>> interpret = Interpret(selection, qbits)
-            >>> interpret.data  # doctest: +NORMALIZE_WHITESPACE
-            InterpretData(investment=[0.5, 0.25, 0.125, 0.125], \
-                selected_indexes=[0, 1, 2, 3], risk=0.9803086248727999, \
-                sharpe_ratio=2.0401738281752975)
-
-        Returns:
-            InterpretData: An InterpretData dataclass.
-        """
-        return InterpretData(
-            self.investment.tolist(),
-            self.selected_indexes.tolist(),
-            self.risk,
-            self.sharpe_ratio,
-        )
-
-
-__test__ = {"Interpret.data": Interpret.data}
+    def __init__(
+        self,
+        investment: typing.List[float],
+        expected_returns: typing.List[float],
+        selected_indexes: typing.List[int],
+        risk: float,
+        sharpe_ratio: float,
+    ) -> None:
+        self.investment = investment
+        self.expected_returns = expected_returns
+        self.selected_indexes = selected_indexes
+        self.risk = risk
+        self.sharpe_ratio = sharpe_ratio

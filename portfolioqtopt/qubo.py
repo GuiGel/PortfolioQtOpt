@@ -90,7 +90,8 @@ def get_qubo_dict(q: npt.NDArray[np.float64]) -> QuboDict:
 
 
 class QuboFactory:
-    """Generates the QUBO from the Lagrange multipliers theta1, theta2, and theta3"""
+    """Generates the QUBO matrix from the Lagrange multipliers theta1, theta2, and
+    theta3"""
 
     def __init__(
         self, selection: Selection, theta1: float, theta2: float, theta3: float

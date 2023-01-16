@@ -217,29 +217,9 @@ class Interpret:
     def data(self) -> InterpretData:
         """Get the interpretation results as a DataClass.
 
-        Example:
-            >>> from portfolioqtopt.markovitz_portfolio import Selection
-            >>> prices = np.array(
-            ...    [
-            ...        [100, 104, 102, 104, 100],
-            ...        [10, 10.2, 10.4, 10.5, 10.4],
-            ...        [50, 51, 52, 52.5, 52],
-            ...        [1.0, 1.02, 1.04, 1.05, 1.04],
-            ...    ],
-            ...    dtype=np.floating,
-            ... ).T
-            >>> selection = Selection(prices, 6, 1.0)
-            >>> qbits = np.array(
-            ...     [0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0]
-            ... )
-            >>> interpret = Interpret(selection, qbits)
-            >>> interpret.data  # doctest: +NORMALIZE_WHITESPACE
-            InterpretData(investment=[0.5, 0.25, 0.125, 0.125], \
-                selected_indexes=[0, 1, 2, 3], risk=0.9803086248727999, \
-                sharpe_ratio=2.0401738281752975)
-
         Returns:
-            InterpretData: An InterpretData dataclass.
+            InterpretData: An :py:class:`portfolioqtopt.interpreter_utils.InterpretData`
+                dataclass.
         """
         return InterpretData(
             self.investment.tolist(),

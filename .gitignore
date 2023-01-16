@@ -13,3 +13,6 @@ data
 
 # vscode stuff
 .vscode
+
+# Sphinx
+docs/build

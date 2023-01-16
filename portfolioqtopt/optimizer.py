@@ -218,6 +218,7 @@ class Interpret:
         """Get the interpretation results as a DataClass.
 
         Example:
+            >>> from portfolioqtopt.markovitz_portfolio import Selection
             >>> prices = np.array(
             ...    [
             ...        [100, 104, 102, 104, 100],

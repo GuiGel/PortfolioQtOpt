@@ -15,6 +15,8 @@ from portfolioqtopt.qubo import QuboFactory
 
 @pytest.fixture(scope="class")
 def qubo_factory() -> QuboFactory:
+    """Pytest fixture that create a :py:class:`work-on-qubo-class.QuboFactory` object
+    that can be used as test argument."""
     prices = np.array(
         [
             [100, 104, 102, 104, 100],
@@ -44,7 +46,17 @@ class TestOptimizer:
         selected_indexes: typing.Iterable[npt.ArrayLike],
         expected_counter: typing.Counter[int],
     ) -> None:
+        """Test the :py:meth:`work-on-qubo-class.Optimizer.reduce_dimension`.
+        For that we simulate the indexes return by the
+        :py:meth:`portfolioqtopt.optimizer.Interpret.selected_indexes` method and
+        compare the final output :py:`collections.Counter` with the expected one.
 
+        Args:
+            qubo_factory (fixture): A simulated QuboFactory object.
+            selected_indexes (typing.Iterable[npt.ArrayLike]): The selected index to
+                simulate.
+            expected_counter (typing.Counter[int]): The expected output.
+        """
         # Prepare test inputs
         selected_indexes = list(map(np.array, selected_indexes))
         steps = len(selected_indexes)

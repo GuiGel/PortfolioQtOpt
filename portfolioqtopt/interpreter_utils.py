@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 import numpy.typing as npt
 
-from portfolioqtopt.utils import get_partitions
+from portfolioqtopt.markovitz_portfolio import get_partitions
 
 
 def get_investment(
@@ -245,8 +245,8 @@ dtype=np.int8)
 
 @dataclass
 class InterpretData:
-    """Dataclass that contains the relevant optimization information.
-    """
+    """Dataclass that contains the relevant optimization information."""
+
     investment: typing.List[float]
     """The investment value."""
     expected_returns: typing.List[float]

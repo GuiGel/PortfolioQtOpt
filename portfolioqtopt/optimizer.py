@@ -181,23 +181,24 @@ class Optimizer:
         ) = indexes  # At beginning the inner and outer indexes are the same
         for i in range(steps):
 
-            logger.info(f"\n----- step {i} -----")
-            logger.info(f"{outer_indexes=}")
-            logger.info(f"{inner_indexes=}")
-            logger.info(f"{sharpe_ratio=}")
-            logger.info(f"run _opt_step")
+            logger.debug(f"\n----- step {i} -----")
+            logger.debug(f"{outer_indexes=}")
+            logger.debug(f"{inner_indexes=}")
+            logger.debug(f"{sharpe_ratio=}")
+            logger.debug(f"run _opt_step")
 
             _outer_indexes, _inner_indexes, _interpreter = self._opt_step(
                 outer_indexes, inner_indexes, sharpe_ratio
             )
 
             if _interpreter is not None:
-                logger.info(f"_interpreter is not None")
+                logger.debug(f"_interpreter is not None")
                 sharpe_ratio = _interpreter.sharpe_ratio
                 outer_indexes = _outer_indexes
                 inner_indexes = _inner_indexes
                 interpreter = _interpreter
-                logger.info(f"{sharpe_ratio=}")
+                logger.debug(f"{sharpe_ratio=}")
+
         return outer_indexes, interpreter
 
     def __call__(self, steps: int) -> typing.Tuple[Indexes, typing.Optional[Interpret]]:

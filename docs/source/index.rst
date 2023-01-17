@@ -12,6 +12,9 @@ Welcome to PortfolioQtOpt's documentation!
 
    markovitz_portfolio
    qubo
+   optimization
+   interpreter_utils
+   reader
 
 Indices and tables
 ==================

@@ -64,6 +64,7 @@ class Qubo:
         matrix (npt.NDArray[np.float64]): The Qubo matrix.
         dictionary (QuboDict): The Qubo dictionary.
     """
+
     matrix: npt.NDArray[np.float64]
     dictionary: QuboDict
 

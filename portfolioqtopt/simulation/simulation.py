@@ -1,15 +1,13 @@
-import logging
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import numpy.linalg as la
 import numpy.typing as npt
+from loguru import logger
 from numpy.polynomial import Polynomial as P
 
 from portfolioqtopt.simulation.errors import CovNotSymDefPos
 from portfolioqtopt.simulation.stocks import Stocks
-
-logger = logging.getLogger("simustocks")
 
 # dr: daily returns
 # er: expected anual returns

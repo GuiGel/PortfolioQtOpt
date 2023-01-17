@@ -17,7 +17,7 @@ def get_investment(
     Example:
 
         >>> dwave_array = np.array([0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0], \
-            dtype=np.int8)
+dtype=np.int8)
         >>> investment = get_investment(dwave_array, 5)
         >>> investment
         array([0.5 , 0.25, 0.25])
@@ -60,10 +60,10 @@ def get_deviation(
 
         >>> investments = np.array([0.5, 0.25, 0.25, 0.])
         >>> prices = np.array([\
-            [100, 104, 102, 104, 100],\
-            [10, 10.2, 10.4, 10.5, 10.4],\
-            [50, 51, 52, 52.5, 52],\
-            [1., 1.02, 1.04, 1.05, 1.04],\
+[100, 104, 102, 104, 100],\
+[10, 10.2, 10.4, 10.5, 10.4],\
+[50, 51, 52, 52.5, 52],\
+[1., 1.02, 1.04, 1.05, 1.04],\
         ]).T
         >>> get_deviation(investments, prices)
         0.852
@@ -89,11 +89,11 @@ def get_covariance(
     Example:
         >>> investments = np.array([0.5, 0.25, 0.25, 0.])
         >>> prices = np.array([\
-            [100, 104, 102, 104, 100],\
-            [10, 10.2, 10.4, 10.5, 10.4],\
-            [50, 51, 52, 52.5, 52],\
-            [1., 1.02, 1.04, 1.05, 1.04],\
-        ]).T
+[100, 104, 102, 104, 100],\
+[10, 10.2, 10.4, 10.5, 10.4],\
+[50, 51, 52, 52.5, 52],\
+[1., 1.02, 1.04, 1.05, 1.04],\
+]).T
         >>> get_covariance(investments, prices)
         0.2499999999999999
 
@@ -155,10 +155,10 @@ def get_risk(
 
         >>> investments = np.array([0.5, 0.25, 0.25, 0.])
         >>> prices = np.array([\
-            [100, 104, 102, 104, 100],\
-            [10, 10.2, 10.4, 10.5, 10.4],\
-            [50, 51, 52, 52.5, 52],\
-            [1., 1.02, 1.04, 1.05, 1.04],\
+[100, 104, 102, 104, 100],\
+[10, 10.2, 10.4, 10.5, 10.4],\
+[50, 51, 52, 52.5, 52],\
+[1., 1.02, 1.04, 1.05, 1.04],\
         ]).T
         >>> get_risk(investments, prices)
         1.0497618777608566
@@ -224,7 +224,7 @@ def get_selected_funds_indexes(
     Example:
 
         >>> dwave_array = np.array([0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0], \
-            dtype=np.int8)
+dtype=np.int8)
         >>> indexes = get_selected_funds_indexes(dwave_array, 5)
         >>> indexes
         array([0, 1, 2])
@@ -245,11 +245,18 @@ def get_selected_funds_indexes(
 
 @dataclass
 class InterpretData:
+    """Dataclass that contains the relevant optimization information.
+    """
     investment: typing.List[float]
+    """The investment value."""
     expected_returns: typing.List[float]
+    """The expected returns for each select asset."""
     selected_indexes: typing.List[int]
+    """The indexes of the funds that have been selected."""
     risk: float
+    """The investment risk."""
     sharpe_ratio: float
+    """The sharpe ratio"""
 
     def __init__(
         self,

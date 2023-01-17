@@ -173,7 +173,29 @@ class Optimizer:
     def optimize(
         self, indexes: Indexes, steps: int
     ) -> typing.Tuple[Indexes, typing.Optional[Interpret]]:
-        """Iterate to found the best sharpe ratio."""
+        """Run various optimization step.
+
+        At each optimization step, if the
+        :py:attr:`portfolio.optimizer.Interpreter.sharpe_ratio` is greater than the
+        precedent compute sharpe ratio, we keep in memory the indexes of the funds that
+        have produced it.
+
+        The next step, a new Qubo is created with the selected indexes and the process
+        is run again.
+
+        At the end we have the indexes that permit to obtain the corresponding funds
+        name.
+
+        Args:
+            indexes (Indexes): The original indexes. Expected to be 0, 1, 2, 3 if we
+                have 4 funds at the beginning of the optimization process.
+            steps (int): The number solver calls.
+
+        Returns:
+            typing.Tuple[Indexes, typing.Optional[Interpret]]: The chosen indexes as
+                well as the corresponding
+                :py:class:`portfolioqtopt.optimizer.Interpreter`.
+        """
         sharpe_ratio = 0.0
         interpreter: typing.Optional[Interpret] = None
         outer_indexes = (
@@ -209,6 +231,8 @@ class Optimizer:
 
 
 class Interpret:
+    """Extract all the necassy information after the optimization process."""
+
     def __init__(self, optimizer: Optimizer) -> None:
         self.optimizer = optimizer
 

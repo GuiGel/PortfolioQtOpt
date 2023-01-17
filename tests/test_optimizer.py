@@ -129,7 +129,7 @@ class TestOptimizer:
             assert (interpret is None) == interpreter_is_none
 
     @pytest.mark.parametrize(
-        "indexes, fake_outer_index, fake_inner_index, fake_sharpe_ratio, expected_indexes",
+        "indexes, fake_outer_index, fake_inner_index, fake_sharpe_ratio, fake_interpreter, expected_indexes",
         [
             (
                 np.array([0, 1, 2, 3, 4, 5, 6]),
@@ -142,20 +142,20 @@ class TestOptimizer:
                     np.array([0, 1, 4]),
                 ],  # inner indexes selected by _opt_step
                 [1.0, 2.0],  # sharpe ratio
+                True,
                 np.array([1, 2, 6]),
             ),
             (
                 np.array([0, 1, 2, 3, 4, 5, 6]),
                 [
-                    np.array([1, 2, 3, 4, 6]),
-                    np.array([1, 2, 6]),
+                    np.array([1, 2, 4]),
                 ],  # outer indexes selected by _opt_step
                 [
-                    np.array([1, 2, 3, 4, 6]),
-                    np.array([0, 1, 4]),
+                    np.array([1, 2, 4]),
                 ],  # inner indexes selected by _opt_step
-                [1.0, 2.0],  # sharpe ratio
-                np.array([1, 2, 6]),
+                [-1.0],  # sharpe ratio
+                False,
+                np.array([0, 1, 2, 3, 4, 5, 6]),
             ),
         ],
     )
@@ -166,27 +166,51 @@ class TestOptimizer:
         fake_outer_index: typing.Iterable[Indexes],
         fake_inner_index: typing.Iterable[Indexes],
         fake_sharpe_ratio: typing.Sequence[float],
+        fake_interpreter: bool,
         expected_indexes: Indexes,
-    ):
-        # For this test we need to simulate the Sharpe Ratio and the outer and inner
-        # indexes.
-        # I have to simulate the _opt_step returned value and mocked the returned
-        # _interpreter.sharpe_ratio.
+    ) -> None:
+        """Test that the Optimizer.optimize method is working as expected.
 
+        This test is only partial due to some difficulties..
+
+        The idea is to be sure that the Optimizer.optimize is able to chose the right
+        outer indexes depending of if the interpreter is None o no.
+        The only important things that we have to check is if the Interpreter
+        returned by the call to Optimizer._opt_step is None or not.
+        That's why we have 2 tests.
+
+        Args:
+            qubo_factory (fixture): _description_
+            indexes (Indexes): The initial indexes parameter of Optimize.optimize
+                method.
+            fake_outer_index (typing.Iterable[Indexes]): The various _outer_indexes
+                returned by the Optimizer.optimize method at each step.
+            fake_inner_index (typing.Iterable[Indexes]): The various _inner_indexes
+                returned by the Optimizer.optimize method at each step.
+            fake_sharpe_ratio (typing.Sequence[float]): The sharpe_ratio compute by
+                the Optimizer.optimize method at each step and accessible trough
+                the sharpe_ratio attribute of the Interpreter object.
+            fake_interpreter (bool): If the fake Interpreter instance returns by the
+                method Optimizer._opt_step is None o no.
+            expected_indexes (Indexes): The expected indexes.
+        """
         optimizer = Optimizer(qubo_factory, "", SolverTypes.hybrid_solver)
-
         steps = len(fake_sharpe_ratio)
 
+        mocked_interpreter: typing.Optional[typing.Any]
         with patch(
             "portfolioqtopt.optimizer.Optimizer._opt_step"
         ) as mocked_optimizer_opt_step, patch(
             "portfolioqtopt.optimizer.Interpret",
         ) as mocked_interpreter:
 
-            # Mock the sharpe ratio property of the Interpreter returned by _opt_step.
-            mocked_interpreter = MagicMock()
-            mocked_sharpe_ratio = PropertyMock(side_effect=fake_sharpe_ratio)
-            type(mocked_interpreter).sharpe_ratio = mocked_sharpe_ratio
+            if fake_interpreter:
+                # Mock the sharpe ratio property of the Interpreter returned by _opt_step.
+                mocked_interpreter = MagicMock()
+                mocked_sharpe_ratio = PropertyMock(side_effect=fake_sharpe_ratio)
+                type(mocked_interpreter).sharpe_ratio = mocked_sharpe_ratio
+            else:
+                mocked_interpreter = None
 
             # Mock the output of the _opt_step returned values
             _opt_side_effect = iter(

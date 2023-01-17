@@ -25,11 +25,16 @@ from dimod.sampleset import SampleSet
 from dwave.system import LeapHybridSampler  # type: ignore
 from loguru import logger
 
-from portfolioqtopt.interpreter_utils import (InterpretData, get_covariance,
-                                              get_deviation, get_investment,
-                                              get_returns, get_risk,
-                                              get_selected_funds_indexes,
-                                              get_sharpe_ratio)
+from portfolioqtopt.interpreter_utils import (
+    InterpretData,
+    get_covariance,
+    get_deviation,
+    get_investment,
+    get_returns,
+    get_risk,
+    get_selected_funds_indexes,
+    get_sharpe_ratio,
+)
 from portfolioqtopt.qubo import Qubo, QuboFactory
 
 
@@ -149,20 +154,20 @@ class Optimizer:
                 the selected indexes of the current reduce ``pd.DataFrame`` and the
                 corresponding sharpe ratio.
         """
-        logger.info(f"input outer indexes: {outer_indexes}")
-        logger.info(f"input inner indexes: {inner_indexes}")
+        logger.debug(f"input outer indexes: {outer_indexes}")
+        logger.debug(f"input inner indexes: {inner_indexes}")
         self.qubo_factory = self.qubo_factory[inner_indexes]
         interpret = Interpret(self)
 
         if interpret.sharpe_ratio > sharpe_ratio:
-            logger.info(f"new sharpe ratio bigger than precedent")
+            logger.debug(f"new sharpe ratio bigger than precedent")
             selected_inner_indexes = interpret.selected_indexes
-            logger.info(f"{selected_inner_indexes=}")
+            logger.debug(f"{selected_inner_indexes=}")
             selected_outer_indexes = outer_indexes[selected_inner_indexes]
             sharpe_ratio = interpret.sharpe_ratio
             return selected_outer_indexes, selected_inner_indexes, interpret
         else:
-            logger.info(f"new sharpe ratio smaller than precedent")
+            logger.debug(f"new sharpe ratio smaller than precedent")
             return outer_indexes, inner_indexes, None
 
     def optimize(
@@ -171,17 +176,29 @@ class Optimizer:
         """Iterate to found the best sharpe ratio."""
         sharpe_ratio = 0.0
         interpreter: typing.Optional[Interpret] = None
-        inner_indexes = indexes  # At beginning the inner and outer indexes are the same
+        outer_indexes = (
+            inner_indexes
+        ) = indexes  # At beginning the inner and outer indexes are the same
         for i in range(steps):
-            logger.info(f"step {i}")
-            indexes, inner_indexes, _interpreter = self._opt_step(
-                indexes, inner_indexes, sharpe_ratio
+
+            logger.info(f"\n----- step {i} -----")
+            logger.info(f"{outer_indexes=}")
+            logger.info(f"{inner_indexes=}")
+            logger.info(f"{sharpe_ratio=}")
+            logger.info(f"run _opt_step")
+
+            _outer_indexes, _inner_indexes, _interpreter = self._opt_step(
+                outer_indexes, inner_indexes, sharpe_ratio
             )
+
             if _interpreter is not None:
+                logger.info(f"_interpreter is not None")
                 sharpe_ratio = _interpreter.sharpe_ratio
+                outer_indexes = _outer_indexes
+                inner_indexes = _inner_indexes
                 interpreter = _interpreter
-                logger.info(f"{interpreter.data}")
-        return indexes, interpreter
+                logger.info(f"{sharpe_ratio=}")
+        return outer_indexes, interpreter
 
     def __call__(self, steps: int) -> typing.Tuple[Indexes, typing.Optional[Interpret]]:
         c = self.reduce_dimension(steps)

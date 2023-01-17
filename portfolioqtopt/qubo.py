@@ -57,16 +57,15 @@ QuboDict = typing.Mapping[typing.Tuple[Variable, Variable], Bias]
 
 @dataclass
 class Qubo:
-    """Dataclass that contains the qubo matrix and dictionary. It is accessible by the
-    :py:attr:`portfolioqtopt.qubo.QuboFactory.qubo` attribute.
+    """Dataclass that contains the qubo matrix and dictionary.
 
-    Attributes:
-        matrix (npt.NDArray[np.float64]): The Qubo matrix.
-        dictionary (QuboDict): The Qubo dictionary.
+    It is accessible as the :py:attr:`portfolioqtopt.qubo.QuboFactory.qubo` attribute.
     """
 
     matrix: npt.NDArray[np.float64]
+    """The Qubo matrix."""
     dictionary: QuboDict
+    """The Qubo dictionary."""
 
 
 def get_qubo_dict(q: npt.NDArray[np.float64]) -> QuboDict:

@@ -1,52 +1,71 @@
-"""This class generates the QUBO from the weights (theta1, theta2, and 
-theta3), the budget, the historical price data for each asset, and the
-expected returns of each asset as a matrix.
-"""
+"""Module that implement the Qubo creation logic."""
+from __future__ import annotations
 
-import itertools as it
+import typing
+from dataclasses import dataclass
+from functools import cached_property
 
 import numpy as np
 import numpy.typing as npt
+from dimod.typing import Bias, Variable
 
-from portfolioqtopt.symmetric_to_triangular import get_upper_triangular
-
-
-class QUBO:
-    def __init__(
-        self, qi: npt.NDArray[np.float64], qij: npt.NDArray[np.float64]
-    ) -> None:
-        # Obtenemos las dimensiones del problema,
-        # m = la profundidad historica de los datos
-        # n = el numero de fondos * el numero de slices
-        m, n = qij.shape
-
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # GENERAMOS EL QUBO
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-        # En un primer momento generamos un matriz en la que unimos la
-        # diagonal, relacionada con los expected returns, y la parte
-        # cuadrática, relacionada con las varianzas.
-        qubo = qi + qij
-
-        # En un primer momento la matriz es completa, por lo que con este
-        # método se obtiene unicamente la parte superior de esta matriz.
-
-        self.qubo = get_upper_triangular(qubo)
-
-        # Generamos el diccionario, que es lo que vamos a emplear para
-        # resolver el problema en DWAVE.
-        self.qubo_dict = {z: self.qubo[z] for z in it.product(range(n), range(n))}
+from portfolioqtopt.markovitz_portfolio import Selection
 
 
-from typing import Dict, NamedTuple, Tuple
+def get_upper_triangular(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    """Extract an upper triangular matrix.
 
-QuboDict = Dict[Tuple[int, int], np.floating]
+    Example:
+        >>> a = np.array([[1, 2, 3], [2, 1, 4], [3, 4, 1]])
+        >>> get_upper_triangular(a)
+        array([[1, 4, 6],
+               [0, 1, 8],
+               [0, 0, 1]])
 
 
-class Qubo(NamedTuple):
+    Args:
+        a (npt.NDArray[np.float64]): A numpy array.
+
+    Returns:
+        npt.NDArray[np.float64]: A numpy array.
+    """
+    return np.triu(a, 1) + np.triu(a, 0)
+
+
+def get_lower_triangular(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    """Extract a lower triangular matrix.
+
+    Example:
+        >>> a = np.array([[1, 2, 3], [2, 1, 4], [3, 4, 1]])
+        >>> get_lower_triangular(a)
+        array([[1, 0, 0],
+               [4, 1, 0],
+               [6, 8, 1]])
+
+
+    Args:
+        a (npt.NDArray[np.float64]): A numpy array.
+
+    Returns:
+        npt.NDArray[np.float64]: A numpy array.
+    """
+    return np.tril(a, -1) + np.tril(a, 0)
+
+
+QuboDict = typing.Mapping[typing.Tuple[Variable, Variable], Bias]
+
+
+@dataclass
+class Qubo:
+    """Dataclass that contains the qubo matrix and dictionary.
+
+    It is accessible as the :py:attr:`portfolioqtopt.qubo.QuboFactory.qubo` attribute.
+    """
+
     matrix: npt.NDArray[np.float64]
+    """The Qubo matrix."""
     dictionary: QuboDict
+    """The Qubo dictionary."""
 
 
 def get_qubo_dict(q: npt.NDArray[np.float64]) -> QuboDict:
@@ -77,20 +96,78 @@ def get_qubo_dict(q: npt.NDArray[np.float64]) -> QuboDict:
     return qubo_dict
 
 
-def get_qubo(qi: npt.NDArray[np.float64], qij: npt.NDArray[np.float64]) -> Qubo:
-    """Compute the qubo matrix and the corresponding dictionary.
+class QuboFactory:
+    """Generates the QUBO matrix from the Lagrange multipliers theta1, theta2, and
+    theta3"""
 
-    Args:
-        qi (npt.NDArray[np.float64]): Diagonal, related to expected returns. Shape
-            (n, n) where m is the historical depth of the data and
-            n = number of funds * number of slices.
-        qij (npt.NDArray[np.float64]): The quadratic part, related to variances.
-            Shape (n, n).
+    def __init__(
+        self, selection: Selection, theta1: float, theta2: float, theta3: float
+    ) -> None:
+        self.selection = selection
+        self.theta1 = theta1
+        self.theta2 = theta2
+        self.theta3 = theta3
 
-    Returns:
-        Qubo: Tuple that has the qubo matrix and dictionary as attributes.
-    """
-    qubo = qi + qij
-    qubo_matrix = get_upper_triangular(qubo)
-    qubo_dict = get_qubo_dict(qubo_matrix)
-    return Qubo(qubo_matrix, qubo_dict)
+    def __getitem__(self, val: typing.Any) -> QuboFactory:
+        selection = self.selection[val]
+        return QuboFactory(selection, self.theta1, self.theta2, self.theta3)
+
+    @cached_property
+    def qubo(self) -> Qubo:
+        """Compute the qubo matrix and it's corresponding dictionary.
+
+        Example:
+
+            >>> prices = np.array(
+            ...     [
+            ...         [100, 104, 102],
+            ...         [10, 10.2, 10.4],
+            ...     ],
+            ...     dtype=float,
+            ... ).T
+            >>> selection = Selection(prices, 2, 1.0)
+            >>> qubo_factory = QuboFactory(selection, 0.1, 0.2, 0.3)
+            >>> qubo = qubo_factory.qubo
+            >>> qubo.matrix
+            array([[-0.20092312,  0.20011534,  0.40011312,  0.20005656],
+                   [ 0.        , -0.1504904 ,  0.20005656,  0.10002828],
+                   [ 0.        ,  0.        , -0.20186945,  0.20011095],
+                   [ 0.        ,  0.        ,  0.        , -0.15096246]])
+            >>> qubo.dictionary
+            {(0, 0): -0.20092312128471299, (0, 1): 0.20011534025374858, (0, 2): \
+0.4001131221719457, (0, 3): 0.20005656108597286, (1, 0): 0.0, (1, 1): \
+-0.15049039570579364, (1, 2): 0.20005656108597286, (1, 3): 0.10002828054298643, \
+(2, 0): 0.0, (2, 1): 0.0, (2, 2): -0.2018694454113006, (2, 3): 0.20011094674556215, \
+(3, 0): 0.0, (3, 1): 0.0, (3, 2): 0.0, (3, 3): -0.15096245939204084}
+
+        Returns:
+            Qubo: A dataclass that have the qubo matrix and the qubo index dictionary
+                as attributes.
+        """
+        # We obtain the values associated to the risk, i.e. the covariance
+        qubo_covariance = np.cov(self.selection.npp.T)  # (p, p)
+
+        # Set the Qubo values
+        qubo_returns = np.diag(self.selection.expected_returns)  # (p, p)
+        qubo_prices_linear = (
+            2.0 * self.selection.b * np.diag(self.selection.npp_last)
+        )  # (p, p)
+        qubo_prices_quadratic = np.outer(
+            self.selection.npp_last, self.selection.npp_last
+        )  # (p, p)
+
+        # Final QUBO formation, with bias and penalty values included
+        qi = (
+            -self.theta1 * qubo_returns - self.theta2 * qubo_prices_linear
+        )  # (p, p).  eq (21a)
+        qij = (
+            self.theta2 * qubo_prices_quadratic + self.theta3 * qubo_covariance
+        )  # (p, p). eq (21b)
+        qubo = typing.cast(npt.NDArray[np.floating[typing.Any]], qi + qij)
+
+        qubo_matrix = get_upper_triangular(qubo)
+        qubo_dict = get_qubo_dict(qubo_matrix)
+        return Qubo(qubo_matrix, qubo_dict)
+
+
+__test__ = {"QuboCreator.qubo": QuboFactory.qubo}

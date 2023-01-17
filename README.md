@@ -1,3 +1,3 @@
-# PortfolioCtOpt
+# PortfolioQtOpt
 
-A library to perform portfolio quantum optimization
+A library to perform portfolio quantum optimization.

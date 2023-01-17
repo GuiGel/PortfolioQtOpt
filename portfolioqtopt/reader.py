@@ -39,7 +39,7 @@ def read_welzia_stocks_file(
 
 if __name__ == "__main__":
 
-    file_path = "/home/ggelabert/Projects/PortfolioCtOpt/data/Histórico_carteras_Welzia_2018.xlsm"
+    file_path = "/home/ggelabert/Projects/PortfolioQtOpt/data/Histórico_carteras_Welzia_2018.xlsm"
     sheet_name = "BBG (valores)"
 
     df = read_welzia_stocks_file(file_path, sheet_name)

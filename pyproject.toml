@@ -37,6 +37,7 @@ nbsphinx = "^0.8.11"
 sphinx-copybutton = "^0.5.1"
 myst-parser = "^0.18.1"
 sphinx = "5.*"
+matplotlib = "^3.6.3"
 
 [tool.isort]
 profile = "black"

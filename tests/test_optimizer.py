@@ -1,6 +1,6 @@
 import typing
 from collections import Counter
-from unittest.mock import PropertyMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import numpy as np
 import numpy.typing as npt
@@ -9,7 +9,7 @@ from loguru import logger
 
 from portfolioqtopt.interpreter_utils import InterpretData
 from portfolioqtopt.markovitz_portfolio import Selection
-from portfolioqtopt.optimizer import Interpret, Optimizer, SolverTypes
+from portfolioqtopt.optimizer import Indexes, Interpret, Optimizer, SolverTypes
 from portfolioqtopt.qubo import QuboFactory
 
 
@@ -127,6 +127,79 @@ class TestOptimizer:
             assert selected_outer_indexes.tolist() == expected_outer_indexes
             assert selected_inner_indexes.tolist() == expected_inner_indexes
             assert (interpret is None) == interpreter_is_none
+
+    @pytest.mark.parametrize(
+        "indexes, fake_outer_index, fake_inner_index, fake_sharpe_ratio, expected_indexes",
+        [
+            (
+                np.array([0, 1, 2, 3, 4, 5, 6]),
+                [
+                    np.array([1, 2, 3, 4, 6]),
+                    np.array([1, 2, 6]),
+                ],  # outer indexes selected by _opt_step
+                [
+                    np.array([1, 2, 3, 4, 6]),
+                    np.array([0, 1, 4]),
+                ],  # inner indexes selected by _opt_step
+                [1.0, 2.0],  # sharpe ratio
+                np.array([1, 2, 6]),
+            ),
+            (
+                np.array([0, 1, 2, 3, 4, 5, 6]),
+                [
+                    np.array([1, 2, 3, 4, 6]),
+                    np.array([1, 2, 6]),
+                ],  # outer indexes selected by _opt_step
+                [
+                    np.array([1, 2, 3, 4, 6]),
+                    np.array([0, 1, 4]),
+                ],  # inner indexes selected by _opt_step
+                [1.0, 2.0],  # sharpe ratio
+                np.array([1, 2, 6]),
+            ),
+        ],
+    )
+    def test_optimize(
+        self,
+        qubo_factory,
+        indexes: Indexes,
+        fake_outer_index: typing.Iterable[Indexes],
+        fake_inner_index: typing.Iterable[Indexes],
+        fake_sharpe_ratio: typing.Sequence[float],
+        expected_indexes: Indexes,
+    ):
+        # For this test we need to simulate the Sharpe Ratio and the outer and inner
+        # indexes.
+        # I have to simulate the _opt_step returned value and mocked the returned
+        # _interpreter.sharpe_ratio.
+
+        optimizer = Optimizer(qubo_factory, "", SolverTypes.hybrid_solver)
+
+        steps = len(fake_sharpe_ratio)
+
+        with patch(
+            "portfolioqtopt.optimizer.Optimizer._opt_step"
+        ) as mocked_optimizer_opt_step, patch(
+            "portfolioqtopt.optimizer.Interpret",
+        ) as mocked_interpreter:
+
+            # Mock the sharpe ratio property of the Interpreter returned by _opt_step.
+            mocked_interpreter = MagicMock()
+            mocked_sharpe_ratio = PropertyMock(side_effect=fake_sharpe_ratio)
+            type(mocked_interpreter).sharpe_ratio = mocked_sharpe_ratio
+
+            # Mock the output of the _opt_step returned values
+            _opt_side_effect = iter(
+                [
+                    (o, i, mocked_interpreter)
+                    for (o, i) in zip(fake_outer_index, fake_inner_index)
+                ]
+            )
+            mocked_optimizer_opt_step.side_effect = _opt_side_effect
+
+            # Run optimize and see if the results are the expected ones!
+            found_indexes, found_interpreter = optimizer.optimize(indexes, steps)
+            np.testing.assert_equal(found_indexes, expected_indexes)
 
 
 @pytest.fixture(scope="class")

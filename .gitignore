@@ -16,3 +16,4 @@ data
 
 # Sphinx
 docs/build
+*.ipynb_checkpoints

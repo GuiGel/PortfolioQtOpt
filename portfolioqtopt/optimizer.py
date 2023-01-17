@@ -61,6 +61,8 @@ Indexes = npt.NDArray[np.signedinteger[typing.Any]]
 
 
 class Optimizer:
+    """Class that implement all the optimization steps."""
+
     def __init__(
         self,
         qubo_factory: QuboFactory,
@@ -126,6 +128,27 @@ class Optimizer:
         inner_indexes: Indexes,
         sharpe_ratio: float,
     ) -> typing.Tuple[Indexes, Indexes, typing.Optional[Interpret]]:
+        """An atomic optimization step.
+
+        The method uses inner_index to create a new ``pd.DataFrame`` which will contain
+        only the prices of the corresponding funds. From this, a new Qubo is calculated
+        and optimized. The Sharpe Ratio obtained as a result of the optimization is
+        compared to the old one. If the new ratio is higher then the new indexes
+        selected during the optimization will be the ones used in the next iteration.
+        The outer_indexes correspond to the indexes of the funds selected in the
+        ``pd.DataFrame`` containing the prices of the original funds.
+
+        Args:
+            outer_indexes (Indexes): Indexes of the original ``pd.DataFrame``.
+            inner_indexes (Indexes): Reduced ``pd.DataFrame`` indexes.
+            sharpe_ratio (float): The sharpe ratio compute in the previous step.
+
+        Returns:
+            typing.Tuple[Indexes, Indexes, typing.Optional[Interpret]]: A tuple
+                compounded of the selected indexes of the original ``pd.DataFrame``,
+                the selected indexes of the current reduce ``pd.DataFrame`` and the
+                corresponding sharpe ratio.
+        """
         logger.info(f"input outer indexes: {outer_indexes}")
         logger.info(f"input inner indexes: {inner_indexes}")
         self.qubo_factory = self.qubo_factory[inner_indexes]

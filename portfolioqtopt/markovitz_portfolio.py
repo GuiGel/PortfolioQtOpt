@@ -27,8 +27,8 @@ def get_partitions(w: int) -> npt.NDArray[np.floating[typing.Any]]:
 
 
 class Selection:
-    """Class with various attributes that help in the Qubo creation.
-    """
+    """Class with various attributes that help in the Qubo creation."""
+
     def __init__(
         self, prices: npt.NDArray[np.floating[typing.Any]], w: int, budget: float
     ) -> None:
@@ -183,3 +183,11 @@ __test__ = {
     "Selection.expected_returns": Selection.expected_returns,
     "Selection.npp_last": Selection.npp_last,
 }
+
+if __name__ == "__main__":
+    prices = np.array([[2, 4, 8, 16], [2, 4, 8, 16]]).T  # , [10, 5, 1, 0.5, 0.1]]).T
+    w, b = 3, 1.0
+    selection = Selection(prices, w, b)
+    print(selection.npp)
+    print(selection.npp_rev)
+    print(selection.expected_returns)

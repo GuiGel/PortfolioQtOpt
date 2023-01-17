@@ -124,7 +124,7 @@ class QuboFactory:
             ...         [100, 104, 102],
             ...         [10, 10.2, 10.4],
             ...     ],
-            ...     dtype=np.floating,
+            ...     dtype=float,
             ... ).T
             >>> selection = Selection(prices, 2, 1.0)
             >>> qubo_factory = QuboFactory(selection, 0.1, 0.2, 0.3)

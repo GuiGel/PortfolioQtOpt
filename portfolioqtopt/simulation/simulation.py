@@ -35,6 +35,7 @@ class Simulation:
         cov_h (npt.NDArray): Historical prices covariance. Matrix of shape
             (n, n) where n is the number of stocks.
     """
+
     def __init__(self, stock: Stocks, er: Dict[str, float], m: int) -> None:
         # TODO check that er are strictly positives, m > 0 and
 
@@ -61,7 +62,7 @@ class Simulation:
     def _chol(
         self, a: Optional[npt.NDArray[np.float64]] = None
     ) -> npt.NDArray[np.float64]:
-        """Compute the Cholesky decomposition of a.
+        """Compute the Cholesky decomposition of a matrix A.
 
         Args:
             a (Optional[npt.NDArray[np.float64]], optional): A Matrix but here a

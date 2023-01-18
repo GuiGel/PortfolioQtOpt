@@ -21,25 +21,24 @@ from portfolioqtopt.simulation.stocks import Stocks
 
 
 class Simulation:
+    """Simulate prices that have the same covariance has the historical prices
+    and a given expected anual return.
+
+    Args:
+        stock (Stocks): A Stock object. Shape (k, n) where k is the number days and
+            n the number of stocks.
+        er (npt.ArrayLike): The expected anual returns for each stocks.
+            List of shape (n, ) where n is the number of stocks.
+        m (int): The number of future daily returns to simulate.
+
+    Attributes:
+        cov_h (npt.NDArray): Historical prices covariance. Matrix of shape
+            (n, n) where n is the number of stocks.
+    """
     def __init__(self, stock: Stocks, er: Dict[str, float], m: int) -> None:
-        """Simulate prices that have the same covariance has historical prices
-        and a given expected anual return.
-
-        Args:
-            stock (Stocks): A Stock object.
-            er (npt.ArrayLike): The expected anual returns for each stocks.
-                List of shape (k, ) where k is the number of stocks.
-            m (int): The number of future daily returns.
-
-        Attributes:
-            cov_h (npt.NDArray): Historical prices covariance. Matrix of shape
-                (k, k) where k is the number of stocks and n the number of
-                prices.
-        """
-
         # TODO check that er are strictly positives, m > 0 and
 
-        self.k, n = stock.prices.shape
+        self.k, _ = stock.prices.shape
         self.stock = stock
         self.cov_h = stock.cov  # historical covariance
         self.er: npt.NDArray[np.float64] = np.array(list(er.values()))
@@ -50,30 +49,70 @@ class Simulation:
 
     @property
     def init_prices(self) -> npt.NDArray[np.float64]:
-        # Get the initialization price for the simulation, the last
-        # prices of the historical prices
+        """Initialization price for the simulation.
+
+        The last prices of the historical prices are taken as initial prices.
+
+        Returns:
+            npt.NDArray[np.float64]: A vector of floats.
+        """
         return self.stock.prices[:, -1:]  # (k, 1)
 
-    def correlate(self) -> npt.NDArray[np.float64]:
-        """Create random vectors that have a given covariance matrix"""
-        try:
-            chol_h = la.cholesky(self.cov_h)
-        except la.LinAlgError as e:
-            raise CovNotSymDefPos(self.cov_h, e)
+    def _chol(
+        self, a: Optional[npt.NDArray[np.float64]] = None
+    ) -> npt.NDArray[np.float64]:
+        """Compute the Cholesky decomposition of a.
 
-        rd = np.random.normal(0, 1, size=(self.k, self.m))
-        cov_rd = np.cov(rd)
+        Args:
+            a (Optional[npt.NDArray[np.float64]], optional): A Matrix but here a
+                symmetric positive matrix. Defaults to None.
+
+        Raises:
+            CovNotSymDefPos: The matrix a is not symmetric definite positive.
+
+        Returns:
+            npt.NDArray[np.float64]: If a is None, return the Choleski decomposition of
+                :attr:`Simulation.cov_h`
+        """
+        if a is None:
+            a = self.cov_h
         try:
-            chol_rd = la.cholesky(cov_rd)
+            L = la.cholesky(a)
+            return L
         except la.LinAlgError as e:
-            raise CovNotSymDefPos(cov_rd, e)
-        rd_corr = chol_h.dot(np.linalg.inv(chol_rd).dot(rd))  # (k, m)
+            raise CovNotSymDefPos(a, e)
+
+    def _get_random_daily_returns(self) -> npt.NDArray[np.float64]:
+        """Get random Gaussian vectors with the matrix identity as covariance matrix.
+
+        TODO This is a function that can be put outside of the class.
+        """
+        x = np.random.normal(0, 1, size=(self.k, self.m))
+        cov = np.cov(x)
+        L = self._chol(cov)
+        return np.linalg.inv(L).dot(x)
+
+    def correlate(self) -> npt.NDArray[np.float64]:
+        """Create random vectors that have a given covariance matrix.
+
+        This method is used to create random daily returns that have the same covariance
+        as the stock returns.
+
+        #. Compute the Choleski decomposition of the covariance of the daily returns \
+of the stock prices.
+        #. Generate random Gaussian vectors that simulate daily returns with an \
+Identity covariance matrix.
+        #. Simulate daily returns with the same covariance matrix as historical ones.
+        """
+        L = self._chol()
+        random_daily_returns = self._get_random_daily_returns()
+        daily_returns = L.dot(random_daily_returns)  # (k, m)
 
         # g are daily returns that must all be inferior to 1!
-        if np.all(rd_corr < 1):
+        if np.all(daily_returns < 1):
             logger.warning("Correlated daily returns not all inf to 1!")
 
-        return rd_corr  # (k, m)
+        return daily_returns  # (k, m)
 
     @staticmethod
     def get_log_taylor_series(

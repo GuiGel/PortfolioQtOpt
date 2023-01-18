@@ -1,3 +1,8 @@
+"""Preliminary calculations.
+
+In this module, we calculate all preliminary results that depend only on prices,
+granularity depth and budget.
+"""
 from __future__ import annotations
 
 import typing
@@ -27,7 +32,23 @@ def get_partitions(w: int) -> npt.NDArray[np.floating[typing.Any]]:
 
 
 class Selection:
-    """Class with various attributes that help in the Qubo creation."""
+    """Class with various attributes that help in the
+    :class:`portfolioqtopt.optimization.qubo.Qubo` creation.
+
+    Args:
+        prices (npt.NDArray[np.floating[typing.Any]]): The stock prices.
+        w (int): The granularity depth. The partitions number that determine the
+            granularity that we are going to give to each fund. That is, the amount of
+            the budget we will be able to invest.
+        budget (float): The initial budget.
+
+    Attributes:
+        prices (str): The stock prices.
+        w (int): The granularity depth.
+        b (float): The allocated budget.
+        m (int): The number of stocks.
+        p (int): The product :math:`w*p`
+    """
 
     def __init__(
         self, prices: npt.NDArray[np.floating[typing.Any]], w: int, budget: float
@@ -40,6 +61,13 @@ class Selection:
 
     @cached_property
     def granularity(self) -> npt.NDArray[np.floating[typing.Any]]:
+        """Compute the possible proportions of the budget :math:`w_i` that we can
+        allocate to each fund defined as
+        :math:`\\forall i \\in [0, w-1], w_{i} = \\frac{1}{2^i}`
+
+        Returns:
+            npt.NDArray[np.floating[typing.Any]]: List of fraction values.
+        """
         return get_partitions(self.w)
 
     def _get_expand_prices(

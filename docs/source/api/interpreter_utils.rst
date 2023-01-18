@@ -1,5 +1,5 @@
 Interpreter Utils
 =================
 
-.. automodule:: portfolioqtopt.interpreter_utils
+.. automodule:: portfolioqtopt.optimization.interpreter_utils
     :members:

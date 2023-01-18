@@ -231,7 +231,7 @@ class Optimizer:
 
 
 class Interpret:
-    """Extract all the necassy information after the optimization process."""
+    """Extract all the information of interest after the optimization process."""
 
     def __init__(self, optimizer: Optimizer) -> None:
         self.optimizer = optimizer

@@ -10,7 +10,7 @@ Welcome to PortfolioQtOpt's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   Example 1 <simulation/example_1.md>
+   simulation/example_1
    api
 
 Indices and tables

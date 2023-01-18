@@ -11,6 +11,7 @@ Welcome to PortfolioQtOpt's documentation!
    :caption: Contents:
 
    simulation/example_1
+   simulation/example_2
    api
 
 Indices and tables

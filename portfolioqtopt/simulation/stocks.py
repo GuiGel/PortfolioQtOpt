@@ -6,7 +6,7 @@ from pydantic import BaseModel, validator
 
 prices_schema = pa.DataFrameSchema(
     {
-        (".*",".*",".*",".*"): pa.Column(
+        (".*", ".*", ".*", ".*"): pa.Column(
             float,
             checks=[
                 pa.Check.greater_than(0, ignore_na=False),

@@ -47,7 +47,7 @@ class Selection:
         w (int): The granularity depth.
         b (float): The allocated budget.
         m (int): The number of stocks.
-        p (int): The product :math:`w*p` 
+        p (int): The product :math:`w*p`
     """
 
     def __init__(
@@ -62,7 +62,7 @@ class Selection:
     @cached_property
     def granularity(self) -> npt.NDArray[np.floating[typing.Any]]:
         """Compute the possible proportions of the budget :math:`w_i` that we can
-        allocate to each fund defined as 
+        allocate to each fund defined as
         :math:`\\forall i \\in [0, w-1], w_{i} = \\frac{1}{2^i}`
 
         Returns:

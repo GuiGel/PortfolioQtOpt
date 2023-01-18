@@ -12,6 +12,8 @@ dwave-ocean-sdk = "^6.1.1"
 pandas = "^1.5.2"
 openpyxl = "^3.0.10"
 loguru = "^0.6.0"
+pandera = "^0.13.4"
+pandas-datareader = "^0.10.0"
 
 [tool.poetry.group.dev.dependencies]
 autoflake = "^2.0.0"
@@ -29,12 +31,14 @@ mypy = "^0.991"
 
 
 [tool.poetry.group.docs.dependencies]
-furo = "^2022.12.7"
 jupytext = "^1.14.4"
 nbsphinx = "^0.8.11"
 sphinx-copybutton = "^0.5.1"
 myst-parser = "^0.18.1"
-sphinx = "5.*"
+sphinx = ">=3,<5"
+matplotlib = "^3.6.3"
+jupyter = "^1.0.0"
+sphinx-book-theme = "^0.3.3"
 
 [tool.isort]
 profile = "black"

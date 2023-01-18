@@ -1,5 +1,5 @@
 Markovitz Portfolio
 ===================
 
-.. automodule:: portfolioqtopt.markovitz_portfolio
+.. automodule:: portfolioqtopt.optimization.markovitz_portfolio
     :members:

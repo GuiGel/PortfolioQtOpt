@@ -25,7 +25,7 @@ from dimod.sampleset import SampleSet
 from dwave.system import LeapHybridSampler  # type: ignore
 from loguru import logger
 
-from portfolioqtopt.interpreter_utils import (
+from portfolioqtopt.optimization.interpreter_utils import (
     InterpretData,
     get_covariance,
     get_deviation,
@@ -35,7 +35,7 @@ from portfolioqtopt.interpreter_utils import (
     get_selected_funds_indexes,
     get_sharpe_ratio,
 )
-from portfolioqtopt.qubo import Qubo, QuboFactory
+from portfolioqtopt.optimization.qubo import Qubo, QuboFactory
 
 
 @unique
@@ -302,9 +302,9 @@ if __name__ == "__main__":
     import numpy as np
     from loguru import logger
 
-    from portfolioqtopt.markovitz_portfolio import Selection
-    from portfolioqtopt.optimizer import Optimizer, SolverTypes
-    from portfolioqtopt.qubo import QuboFactory
+    from portfolioqtopt.optimization.markovitz_portfolio import Selection
+    from portfolioqtopt.optimization.optimizer import Optimizer, SolverTypes
+    from portfolioqtopt.optimization.qubo import QuboFactory
     from portfolioqtopt.reader import read_welzia_stocks_file
 
     file_path = "/home/ggelabert/Projects/PortfolioQtOpt/data/Histórico carteras Welzia Completo.xlsm"

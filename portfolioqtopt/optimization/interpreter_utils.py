@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 import numpy.typing as npt
 
-from portfolioqtopt.markovitz_portfolio import get_partitions
+from portfolioqtopt.optimization.markovitz_portfolio import get_partitions
 
 
 def get_investment(
@@ -120,7 +120,7 @@ def get_returns(
 
     Example:
 
-        >>> from portfolioqtopt.markovitz_portfolio import Selection
+        >>> from portfolioqtopt.optimization.markovitz_portfolio import Selection
         >>> prices = np.array([[100, 50, 10, 5], [10, 5, 1, 0.5]]).T
         >>> dwave_array = np.array([0, 1, 1, 0, 0, 1], dtype=np.int8)
         >>> selection = Selection(prices, w=3, budget=1)
@@ -187,7 +187,7 @@ def get_sharpe_ratio(
 
     Example:
 
-            >>> from portfolioqtopt.markovitz_portfolio import Selection
+            >>> from portfolioqtopt.optimization.markovitz_portfolio import Selection
             >>> prices = np.array([[100, 50, 10, 5], [10, 5, 1, 0.5]]).T
             >>> dwave_array = np.array([0, 1, 1, 0, 0, 1], dtype=np.int8)
             >>> slices_nb = 3

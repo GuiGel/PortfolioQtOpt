@@ -9,7 +9,7 @@ import numpy as np
 import numpy.typing as npt
 from dimod.typing import Bias, Variable
 
-from portfolioqtopt.markovitz_portfolio import Selection
+from portfolioqtopt.optimization.markovitz_portfolio import Selection
 
 
 def get_upper_triangular(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:

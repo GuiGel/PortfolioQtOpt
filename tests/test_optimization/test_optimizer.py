@@ -7,10 +7,15 @@ import numpy.typing as npt
 import pytest
 from loguru import logger
 
-from portfolioqtopt.interpreter_utils import InterpretData
-from portfolioqtopt.markovitz_portfolio import Selection
-from portfolioqtopt.optimizer import Indexes, Interpret, Optimizer, SolverTypes
-from portfolioqtopt.qubo import QuboFactory
+from portfolioqtopt.optimization.interpreter_utils import InterpretData
+from portfolioqtopt.optimization.markovitz_portfolio import Selection
+from portfolioqtopt.optimization.optimizer import (
+    Indexes,
+    Interpret,
+    Optimizer,
+    SolverTypes,
+)
+from portfolioqtopt.optimization.qubo import QuboFactory
 
 
 @pytest.fixture(scope="class")
@@ -64,7 +69,7 @@ class TestOptimizer:
 
         # Test the portfolioqtopt.optimizer.reduce_dimension methods.
         with patch(
-            "portfolioqtopt.optimizer.Interpret.selected_indexes",
+            "portfolioqtopt.optimization.optimizer.Interpret.selected_indexes",
             new_callable=PropertyMock,
         ) as mocked_interpreter_selected_indexes:
             mocked_interpreter_selected_indexes.side_effect = selected_indexes
@@ -103,10 +108,10 @@ class TestOptimizer:
         logger.info(optimizer.qubo_factory.qubo.matrix.shape)
 
         with patch(
-            "portfolioqtopt.optimizer.Interpret.selected_indexes",
+            "portfolioqtopt.optimization.optimizer.Interpret.selected_indexes",
             new_callable=PropertyMock,
         ) as mocked_interpreter_selected_indexes, patch(
-            "portfolioqtopt.optimizer.Interpret.sharpe_ratio",
+            "portfolioqtopt.optimization.optimizer.Interpret.sharpe_ratio",
             new_callable=PropertyMock,
         ) as mocked_interpreter_sharpe_ratio:
 
@@ -199,9 +204,9 @@ class TestOptimizer:
 
         mocked_interpreter: typing.Optional[typing.Any]
         with patch(
-            "portfolioqtopt.optimizer.Optimizer._opt_step"
+            "portfolioqtopt.optimization.optimizer.Optimizer._opt_step"
         ) as mocked_optimizer_opt_step, patch(
-            "portfolioqtopt.optimizer.Interpret",
+            "portfolioqtopt.optimization.optimizer.Interpret",
         ) as mocked_interpreter:
 
             if fake_interpreter:
@@ -229,7 +234,7 @@ class TestOptimizer:
 @pytest.fixture(scope="class")
 def mocked_qbits():
     with patch(
-        "portfolioqtopt.optimizer.Optimizer.qbits",
+        "portfolioqtopt.optimization.optimizer.Optimizer.qbits",
         new_callable=PropertyMock,
     ) as mocked_optimizer_qbits:
         mocked_qbits = np.array(

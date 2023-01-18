@@ -1,3 +1,4 @@
+"""Module that implement the simulation core functionalities."""
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np

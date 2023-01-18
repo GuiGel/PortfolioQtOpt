@@ -32,3 +32,12 @@ class TestSimulation:
         obtained_covariance = np.cov(random_daily_returns)
 
         np.testing.assert_almost_equal(obtained_covariance, expected_covariance)
+
+    def test_correlate(self, stocks) -> None:
+        simulation = Simulation(stocks, {"a": 0.1, "b": 0.3, "c": 0.1}, 10)
+        daily_returns = simulation.correlate()
+
+        expected_covariance = stocks.cov
+        obtained_covariance = np.cov(daily_returns)
+
+        np.testing.assert_almost_equal(obtained_covariance, expected_covariance)

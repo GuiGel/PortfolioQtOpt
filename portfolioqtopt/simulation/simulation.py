@@ -62,7 +62,14 @@ class Simulation:
     def _chol(
         self, a: Optional[npt.NDArray[np.float64]] = None
     ) -> npt.NDArray[np.float64]:
-        """Compute the Cholesky decomposition of a matrix A.
+        """Choleski decomposition.
+
+        Return the Cholesky decomposition, L * L.H, of the square matrix a, where L is \
+lower-triangular and .H is the conjugate transpose operator (which is the ordinary \
+transpose if a is real-valued). a must be Hermitian (symmetric if real-valued) and \
+positive-definite (which is the case if a is the covariance matrix of the daily returns\
+). No checking is performed to verify whether a is Hermitian or not. In addition, only \
+the lower-triangular and diagonal elements of a are used. Only L is actually returned.
 
         Args:
             a (Optional[npt.NDArray[np.float64]], optional): A Matrix but here a
@@ -119,6 +126,94 @@ Identity covariance matrix.
     def get_log_taylor_series(
         cr: npt.NDArray[np.float64], er: npt.NDArray[np.float64], order: int = 4
     ):
+        """Obtain a polynomial approximation of the expected return.
+
+We have yet a matrix of daily returns :math:`Erd_{s}` that have the same covariance \
+matrix :math:`\\Sigma` as the one of our historical prices :math:`P`. But the anual expected \
+return vector :math:`Er_{s}` that correspond to these simulated daily returns is not \
+the same as the original one :math:`Er`.
+
+By using the fact that, if :math:`c \\in `R^n` a vector then \
+:math:`\\mathbb{E}[Er_{s} +  c^T]=\\mathbb{E}[Er_{s}]`, we can easily demonstrate that \
+:math:`Cov(Er_{s} + c^T)=Cov(Er)`.
+
+Our goal here is to found that vector :math:`c` such that :math:`Er_s + c^T = Er` so \
+let's go!
+
+For a given stock :math:`u`, the expected return :math:`r_{u}` between days :math:`0, n` is:
+
+.. math:: r_{u}=\\frac{r_{u,n}-r_{u,0}}{r_{u,0}}
+
+and we can remarque that:
+
+.. math:: 1 + r_{u}=\\prod_{i=1}^n(1 + r_{u,i})
+
+If for all :math:`i` in :math:`[1,n]` we have :math:`r_{u,i} > -1` then:
+
+.. math:: ln(1 + r_{u})=\\sum_{k=1}^n{ln(1+r_{u,i})} 
+
+.. note::
+    The *Taylor* theorem :
+
+    #. :math:`I` a subset of :math:`R`;
+    #. :math:`a` in :math:`I`;
+    #. :math:`E` a real normed vector space;
+    #. :math:`f` a function of :math:`I` in :math:`E` derivable in :math:`a` up to a certain order :math:`n\\geq 1`.  
+
+    Then for any real number :math:`x` belonging to :math:`I` , we have the Taylor-Young formula:
+
+    .. math:: f(a+h)=\\sum_{k=0}^n{\\frac{f^{(k)}(a)}{k!}h^{k}+R_{n}(a+h)}
+
+    where the remaining :math:`R_{n}(x)` is a negligible function with respect to :math:`(x-a)^{n}` in the neighbourhood of :math:`a`.
+
+If we apply to the *Taylor theorem* to the logarithm function in 1 we have for all :math:`x > 0`:   
+
+.. math:: ln(1+x)=\\sum_{k=1}^{n} {(-1)^{k-1}\\frac{x^{k}}{k}}+ R_{n}(1+x)
+
+If :math:`x < 1` then the *Taylor-Young* formula stand that we have:
+
+.. math:: R_{n}(1 + x)=o(x^{n})
+
+In our particular case, we know that the daily returns :math:`r_{u, i}` are strictly \
+less than 1 for all :math:`i` and :math:`u`. We can therefore always find a strictly \
+positive integer :math:`n` such that :math:`ln(1+r_{u,i})` is approximated with a great \
+accuracy by is corresponding polynomial *Taylor-Young* approximation. 
+
+.. math::
+
+    \\lim_{n \\to +\\infty}ln(1 + r_{u,i}) - \\sum_{k=1}^{n}{(-1)^{k-1}\\frac{r_{u,i}^{k}}{k}} = 0
+
+
+So for a given stock :math:`u` with  :math:`m` daily returns, and :math:`r_{u, i}` a \
+daily return at day :math:`i`, we can try to found the constant :math:`c_{u}` such \
+that for a simulated daily return :math:`rs_{u,i}` we have:
+
+.. math:: \\sum_{i=1}^m{ln(1 + rs_{u,i} + c_{u})} = ln(1 + r_{u})
+
+To solve this equation we will use the *Taylor-Young* approximation to create the polynomial :math:`P_{u}(X)`:
+
+.. math:: P_{u}(X) = \\sum_{i=1}^{m} \\sum_{k=1}^n(-1)^{k-1}{\\frac{(rs_{u,i} + X)^{k}}{k}} - ln(1 + r_{u})
+
+We can find :math:`c_{u}` as a real root of :math:`P_{u}` such that \
+:math:`| \\underset{1 \\leq i \\leq n}{max}(rs_{u,i}) + c_{u} | < 1` this is the \
+condition to have:
+
+.. math:: + o((rs_{u,i} + c_{u})^{n})
+
+For that we solve the polynomial P.
+
+
+        Args:
+            cr (npt.NDArray[np.float64]): Matrix of daily returns with the same \
+covariance matrix as the historical daily returns.
+            er (npt.NDArray[np.float64]): The anual expected returns. Hey must be \
+strictly superior to -1.
+            order (int, optional): Order of the polynomial Taylor-Young approximation \
+of the :math:`ln` function. Defaults to 4.
+
+        Returns:
+            _type_: _description_
+        """
         # cr: correlated daily returns (k, m)
         # er: anual expected returns (k)
         # limited development of the function ln(1+x) with x = rc + alpha

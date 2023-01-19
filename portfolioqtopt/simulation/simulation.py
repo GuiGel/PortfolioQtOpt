@@ -158,15 +158,19 @@ If for all :math:`i` in :math:`[1,n]` we have :math:`r_{u,i} > -1` then:
     #. :math:`I` a subset of :math:`R`;
     #. :math:`a` in :math:`I`;
     #. :math:`E` a real normed vector space;
-    #. :math:`f` a function of :math:`I` in :math:`E` derivable in :math:`a` up to a certain order :math:`n\\geq 1`.  
+    #. :math:`f` a function of :math:`I` in :math:`E` derivable in :math:`a` up to a \
+certain order :math:`n\\geq 1`.  
 
-    Then for any real number :math:`x` belonging to :math:`I` , we have the Taylor-Young formula:
+    Then for any real number :math:`x` belonging to :math:`I` , we have the \
+*Taylor-Young* formula:
 
     .. math:: f(a+h)=\\sum_{k=0}^n{\\frac{f^{(k)}(a)}{k!}h^{k}+R_{n}(a+h)}
 
-    where the remaining :math:`R_{n}(x)` is a negligible function with respect to :math:`(x-a)^{n}` in the neighbourhood of :math:`a`.
+    where the remaining :math:`R_{n}(x)` is a negligible function with respect to \
+    :math:`(x-a)^{n}` in the neighbourhood of :math:`a`.
 
-If we apply to the *Taylor theorem* to the logarithm function in 1 we have for all :math:`x > 0`:   
+If we apply to the *Taylor theorem* to the logarithm function in 1 we have for all \
+:math:`x > 0`:   
 
 .. math:: ln(1+x)=\\sum_{k=1}^{n} {(-1)^{k-1}\\frac{x^{k}}{k}}+ R_{n}(1+x)
 
@@ -190,13 +194,17 @@ that for a simulated daily return :math:`rs_{u,i}` we have:
 
 .. math:: \\sum_{i=1}^m{ln(1 + rs_{u,i} + c_{u})} = ln(1 + r_{u})
 
-To solve this equation we will use the *Taylor-Young* approximation to create the polynomial :math:`P_{u}(X)`:
+To solve this equation we will use the *Taylor-Young* approximation to create the \
+polynomial :math:`P_{u}^{n}(X)` of order :math:`n`:
 
-.. math:: P_{u}(X) = \\sum_{i=1}^{m} \\sum_{k=1}^n(-1)^{k-1}{\\frac{(rs_{u,i} + X)^{k}}{k}} - ln(1 + r_{u})
+.. math:: P_{u}^{n}(X) = \\sum_{i=1}^{m} \\sum_{k=1}^n(-1)^{k-1}{\\frac{(rs_{u,i} + X)^{k}}{k}} - ln(1 + r_{u})
 
+
+If :math:`P` order :math:`n` is big enoughs we now that ...
 We can find :math:`c_{u}` as a real root of :math:`P_{u}` such that \
 :math:`| \\underset{1 \\leq i \\leq n}{max}(rs_{u,i}) + c_{u} | < 1` this is the \
 condition to have:
+
 
 .. math:: + o((rs_{u,i} + c_{u})^{n})
 

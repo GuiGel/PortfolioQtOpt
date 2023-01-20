@@ -78,11 +78,11 @@ def reduce_dimension(
         indexes = get_selected_funds_indexes(qbits, w)
         logger.debug(f"selected indexes {indexes}")
         c.update(Counter(indexes))
-    logger.info(f"indexes distribution {c}")
+    logger.debug(f"indexes distribution {c}")
     return c
 
 
-def found_best_sharpe_ratio(
+def find_best_sharpe_ratio(
     qubo: QuboData,
     indexes: Indexes,
     steps: int,
@@ -131,13 +131,13 @@ def optimize(
     qubo = get_qubo(prices, b, w, theta1, theta2, theta3)
     c = reduce_dimension(qubo.q, qubo.w, steps, solver, token_api)
 
-    logger.info(f"Compute qubo for reduce universe")
+    logger.info(f"compute qubo again")
     outer_indexes = typing.cast(Indexes, np.sort(np.array([k for k in c])))
     logger.debug(f"selected outer indexes: {outer_indexes}")
     inner_qubo = get_qubo(prices[:, outer_indexes], b, w, theta1, theta2, theta3)
     logger.info(f"inner qubo shape {inner_qubo.prices.shape}")
 
-    outer_indexes, interpreter = found_best_sharpe_ratio(
+    outer_indexes, interpreter = find_best_sharpe_ratio(
         inner_qubo, outer_indexes, steps, solver, token_api
     )
     return outer_indexes, interpreter

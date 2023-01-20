@@ -6,25 +6,29 @@ from loguru import logger
 import time
 import pandas as pd
 
-logger.add(f"logs/{time.time() * 1000}.log", level="DEBUG")
+logger.add(f"logs/{round(time.time() * 1000)}.log", level="DEBUG")
 
 def store_results(
     funds: pd.Index, interpretation: Interpretation
 ) -> None:
     final_results = {
         "selected funds": funds,
-        "investment": interpretation.investment[interpretation.investment.nonzero()],
+        "investment": interpretation.investment,
         "expected return": interpretation.expected_returns,
         "risk": interpretation.risk,
         "sharpe_ratio": interpretation.sharpe_ratio,
     }
     curr_time = round(time.time() * 1000)
-    logger.info("f{curr_time=}")
+    logger.info(f"{curr_time=}")
     logger.success(f"{final_results=}")
 
+# Il me faut penser à comment faire le lien avec les autres parties du programme.
+# Au départ un pd.DataFrame qui vient de plusieurs sources.
+# L'algo the Tecnalia doit pouvoir prendre en entrée un DataFrame ou un numpy array
+# avec une série d'indexes. Ou à moi de transformer la sortie de la simulation en
+# dataframe.
 
 if __name__ == "__main__":
-    pass
 
     from portfolioqtopt.reader import read_welzia_stocks_file
 

@@ -5,7 +5,7 @@ from typing import NewType
 import numpy as np
 import numpy.typing as npt
 
-from portfolioqtopt.optimization.markovitz_portfolio import get_partitions
+from portfolioqtopt.optimization.utils import Array, get_partitions_granularity
 
 Qbits = NewType("Qbits", npt.NDArray[np.int8])
 
@@ -15,16 +15,16 @@ Indexes = NewType("Indexes", npt.NDArray[np.signedinteger[typing.Any]])
 def get_investments(
     qbits: Qbits,
     w: int,
-) -> npt.NDArray[np.floating[typing.Any]]:
+) -> Array:
     """Get the investment per fund.
 
     Example:
 
-        >>> qbits = np.array([0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0], \
+        >>> qbits = np.array([0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0], \
 dtype=np.int8)
-        >>> investment = get_investment(qbits, 5)
+        >>> investment = get_investments(qbits, 5)
         >>> investment
-        array([0.5 , 0.25, 0.25])
+        array([0.5, 0.5, 0. ])
 
         We can verify that all the budget is invest as expected.
         >>> investment.sum()
@@ -40,7 +40,7 @@ dtype=np.int8)
             Shape (p/w,).
     """
     qbits = qbits.reshape(-1, w)  # type: ignore[assignment]
-    pw = get_partitions(w).reshape(1, -1)
+    pw = get_partitions_granularity(w).reshape(1, -1)
     investments: npt.NDArray[np.floating[typing.Any]] = (qbits * pw).sum(axis=1)
     total = investments.sum()
 
@@ -49,6 +49,27 @@ dtype=np.int8)
     ), f"All the budget is not invest! The total investment is {total} in spite of 1.0"
 
     return investments
+
+
+def get_investments_nonzero(investments: Array) -> Array:
+    """Get the investment per fund that is not null.
+
+    Example:
+
+        >>> investment = np.array([0.5 , 0.5, 0.0])
+        >>> get_investments_nonzero(investment)
+        array([0.5, 0.5])
+
+    Args:
+        qbits (Qbits): The dwave output array made of 0 and 1.
+            Shape (p,).
+        w (int): The depth of granularity.
+
+    Returns:
+        npt.NDArray[np.floating[typing.Any]]: The total investment for each funds.
+            Shape (p/w,).
+    """
+    return investments[investments.nonzero()]
 
 
 def get_deviation(
@@ -124,16 +145,9 @@ def get_returns(
 
     Example:
 
-        >>> from portfolioqtopt.optimization.markovitz_portfolio import Selection
-        >>> prices = np.array([[100, 50, 10, 5], [10, 5, 1, 0.5]]).T
         >>> qbits = np.array([0, 1, 1, 0, 0, 1], dtype=np.int8)
-        >>> selection = Selection(prices, w=3, budget=1)
-        >>> selection.npp_rev
-        array([[1.    , 0.5   , 0.25  , 1.    , 0.5   , 0.25  ],
-               [0.5   , 0.25  , 0.125 , 0.5   , 0.25  , 0.125 ],
-               [0.1   , 0.05  , 0.025 , 0.1   , 0.05  , 0.025 ],
-               [0.05  , 0.025 , 0.0125, 0.05  , 0.025 , 0.0125]])
-        >>> get_returns(qbits, selection.npp_rev)  # doctest: +NORMALIZE_WHITESPACE
+        >>> arp = np.array([-0.95  , -0.475 , -0.2375, -0.95  , -0.475 , -0.2375])
+        >>> get_returns(qbits, arp)  # doctest: +NORMALIZE_WHITESPACE
         array([-0. , -0.475 , -0.2375, -0. , -0. , -0.2375])
 
     Args:
@@ -184,18 +198,17 @@ def get_sharpe_ratio(
     qbits: Qbits,
     anual_returns_partitions: npt.NDArray[np.floating[typing.Any]],
     prices: npt.NDArray[np.floating[typing.Any]],
-    slices_nb: int,
+    w: int,
 ) -> float:
     """Compute the Sharpe Ratio.
 
     Example:
 
-            >>> from portfolioqtopt.optimization.markovitz_portfolio import Selection
             >>> prices = np.array([[100, 50, 10, 5], [10, 5, 1, 0.5]]).T
             >>> qbits = np.array([0, 1, 1, 0, 0, 1], dtype=np.int8)
-            >>> slices_nb = 3
-            >>> selection = Selection(prices, w=slices_nb, budget=1)
-            >>> get_sharpe_ratio(qbits, selection.npp_rev, prices, slices_nb)
+            >>> w = 3
+            >>> arp = np.array([-0.95  , -0.475 , -0.2375, -0.95  , -0.475 , -0.2375])
+            >>> get_sharpe_ratio(qbits, arp, prices, w)
             -3.1810041773302586
 
     Args:
@@ -204,13 +217,13 @@ def get_sharpe_ratio(
         anual_returns_partitions (npt.NDArray[np.floating[typing.Any]]): The sliced prices multiplied by the
             ratio between the budget and the first price. Shape (m, p)
         prices (npt.NDArray[np.floating[typing.Any]]): The funds prices. Shape (m, n).
-        slices_nb (int): The depth of granularity.
+        w (int): The depth of granularity.
 
     Returns:
         float: A float representing the Sharpe Ratio.
     """
     returns = get_returns(qbits, anual_returns_partitions)
-    investments = get_investments(qbits, slices_nb)
+    investments = get_investments(qbits, w)
     risk = get_risk(investments, prices)
     try:
         sharpe_ratio: float = 100 * returns.sum() / risk
@@ -219,7 +232,7 @@ def get_sharpe_ratio(
     return sharpe_ratio
 
 
-def get_selected_funds_indexes(qbits: Qbits, slices_nb: int) -> Indexes:
+def get_selected_funds_indexes(qbits: Qbits, w: int) -> Indexes:
     """Get the positional index of the selected funds in the prices array.
 
     Example:
@@ -233,12 +246,12 @@ dtype=np.int8)
     Args:
         qbits (Qbits): The dwave output array made of 0 and 1.
             Shape (p,).
-        slices_nb (int): The depth of granularity.
+        w (int): The depth of granularity.
 
     Returns:
         npt.NDArray[np.floating[typing.Any]]: The total investment for each funds.
-            Shape (p/slices_nb,).
+            Shape (p/w,).
     """
-    investments = get_investments(qbits, slices_nb)
+    investments = get_investments(qbits, w)
     selected_funds = investments.nonzero()[0]  # We know that investment is a 1D array
     return typing.cast(Indexes, selected_funds)

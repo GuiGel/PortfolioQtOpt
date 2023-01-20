@@ -6,7 +6,6 @@ granularity depth and budget.
 from __future__ import annotations
 
 import typing
-from dataclasses import dataclass
 from functools import cache
 
 import numpy as np
@@ -103,6 +102,14 @@ def get_average_daily_returns_partition_tecnalia(
     return (approximate_average[..., None] * partitions_granularity).flatten()
 
 
+def get_anual_returns(prices: Array) -> Array:
+    return (prices[-1] - prices[0]) / prices[0]
+
+
+def get_anual_returns_partition(anual_returns: Array, pw: Array) -> Array:
+    return (anual_returns[..., None] * pw).flatten()
+
+
 def get_upper_triangular(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     """Extract an upper triangular matrix.
 
@@ -169,4 +176,3 @@ def get_qubo_dict(q: npt.NDArray[np.float64]) -> Q:
     n = len(q)
     qubo_dict: Q = {(i, j): q[i, j] for i in range(n) for j in range(n)}
     return qubo_dict
-

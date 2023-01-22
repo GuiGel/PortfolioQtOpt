@@ -1,4 +1,8 @@
-"""Module that extract relevant information from the optimization results"""
+"""Module that extract relevant information from the optimization results.
+
+All the functions extract only information from \
+:class:`portfolioqtopt.optimization._qubo.QuboData` and \
+:type:`portfolioqtopt.optimization._qbits.Qbits`."""
 import typing
 from typing import NewType
 
@@ -31,8 +35,7 @@ dtype=np.int8)
         1.0
 
     Args:
-        qbits (Qbits): The dwave output array made of 0 and 1.
-            Shape (p,).
+        qbits (Qbits): The dwave output array made of 0 and 1. (p,).
         w (int): The depth of granularity.
 
     Returns:
@@ -41,7 +44,7 @@ dtype=np.int8)
     """
     qbits = qbits.reshape(-1, w)  # type: ignore[assignment]
     pw = get_partitions_granularity(w).reshape(1, -1)
-    investments: npt.NDArray[np.floating[typing.Any]] = (qbits * pw).sum(axis=1)
+    investments: Array = (qbits * pw).sum(axis=1)
     total = investments.sum()
 
     assert (
@@ -56,18 +59,17 @@ def get_investments_nonzero(investments: Array) -> Array:
 
     Example:
 
-        >>> investment = np.array([0.5 , 0.5, 0.0])
+        >>> investment = np.array([0.5, 0.5, 0.0])
         >>> get_investments_nonzero(investment)
         array([0.5, 0.5])
 
     Args:
-        qbits (Qbits): The dwave output array made of 0 and 1.
-            Shape (p,).
+        qbits (Qbits): The dwave output array made of 0 and 1. (p,).
         w (int): The depth of granularity.
 
     Returns:
-        npt.NDArray[np.floating[typing.Any]]: The total investment for each funds.
-            Shape (p/w,).
+        npt.NDArray[np.floating[typing.Any]]: The total investment for each selected \
+funds. (m,).
     """
     return investments[investments.nonzero()]
 
@@ -90,13 +92,15 @@ def get_deviation(
 [50, 51, 52, 52.5, 52],\
 [1., 1.02, 1.04, 1.05, 1.04],\
         ]).T
+        >>> prices.shape
+        (5, 4)
         >>> get_deviation(investments, prices)
         0.852
 
     Args:
-        investments (npt.NDArray[np.floating[typing.Any]]): The investment for each fund.
-            Shape (n,).
-        prices (npt.NDArray[np.floating[typing.Any]]): The funds prices. Shape (m, n).
+        investments (npt.NDArray[np.floating[typing.Any]]): The investment for each \
+fund. (m,).
+        prices (npt.NDArray[np.floating[typing.Any]]): The funds prices. (n, m).
 
     Returns:
         float: The compute deviation.
@@ -123,11 +127,12 @@ def get_covariance(
         0.2499999999999999
 
     Args:
-        investments (npt.NDArray[np.floating[typing.Any]]): The investment for each fund.
-            Shape (n,).
-        prices (npt.NDArray[np.floating[typing.Any]]): The funds prices. Shape (m, n).
+        investments (npt.NDArray[np.floating[typing.Any]]): The investment for each \
+fund. (m,).
+        prices (npt.NDArray[np.floating[typing.Any]]): The funds prices. Shape (n, m).
 
-    Returns:The compute covariance.
+    Returns:
+        float: The compute covariance.
     """
     n = len(investments)
     index = np.triu_indices(n, 1)
@@ -204,12 +209,12 @@ def get_sharpe_ratio(
 
     Example:
 
-            >>> prices = np.array([[100, 50, 10, 5], [10, 5, 1, 0.5]]).T
-            >>> qbits = np.array([0, 1, 1, 0, 0, 1], dtype=np.int8)
-            >>> w = 3
-            >>> arp = np.array([-0.95  , -0.475 , -0.2375, -0.95  , -0.475 , -0.2375])
-            >>> get_sharpe_ratio(qbits, arp, prices, w)
-            -3.1810041773302586
+        >>> prices = np.array([[100, 50, 10, 5], [10, 5, 1, 0.5]]).T
+        >>> qbits = np.array([0, 1, 1, 0, 0, 1], dtype=np.int8)
+        >>> w = 3
+        >>> arp = np.array([-0.95  , -0.475 , -0.2375, -0.95  , -0.475 , -0.2375])
+        >>> get_sharpe_ratio(qbits, arp, prices, w)
+        -3.1810041773302586
 
     Args:
         qbits (Qbits): The dwave output array made of 0 and 1.
@@ -244,13 +249,11 @@ dtype=np.int8)
         array([0, 1, 2])
 
     Args:
-        qbits (Qbits): The dwave output array made of 0 and 1.
-            Shape (p,).
+        qbits (Qbits): The dwave output array made of 0 and 1. (p,).
         w (int): The depth of granularity.
 
     Returns:
-        npt.NDArray[np.floating[typing.Any]]: The total investment for each funds.
-            Shape (p/w,).
+        npt.NDArray[np.floating[typing.Any]]: The total investment for each funds. (m,).
     """
     investments = get_investments(qbits, w)
     selected_funds = investments.nonzero()[0]  # We know that investment is a 1D array

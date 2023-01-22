@@ -12,7 +12,9 @@ import numpy as np
 import numpy.typing as npt
 from dimod.typing import Bias, Variable
 
-Array = npt.NDArray[np.floating[typing.Any]]
+T = typing.TypeVar("T", np.float64, np.float_)
+
+Array = npt.NDArray[np.float64]
 
 Q = typing.Mapping[typing.Tuple[Variable, Variable], Bias]
 
@@ -45,11 +47,11 @@ def get_partitions_granularity_broadcast(
     return broadcast_array.flatten()  # (p,)
 
 
-def get_qubo_prices_linear(partitions_granularity_broadcast, b: float) -> Array:
+def get_qubo_prices_linear(partitions_granularity_broadcast: Array, b: float) -> Array:
     return 2.0 * b * np.diag(partitions_granularity_broadcast)  # (p, p)
 
 
-def get_qubo_prices_quadratic(partitions_granularity_broadcast, b: float) -> Array:
+def get_qubo_prices_quadratic(partitions_granularity_broadcast: Array, b: float) -> Array:
     return np.outer(
         partitions_granularity_broadcast, partitions_granularity_broadcast
     )  # (p, p)
@@ -65,13 +67,13 @@ def get_qubo_covariance(normalized_prices_partition: Array) -> Array:
 
 def get_normalized_prices(prices: Array, b: float) -> Array:
     ":math:`\\bar a`"
-    factor = np.divide(b, prices[-1, :], dtype=np.float64, casting="unsafe")
+    factor = np.divide(b, prices[-1, :], dtype=np.float64, casting="safe")
     normalized_prices = prices * factor
-    return normalized_prices
+    return typing.cast(Array, normalized_prices)
 
 
 def get_normalized_prices_partition(
-    normalized_prices: Array, partitions_granularity
+    normalized_prices: Array, partitions_granularity: Array
 ) -> Array:
     n = len(normalized_prices)
     _npp = normalized_prices[..., None] * partitions_granularity  # (n, m, w)
@@ -80,7 +82,7 @@ def get_normalized_prices_partition(
 
 def get_average_daily_returns(prices: Array) -> Array:
     average_daily_returns = (np.diff(prices, axis=0) / prices[:-1]).mean(axis=0)
-    return average_daily_returns  # (m,)
+    return typing.cast(Array, average_daily_returns)  # (m,)
 
 
 def get_average_daily_returns_partition(
@@ -103,14 +105,14 @@ def get_average_daily_returns_partition_tecnalia(
 
 
 def get_anual_returns(prices: Array) -> Array:
-    return (prices[-1] - prices[0]) / prices[0]
+    return typing.cast(Array, (prices[-1] - prices[0]) / prices[0])
 
 
 def get_anual_returns_partition(anual_returns: Array, pw: Array) -> Array:
     return (anual_returns[..., None] * pw).flatten()
 
 
-def get_upper_triangular(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+def get_upper_triangular(a: Array) -> Array:
     """Extract an upper triangular matrix.
 
     Example:
@@ -122,15 +124,15 @@ def get_upper_triangular(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
 
 
     Args:
-        a (npt.NDArray[np.float64]): A numpy array.
+        a (Array): A numpy array.
 
     Returns:
-        npt.NDArray[np.float64]: A numpy array.
+        Array: A numpy array.
     """
     return np.triu(a, 1) + np.triu(a, 0)
 
 
-def get_lower_triangular(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+def get_lower_triangular(a: Array) -> Array:
     """Extract a lower triangular matrix.
 
     Example:
@@ -142,15 +144,15 @@ def get_lower_triangular(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
 
 
     Args:
-        a (npt.NDArray[np.float64]): A numpy array.
+        a (Array): A numpy array.
 
     Returns:
-        npt.NDArray[np.float64]: A numpy array.
+        Array: A numpy array.
     """
     return np.tril(a, -1) + np.tril(a, 0)
 
 
-def get_qubo_dict(q: npt.NDArray[np.float64]) -> Q:
+def get_qubo_dict(q: Array) -> Q:
     """Create a dictionary from a symmetric matrix.
 
     This function is utilize to generate the qubo dictionary, which we will use to solve
@@ -167,7 +169,7 @@ def get_qubo_dict(q: npt.NDArray[np.float64]) -> Q:
         (2, 1): 4, (2, 2): 1}
 
     Args:
-        q (npt.NDArray[np.float64]): A symmetric matrix. The qubo matrix for example.
+        q (Array): A symmetric matrix. The qubo matrix for example.
 
     Returns:
         Q: A dict with key the tuple of coordinate (i, j) and value the

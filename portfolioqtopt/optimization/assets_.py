@@ -40,10 +40,7 @@ class Assets:
 
     @cached_property
     def normalized_prices_approx(self) -> Array:
-        approximate_average = (
-            self.normalized_prices[-1, :] - self.normalized_prices[0, :]
-        ) / (self.n - 1)
-        return approximate_average
+        return (self.normalized_prices[-1] - self.normalized_prices[0]) / (self.n - 1)
 
     @cached_property
     def anual_returns(self) -> Array:

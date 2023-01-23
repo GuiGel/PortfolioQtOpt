@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import numpy.typing as npt
+from loguru import logger
 
 from portfolioqtopt.optimization.assets_ import Array, Assets
 from portfolioqtopt.optimization.qubo_ import get_pw
@@ -53,6 +54,7 @@ dtype=np.int8)
     qbits = qbits.reshape(-1, w)  # type: ignore[assignment]
     pw = get_pw(w).reshape(1, -1)
     investments: Array = (qbits * pw).sum(axis=1)
+    logger.debug(f"{investments.tolist()=}")
 
     indexes = typing.cast(Indexes, investments.nonzero()[0])  # selected indexes
 
@@ -79,7 +81,7 @@ def interpret(a: Assets, qbits: Qbits):
 
     Example:
 
-        Define some prices for 4 assets on 5 days.
+        Define 5 prices for 4 assets.
  
         >>> prices = np.array([\
 [100, 102, 104, 108, 116],\
@@ -129,8 +131,11 @@ risk=17.153170260916784, sharpe_ratio=2.594272622676201)
 
     risk = np.sqrt(deviation + covariance)
 
+    print(f"{a.anual_returns=}")
+
     returns = a.anual_returns * investments
     expected_returns = 100 * returns.sum()
+    logger.info(f"{expected_returns=}")
 
     try:
         sharpe_ratio: float = expected_returns / risk

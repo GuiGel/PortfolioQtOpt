@@ -39,8 +39,7 @@ dtype=np.int8)
         w (int): The depth of granularity.
 
     Returns:
-        npt.NDArray[np.floating[typing.Any]]: The total investment for each funds.
-            Shape (p/w,).
+        npt.NDArray[np.floating[typing.Any]]: The total investment for each funds. (m,).
     """
     qbits = qbits.reshape(-1, w)  # type: ignore[assignment]
     pw = get_partitions_granularity(w).reshape(1, -1)
@@ -52,6 +51,29 @@ dtype=np.int8)
     ), f"All the budget is not invest! The total investment is {total} in spite of 1.0"
 
     return investments
+
+
+def get_selected_funds_indexes(qbits: Qbits, w: int) -> Indexes:
+    """Get the positional index of the selected funds in the prices array.
+
+    Example:
+
+        >>> qbits = np.array([0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0], \
+dtype=np.int8)
+        >>> indexes = get_selected_funds_indexes(qbits, 5)
+        >>> indexes
+        array([0, 1, 2])
+
+    Args:
+        qbits (Qbits): The dwave output array made of 0 and 1. (p,).
+        w (int): The depth of granularity.
+
+    Returns:
+        npt.NDArray[np.floating[typing.Any]]: The total investment for each funds. (m,).
+    """
+    investments = get_investments(qbits, w)
+    selected_funds = investments.nonzero()[0]  # We know that investment is a 1D array
+    return typing.cast(Indexes, selected_funds)
 
 
 def get_investments_nonzero(investments: Array) -> Array:
@@ -69,7 +91,7 @@ def get_investments_nonzero(investments: Array) -> Array:
 
     Returns:
         npt.NDArray[np.floating[typing.Any]]: The total investment for each selected \
-funds. (m,).
+funds.
     """
     return investments[investments.nonzero()]
 
@@ -235,26 +257,3 @@ def get_sharpe_ratio(
     except ZeroDivisionError:
         raise
     return sharpe_ratio
-
-
-def get_selected_funds_indexes(qbits: Qbits, w: int) -> Indexes:
-    """Get the positional index of the selected funds in the prices array.
-
-    Example:
-
-        >>> qbits = np.array([0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0], \
-dtype=np.int8)
-        >>> indexes = get_selected_funds_indexes(qbits, 5)
-        >>> indexes
-        array([0, 1, 2])
-
-    Args:
-        qbits (Qbits): The dwave output array made of 0 and 1. (p,).
-        w (int): The depth of granularity.
-
-    Returns:
-        npt.NDArray[np.floating[typing.Any]]: The total investment for each funds. (m,).
-    """
-    investments = get_investments(qbits, w)
-    selected_funds = investments.nonzero()[0]  # We know that investment is a 1D array
-    return typing.cast(Indexes, selected_funds)

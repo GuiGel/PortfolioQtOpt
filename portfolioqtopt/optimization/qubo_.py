@@ -170,7 +170,8 @@ def get_qubo(
     anual_returns_partitions = expand(a.anual_returns, pw)  # (p,)
 
     # Compute the partitions of the average daily returns.
-    adrp = expand(a.average_daily_returns, pw)  # (p,)
+    # adrp = expand(a.average_daily_returns, pw)  # (p,)
+    adrp = expand(a.normalized_prices_approx, pw)  # (p,) Tecnalia option.
 
     # Set qubo values
     qubo_covariance = get_qubo_covariance(npp)

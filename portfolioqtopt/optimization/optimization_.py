@@ -78,7 +78,7 @@ def reduce_dimension(
         logger.debug(f"run solver step {step}")
         qbits = get_qbits(q, solver, token_api)
         _, indexes = get_investments(qbits, w)
-        logger.debug(f"selected indexes {indexes}")
+        logger.debug(f"selected indexes {indexes.tolist()}")
         c.update(Counter(indexes))
     distribution = pd.DataFrame.from_dict(
         c, orient="index", columns=["selected X times"]
@@ -138,13 +138,13 @@ def optimize(
     q = get_qubo(assets, b, w, theta1, theta2, theta3)
     outer_indexes = reduce_dimension(q, w, steps, solver, token_api)
 
-    logger.info(f"Create new assets with indexes:\n{outer_indexes}")
+    logger.info(f"create new assets with reduce universe:\n{outer_indexes}")
     assets = assets[outer_indexes]
 
-    logger.info(f"Recompute qubo.")
+    logger.info(f"recompute qubo")
     inner_qubo = get_qubo(assets, b, w, theta1, theta2, theta3)
 
-    logger.info(f"Find best sharpe ration.")
+    logger.info(f"iterate to find best sharpe ratio")
     outer_indexes, interpreter = find_best_sharpe_ratio(
         assets, inner_qubo, outer_indexes, steps, solver, token_api
     )

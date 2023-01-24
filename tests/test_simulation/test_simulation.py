@@ -17,7 +17,7 @@ def stocks() -> Stocks:
         ],
         dtype=np.float64,
     ).T
-    df = pd.DataFrame(prices, columns="a b c".split())
+    df = pd.DataFrame(prices, columns=["a", "b", "c"])
     stocks = Stocks(df=df)
     return stocks
 

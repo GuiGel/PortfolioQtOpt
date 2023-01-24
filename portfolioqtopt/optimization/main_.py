@@ -1,8 +1,8 @@
 import time
 
+import numpy as np
 import pandas as pd
 from loguru import logger
-import numpy as np
 
 from portfolioqtopt.optimization.assets_ import Assets
 from portfolioqtopt.optimization.interpreter_ import Interpretation

@@ -51,7 +51,9 @@ def get_qubo_prices_linear(partitions_granularity_broadcast: Array, b: float) ->
     return 2.0 * b * np.diag(partitions_granularity_broadcast)  # (p, p)
 
 
-def get_qubo_prices_quadratic(partitions_granularity_broadcast: Array, b: float) -> Array:
+def get_qubo_prices_quadratic(
+    partitions_granularity_broadcast: Array, b: float
+) -> Array:
     return np.outer(
         partitions_granularity_broadcast, partitions_granularity_broadcast
     )  # (p, p)

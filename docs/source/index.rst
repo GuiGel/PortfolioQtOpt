@@ -13,6 +13,7 @@ Welcome to PortfolioQtOpt's documentation!
    simulation/example_1
    simulation/example_2
    api
+   bibliography
 
 Indices and tables
 ==================

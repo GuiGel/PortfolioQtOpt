@@ -6,8 +6,7 @@ API
    :caption: Contents:
 
    api/simulation
-   api/markovitz_portfolio
    api/qubo
    api/optimization
-   api/interpreter_utils
+   api/interpreter
    api/reader

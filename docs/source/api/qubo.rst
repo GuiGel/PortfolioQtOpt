@@ -1,5 +1,5 @@
 Qubo
 ====
 
-.. automodule:: portfolioqtopt.optimization.qubo
+.. automodule:: portfolioqtopt.optimization.qubo_
     :members:

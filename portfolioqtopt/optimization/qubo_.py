@@ -1,7 +1,12 @@
 """Preliminary calculations.
 
-In this module, we calculate all preliminary results that depend only on prices,
-granularity depth and budget.
+In this module, we calculate the qubo dict on \
+:py:class:`portfolioqtopt.optimization.assets_.Assets`, granularity depth :math:`w` \
+and the budget :math:`b`.
+
+.. note:: 
+    We keep most of the small functions we have implemented as they help to \
+understand the calculations for this project and are an aid to accurate unit testing.
 """
 from __future__ import annotations
 
@@ -17,6 +22,36 @@ Q = typing.Mapping[typing.Tuple[Variable, Variable], Bias]
 
 
 def expand(array: Array, pw: Array, b: float = 1.0) -> Array:
+    """Expand a 1D or 2D array by multiplying all its values with pw values.
+
+    Example:
+
+        >>> pw = [1, 2, 3]
+
+        If array is a vector:
+
+        >>> array = np.array([1, 5], dtype=np.float64)
+        >>> expand(array, pw)
+        array([ 1.,  2.,  3.,  5., 10., 15.])
+
+        If array is a matrix:
+
+        >>> array = np.array([[1, 2], [5, 6]], dtype=np.float64)
+        >>> expand(array, pw)
+        array([[ 1.,  2.,  3.,  2.,  4.,  6.],
+               [ 5., 10., 15.,  6., 12., 18.]])
+
+    Args:
+        array (Array): A 1D or 2D array to expand with pw. (m,) or (n, m).
+        pw (Array): A granularity partition. (w,)
+        b (float, optional):The budget. Defaults to 1.0.
+
+    Raises:
+        ValueError: The array is not 1D or 2D.
+
+    Returns:
+        Array: If array is (n, m) -> (n, m * w) else (m,) -> (m * w,)
+    """
     dim = len(array.shape)
     if dim == 1:
         # array (m, )
@@ -32,36 +67,43 @@ def expand(array: Array, pw: Array, b: float = 1.0) -> Array:
 
 @cache
 def get_pw(w: int) -> Array:
-    """Compute the possible proportions of the budget that we can allocate to each fund.
+    """Compute the possible proportions :math:`p_{k}` of the budget that we can \
+    allocate to each fund.
 
     For :math:`k` in :math:`[1, w]`,  :math:`p_{k}=1/2^{k-1}`.  
 
     Example:
 
-        >>> get_partitions(5)
+        >>> get_pw(5)
         array([1.    , 0.5   , 0.25  , 0.125 , 0.0625])
 
     Args:
         w (int): The partitions number :math:`w` that determine the precision of the \
 granularity partition.
     Returns:
-        npt.NDArray[np.floating[typing.Any]]: The List of fraction values :math:`p_{w}`.
+        npt.NDArray[np.floating[typing.Any]]: The List of fraction values \
+            :math:`p_{w}`. (w,)
     """
     return np.power(0.5, np.arange(w))
 
 
 def get_pw_broadcast(pw: Array, m: int) -> Array:
-    """Broadcast pw by concatenating pw m times along 1 dimension.
+    """Broadcast pw by concatenating :math:`p_{w}` m times along 1 dimension.
+
+    Example:
+        >>> pw = [1, 0.5, 0.25, 0.125]
+        >>> get_pw_broadcast(pw, 2)  #
+        array([1.   , 0.5  , 0.25 , 0.125, 1.   , 0.5  , 0.25 , 0.125])
 
     Args:
         pw (Array): Granularity partition. (w,)
         m (int): The number of assets.
 
     Returns:
-        Array: The broadcast granular partitions. (p,)
+        Array: The broadcasted granular partitions. (p,)
     """
     # (p10, .., p1w-1, ..., pm0 ... pmw-1)
-    broadcast_array = np.zeros((m, 1)) + pw  # (m, w)
+    broadcast_array = np.zeros((m, 1), dtype=np.float64) + pw  # (m, w)
     return broadcast_array.flatten()  # (p,)
 
 
@@ -138,7 +180,7 @@ def get_lower_triangular(a: Array) -> Array:
 
 
 def get_qubo_dict(q: Array) -> Q:
-    """Create a dictionary from a symmetric matrix.
+    """Create a dictionary from a symmetric matrix upper indexes and values.
 
     This function is utilize to generate the qubo dictionary, which we will use to solve
     the problem in DWAVE.
@@ -186,7 +228,7 @@ def get_qubo(
 
     # Set qubo values
     qubo_covariance = get_qubo_covariance(npp)
-    qubo_returns = get_qubo_returns(adrp)
+    qubo_returns = get_qubo_returns(adrp)  # (p, p)
     pw_broadcast = get_pw_broadcast(pw, a.m)
     qubo_linear = get_qubo_prices_linear(pw_broadcast, b)
     qubo_quadratic = get_qubo_prices_quadratic(pw_broadcast)

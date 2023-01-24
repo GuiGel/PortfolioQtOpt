@@ -67,13 +67,27 @@ dtype=np.int8)
     return IvtIdx(investments[indexes], indexes)
 
 
-@dataclass
+@dataclass(eq=False)
 class Interpretation:
     selected_indexes: Indexes
     investments: Array
     expected_returns: float
     risk: float
     sharpe_ratio: float
+
+    def __eq__(self, other):
+        if not isinstance(other, Interpretation):
+            return NotImplemented
+        return (
+            (
+                np.testing.assert_equal(self.selected_indexes, other.selected_indexes)
+                is None
+            )
+            and (np.testing.assert_equal(self.investments, other.investments) is None)
+            and self.expected_returns == other.expected_returns
+            and self.risk == other.risk
+            and self.sharpe_ratio == other.sharpe_ratio
+        )
 
 
 def interpret(a: Assets, qbits: Qbits):

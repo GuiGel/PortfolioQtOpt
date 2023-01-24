@@ -20,13 +20,13 @@ def expand(array: Array, pw: Array, b: float = 1.0) -> Array:
     dim = len(array.shape)
     if dim == 1:
         # array (m, )
-        expanded_array = (array[..., None] * pw).flatten()  # m * w
+        expanded_array = (array[..., None] * pw).flatten()  # p = m * w
     elif dim == 2:
         n, _ = array.shape
         expanded_ = array[..., None] * b * pw  # (n, m, w)
-        expanded_array = expanded_.reshape(n, -1)  # (n, p)
+        expanded_array = expanded_.reshape(n, -1)  # (n, m * w) = (n, p)
     else:
-        raise ValueError("The array must be a Matrix or a Vector.")
+        raise ValueError(f"The array must be a 2D or 1D but is {dim}D.")
     return expanded_array
 
 
@@ -51,6 +51,15 @@ granularity partition.
 
 
 def get_pw_broadcast(pw: Array, m: int) -> Array:
+    """Broadcast pw by concatenating pw m times along 1 dimension.
+
+    Args:
+        pw (Array): Granularity partition. (w,)
+        m (int): The number of assets.
+
+    Returns:
+        Array: The broadcast granular partitions. (p,)
+    """
     # (p10, .., p1w-1, ..., pm0 ... pmw-1)
     broadcast_array = np.zeros((m, 1)) + pw  # (m, w)
     return broadcast_array.flatten()  # (p,)

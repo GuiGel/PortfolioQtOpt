@@ -17,3 +17,6 @@ data
 # Sphinx
 docs/build
 *.ipynb_checkpoints
+
+# temporary folder
+to_remove

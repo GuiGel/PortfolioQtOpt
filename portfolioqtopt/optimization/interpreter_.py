@@ -18,6 +18,9 @@ Indexes = npt.NDArray[np.signedinteger[typing.Any]]
 
 
 class IvtIdx(typing.NamedTuple):
+    """Named Tuple that stores the indexes of the selected assets and their \
+corresponding investment.
+    """
     investment: Array
     indexes: Indexes
 
@@ -90,8 +93,8 @@ class Interpretation:
         )
 
 
-def interpret(a: Assets, qbits: Qbits):
-    """_summary_
+def interpret(a: Assets, qbits: Qbits) -> Interpretation:
+    """Interpret the optimization results.
 
     Example:
 
@@ -104,8 +107,8 @@ def interpret(a: Assets, qbits: Qbits):
 [100, 101, 102, 103, 104],\
 ], dtype=np.float64).T
 
-        Create an instance of the :class:`portfolioqtopt.optimization.assets_.Assets` \
-object.
+        Create an instance of the :py:class:`portfolioqtopt.optimization.assets_.Assets`
+        object.
 
         >>> assets = Assets(prices)
 
@@ -122,11 +125,12 @@ investments=array([0.75 , 0.125, 0.125]), expected_returns=44.5, \
 risk=17.153170260916784, sharpe_ratio=2.594272622676201)
 
     Args:
-        a (Assets): _description_
-        qbits (Qbits): _description_
+        a (Assets): The assets.
+        qbits (Qbits): The qbits resulting of the optimization.
 
     Returns:
-        _type_: _description_
+        Interpretation: The interpretation of the optimization process for a given set \
+of assets.
     """
     p = len(qbits)
     w = int(p / a.m)
@@ -144,8 +148,6 @@ risk=17.153170260916784, sharpe_ratio=2.594272622676201)
     covariance: float = (investments_prod * prices_cov).sum() * 2
 
     risk = np.sqrt(deviation + covariance)
-
-    print(f"{a.anual_returns=}")
 
     returns = a.anual_returns * investments
     expected_returns = 100 * returns.sum()

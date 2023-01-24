@@ -1,8 +1,4 @@
-"""Preliminary calculations.
-
-In this module, we calculate all preliminary results that depend only on prices,
-granularity depth and budget.
-"""
+"""This module defines the :class:`Assets` object."""
 from __future__ import annotations
 
 import typing
@@ -11,8 +7,6 @@ from functools import cached_property
 import numpy as np
 import numpy.typing as npt
 from dimod.typing import Bias, Variable
-
-T = typing.TypeVar("T", np.float64, np.float_)
 
 Array = npt.NDArray[np.float64]
 
@@ -40,7 +34,8 @@ class Assets:
 
     @cached_property
     def normalized_prices_approx(self) -> Array:
-        return (self.normalized_prices[-1] - self.normalized_prices[0]) / (self.n - 1)
+        diff = self.normalized_prices[-1] - self.normalized_prices[0]
+        return typing.cast(Array, diff / (self.n - 1))
 
     @cached_property
     def anual_returns(self) -> Array:

@@ -1,4 +1,91 @@
-"""Module that implement the simulation core functionalities."""
+"""Module that implement the simulation core functionalities.
+
+How does it works ?
+-------------------
+
+We have yet a matrix of daily returns :math:`Erd_{s}` that have the same covariance \
+matrix :math:`\\Sigma` as the one of our historical prices :math:`P`. But the anual \
+expected return vector :math:`Er_{s}` that correspond to these simulated daily returns \
+is not the same as the original one :math:`Er`.
+
+By using the fact that, if :math:`c \\in `R^n` a vector then \
+:math:`\\mathbb{E}[Er_{s} +  c^T]=\\mathbb{E}[Er_{s}]`, we can easily demonstrate that \
+:math:`Cov(Er_{s} + c^T)=Cov(Er)`.
+
+Our goal here is to found that vector :math:`c` such that :math:`Er_s + c^T = Er` so \
+let's go!
+
+For a given stock :math:`u`, the expected return :math:`r_{u}` between days \
+:math:`0, n` is:
+
+.. math:: r_{u}=\\frac{r_{u,n}-r_{u,0}}{r_{u,0}}
+
+and we can remarque that:
+
+.. math:: 1 + r_{u}=\\prod_{i=1}^n(1 + r_{u,i})
+
+If for all :math:`i` in :math:`[1,n]` we have :math:`r_{u,i} > -1` then:
+
+.. math:: ln(1 + r_{u})=\\sum_{k=1}^n{ln(1+r_{u,i})} 
+
+.. note::
+    The *Taylor* theorem :
+
+    #. :math:`I` a subset of :math:`R`;
+    #. :math:`a` in :math:`I`;
+    #. :math:`E` a real normed vector space;
+    #. :math:`f` a function of :math:`I` in :math:`E` derivable in :math:`a` up to a \
+certain order :math:`n\\geq 1`.  
+
+    Then for any real number :math:`x` belonging to :math:`I` , we have the \
+*Taylor-Young* formula:
+
+    .. math:: f(a+h)=\\sum_{k=0}^n{\\frac{f^{(k)}(a)}{k!}h^{k}+R_{n}(a+h)}
+
+    where the remaining :math:`R_{n}(x)` is a negligible function with respect to \
+    :math:`(x-a)^{n}` in the neighbourhood of :math:`a`.
+
+If we apply to the *Taylor theorem* to the logarithm function in 1 we have for all \
+:math:`x > 0`:   
+
+.. math:: ln(1+x)=\\sum_{k=1}^{n} {(-1)^{k-1}\\frac{x^{k}}{k}}+ R_{n}(1+x)
+
+If :math:`x < 1` then the *Taylor-Young* formula stand that we have:
+
+.. math:: R_{n}(1 + x)=o(x^{n})
+
+In our particular case, we know that the daily returns :math:`r_{u, i}` are strictly \
+less than 1 for all :math:`i` and :math:`u`. We can therefore always find a strictly \
+positive integer :math:`n` such that :math:`ln(1+r_{u,i})` is approximated with a great \
+accuracy by is corresponding polynomial *Taylor-Young* approximation. 
+
+.. math::
+
+    \\lim_{n \\to +\\infty}ln(1 + r_{u,i}) - \\sum_{k=1}^{n}{(-1)^{k-1}\\frac{r_{u,i}^{k}}{k}} = 0
+
+
+So for a given stock :math:`u` with  :math:`m` daily returns, and :math:`r_{u, i}` a \
+daily return at day :math:`i`, we can try to found the constant :math:`c_{u}` such \
+that for a simulated daily return :math:`rs_{u,i}` we have:
+
+.. math:: \\sum_{i=1}^m{ln(1 + rs_{u,i} + c_{u})} = ln(1 + r_{u})
+
+To solve this equation we will use the *Taylor-Young* approximation to create the \
+polynomial :math:`P_{u}^{n}(X)` of order :math:`n` such that:
+
+.. math:: P_{u}^{n}(X) = \\sum_{i=1}^{m} \\sum_{k=1}^n(-1)^{k-1}{\\frac{(rs_{u,i} + X)^{k}}{k}} - ln(1 + r_{u})
+
+
+Let be :math:`c_{n,u}` a root of  :math:`P_{u}^{n}(X)`.
+If \
+:math:`\\forall n >=1, | \\underset{1 \\leq i \\leq n}{max}(rs_{u,i}) + c_{n,u} | < 1` \
+then we can observe that:
+
+.. math:: \\lim_{n \\to +\\infty}(c_{n,u}) = c_{u}
+
+Our algorithm fails if :math:`P_{u}^{n}(X)` as no such root!
+
+"""
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -21,25 +108,25 @@ from portfolioqtopt.simulation.stocks import Stocks
 
 
 class Simulation:
+    """Simulate prices that have the same covariance has the historical prices
+    and a given expected anual return.
+
+    Args:
+        stock (Stocks): A Stock object. Shape (k, n) where k is the number days and
+            n the number of stocks.
+        er (npt.ArrayLike): The expected anual returns for each stocks.
+            List of shape (n, ) where n is the number of stocks.
+        m (int): The number of future daily returns to simulate.
+
+    Attributes:
+        cov_h (npt.NDArray): Historical prices covariance. Matrix of shape
+            (n, n) where n is the number of stocks.
+    """
+
     def __init__(self, stock: Stocks, er: Dict[str, float], m: int) -> None:
-        """Simulate prices that have the same covariance has historical prices
-        and a given expected anual return.
-
-        Args:
-            stock (Stocks): A Stock object.
-            er (npt.ArrayLike): The expected anual returns for each stocks.
-                List of shape (k, ) where k is the number of stocks.
-            m (int): The number of future daily returns.
-
-        Attributes:
-            cov_h (npt.NDArray): Historical prices covariance. Matrix of shape
-                (k, k) where k is the number of stocks and n the number of
-                prices.
-        """
-
         # TODO check that er are strictly positives, m > 0 and
 
-        self.k, n = stock.prices.shape
+        self.k, _ = stock.prices.shape
         self.stock = stock
         self.cov_h = stock.cov  # historical covariance
         self.er: npt.NDArray[np.float64] = np.array(list(er.values()))
@@ -50,35 +137,95 @@ class Simulation:
 
     @property
     def init_prices(self) -> npt.NDArray[np.float64]:
-        # Get the initialization price for the simulation, the last
-        # prices of the historical prices
+        """Initialization price for the simulation.
+
+        The last prices of the historical prices are taken as initial prices.
+
+        Returns:
+            npt.NDArray[np.float64]: A vector of floats.
+        """
         return self.stock.prices[:, -1:]  # (k, 1)
 
-    def correlate(self) -> npt.NDArray[np.float64]:
-        """Create random vectors that have a given covariance matrix"""
-        try:
-            chol_h = la.cholesky(self.cov_h)
-        except la.LinAlgError as e:
-            raise CovNotSymDefPos(self.cov_h, e)
+    def _chol(
+        self, a: Optional[npt.NDArray[np.float64]] = None
+    ) -> npt.NDArray[np.float64]:
+        """Choleski decomposition.
 
-        rd = np.random.normal(0, 1, size=(self.k, self.m))
-        cov_rd = np.cov(rd)
+        Return the Cholesky decomposition, L * L.H, of the square matrix a, where L is \
+lower-triangular and .H is the conjugate transpose operator (which is the ordinary \
+transpose if a is real-valued). a must be Hermitian (symmetric if real-valued) and \
+positive-definite (which is the case if a is the covariance matrix of the daily returns\
+). No checking is performed to verify whether a is Hermitian or not. In addition, only \
+the lower-triangular and diagonal elements of a are used. Only L is actually returned.
+
+        Args:
+            a (Optional[npt.NDArray[np.float64]], optional): A Matrix but here a
+                symmetric positive matrix. Defaults to None.
+
+        Raises:
+            CovNotSymDefPos: The matrix a is not symmetric definite positive.
+
+        Returns:
+            npt.NDArray[np.float64]: If a is None, return the Choleski decomposition of
+                :attr:`Simulation.cov_h`
+        """
+        if a is None:
+            a = self.cov_h
         try:
-            chol_rd = la.cholesky(cov_rd)
+            L = la.cholesky(a)
+            return L
         except la.LinAlgError as e:
-            raise CovNotSymDefPos(cov_rd, e)
-        rd_corr = chol_h.dot(np.linalg.inv(chol_rd).dot(rd))  # (k, m)
+            raise CovNotSymDefPos(a, e)
+
+    def _get_random_daily_returns(self) -> npt.NDArray[np.float64]:
+        """Get random Gaussian vectors with the matrix identity as covariance matrix.
+
+        TODO This is a function that can be put outside of the class.
+        """
+        x = np.random.normal(0, 1, size=(self.k, self.m))
+        cov = np.cov(x)
+        L = self._chol(cov)
+        return np.linalg.inv(L).dot(x)
+
+    def correlate(self) -> npt.NDArray[np.float64]:
+        """Create random vectors that have a given covariance matrix.
+
+        This method is used to create random daily returns that have the same covariance
+        as the stock returns.
+
+        #. Compute the Choleski decomposition of the covariance of the daily returns \
+of the stock prices.
+        #. Generate random Gaussian vectors that simulate daily returns with an \
+Identity covariance matrix.
+        #. Simulate daily returns with the same covariance matrix as historical ones.
+        """
+        L = self._chol()
+        random_daily_returns = self._get_random_daily_returns()
+        daily_returns = L.dot(random_daily_returns)  # (k, m)
 
         # g are daily returns that must all be inferior to 1!
-        if np.all(rd_corr < 1):
+        if np.all(daily_returns < 1):
             logger.warning("Correlated daily returns not all inf to 1!")
 
-        return rd_corr  # (k, m)
+        return daily_returns  # (k, m)
 
     @staticmethod
     def get_log_taylor_series(
         cr: npt.NDArray[np.float64], er: npt.NDArray[np.float64], order: int = 4
     ):
+        """Obtain a polynomial approximation of the expected return.
+
+        Args:
+            cr (npt.NDArray[np.float64]): Matrix of daily returns with the same \
+covariance matrix as the historical daily returns.
+            er (npt.NDArray[np.float64]): The anual expected returns. Hey must be \
+strictly superior to -1.
+            order (int, optional): Order of the polynomial Taylor-Young approximation \
+of the :math:`ln` function. Defaults to 4.
+
+        Returns:
+            _type_: _description_
+        """
         # cr: correlated daily returns (k, m)
         # er: anual expected returns (k)
         # limited development of the function ln(1+x) with x = rc + alpha
@@ -95,7 +242,8 @@ class Simulation:
         lds -= np.log(1 + er)
         return lds  # (k,)
 
-    def get_root(self, dl: P, min_r: float, max_r: float) -> float:
+    @staticmethod
+    def get_root(dl: P, min_r: float, max_r: float) -> float:
         # ------------- compute limited development roots
         roots = P.roots(dl)
 

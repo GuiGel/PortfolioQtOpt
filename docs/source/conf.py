@@ -40,8 +40,12 @@ extensions = [
     "nbsphinx",
     "myst_parser",
     "sphinx_copybutton",
-    "IPython.sphinxext.ipython_console_highlighting"
+    "IPython.sphinxext.ipython_console_highlighting",
+    "sphinxcontrib.bibtex",
 ]
+
+# Add bibliography file name
+bibtex_bibfiles = ['refs.bib']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

@@ -39,6 +39,7 @@ sphinx = ">=3,<5"
 matplotlib = "^3.6.3"
 jupyter = "^1.0.0"
 sphinx-book-theme = "^0.3.3"
+sphinxcontrib-bibtex = "^2.5.0"
 
 [tool.isort]
 profile = "black"

@@ -210,6 +210,22 @@ def get_qubo_dict(q: Array) -> Q:
 def get_qubo(
     a: Assets, b: float, w: int, theta1: float, theta2: float, theta3: float
 ) -> Q:
+    """Function that return the qubo ready for passing to the solver.
+
+    Compute the qubo as stand by the equation (20) in :cite:p:`Grant2021`.
+
+    Args:
+        a (Assets): Assets with asset prices.
+        b (float): The initial budget to allocate.
+        w (int): The partition number.
+        theta1 (float): The first Lagrange multiplier.
+        theta2 (float): The second Lagrange multiplier.
+        theta3 (float): The third Lagrange multiplier.
+
+    Returns:
+        Q: The qubo as a dict where the keys are a tuple representing the position of \
+the corresponding value in the qubo matrix.
+    """
 
     # Compute the granularity partition
     pw = get_pw(w)

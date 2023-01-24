@@ -23,23 +23,11 @@ def test_read_welzia_stocks_file(welzia):
     np.testing.assert_equal(array, expected_array)
     assert array.shape == (4, 3)
 
-    # test that the pd.MultiIndex of df is the expected one
-    column_arrays = [
-        ["LU0151325312", "LU0329760937", "LU0963540371"],
-        [
-            "Candriam Bonds - Credit Opport",
-            "DWS Invest Global Infrastructu",
-            "Fidelity Funds - America Fund",
-        ],
-        [
-            "DEXHISI LX Equity",
-            "DWSGIFC LX Equity",
-            "FIAYEHG LX Equity",
-        ],
-        ["PX_LAST", "PX_LAST", "PX_LAST"],
-    ]
-    column_names = [None, "Name", "TICKER_AND_EXCH_CODE", "Date"]
-    columns = pd.MultiIndex.from_arrays(column_arrays, names=column_names)
+    # test that the name of the columns are the expected ones
+    column_arrays = ["DEXHISI LX Equity", "DWSGIFC LX Equity", "FIAYEHG LX Equity"]
+    column_names = ["TICKER_AND_EXCH_CODE"]
+    columns = pd.Index(column_arrays)
 
-    assert isinstance(df.columns, pd.MultiIndex)  # To avoid mypy complains
-    assert pd.MultiIndex.equals(df.columns, columns)
+    assert isinstance(df.columns, pd.Index)  # To avoid mypy complains
+    assert pd.Index.equals(df.columns, columns)
+    assert column_names == df.columns.names

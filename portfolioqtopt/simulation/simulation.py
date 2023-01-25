@@ -9,32 +9,99 @@ durant :math:`N^{h}` jours.
 
 - Un prix initial :math:`V\\in\\large{R}^{1\\times{m}}` pour chaque actif :math:`a_{i}`.
 
-- Un nombre de jours :math:`N^{s}` qui représentent le nombre de jour de clotures où \
-l'on doit simuler un prix de tel sorte que l'ensemble des prix simulés pour :math:`A` \
-est donné par :math:`P^{s}\\in\\large{R}^{N^{s}\\times{m}}`
+- Le nombre de jour de clotures :math:`N^{s}` où l'on doit simuler un prix pour chaque \
+asset.
 
-- Le retour espéré à la fin de la simulation \
-:math:`Er \\in \\large{R}^{1 \\times{m} }` pour chaque actifs :math:`a_{i}` avec \
+- Le retour espéré de :math:`A` à la fin de la simulation \
+:math:`Er \\in \\large{R}^{1 \\times{m} }` avec \
 :math:`er_{i}=(p^{s}_{i,Nh} - p^{s}_{i,0})/p^{s}_{i,0}` le retour espéré de l'actif  \
 :math:`a_{i}` durant les :math:`N^{s}_{f}` jours simulés.
 
-de créer :math:`P^{s}` de tel sorte que:  
+de simulé les prix futurs :math:`P^{s}\\in\\large{R}^{N^{s}\\times{m}}` de \
+:math:`A` de tel sorte que:  
 
 - :math:`C^{s}=C^{h}` avec :math:`C^{s}=Cov(Ed^{s})`et:math:`C^{h}=Cov(Ed^{h})` \
 ou :math:`Ed^{s}\\in\\large{R}^{N^{s}-1\\times{m}}` représente la matrice des \
-retours journalier des prix simulés des assets :math:`A` et \ 
+retours journalier des prix simulés des assets :math:`A` et \
 :math:`E^{h}_{d}\\in\\large{R}^{N^{h}-1\\times{m}}` ceux de leur prix historique. \
-Nous définissons le retour journalier de l'asset :math:`a_{i}` le jour :math:`j>1` \
-comme :math:`ed_{i,j}=(p_{i,j} - p_{i,j-1})/p_{i,j-1}`.
+Le retour journalier :math:`ed_{i,j}` de l'asset :math:`a_{i}` le jour :math:`j>1` \
+est tel que :math:`ed_{i,j}=(p_{i,j} - p_{i,j-1})/p_{i,j-1}`.
 
 
 - :math:`Er^{s}=Er` ou :math:`Er^{s} \\in \\large{R}^{1 \\times{m} }` est le retour \
 espéré de A sur la période de temps de la simulation.
 
 
-
 How does it works ?
 -------------------
+
+Génerer des retours journaliers ayant la covariance désirées
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To do this, we first generate a matrix :math:`M\\in\\large{R}^{N^{s}-1\\times{m} }` \
+composed of random values drawn from the standard normal distribution.  
+:math:`M` is our first version of the simulated daily expected returns.
+
+Puis comme nous savons que :math:`Cov(M)\\in\\large{R}^{m\\times{m}}` est une matrice \
+symetrique définie positive à valeur réelles qui n'est pas tout à fait la matrice \
+identité :math:`I`, nous utilisons la décomposition de Choleski qui \
+nous dit qu'il existe une unique matrice :math:`L\\in\\large{R}^{m\\times{m}}` upper \
+triangular with real and positive diagonal entries tel que :math:`Cov(M)=C^{M}=L^{T}L`.
+
+Nous pouvons faire de même pour :math:`C^{h}` et écrire qu'il existe une unique matrice \
+triangulaire supérieur :math:`L^{h}\\in\\large{R}^{m\\times{m}}` tel que \
+:math:`C^{h}=L_{h}^{T}L_{h}`.
+
+Nous suposons que les matrices :math:`L` et :math:`L^{h}` sont inversibles. \
+Montrons que si l'on pose :math:`Q=ML^{-1}L_{h}` alors :math:`Cov(Q)=C^{h}` .
+
+Pour cela utilisons le fait :math:`\\mathbb{E}(MA)=\\mathbb{E}(M)A` et revenons à la \
+définition de la covariance:
+
+.. math:: 
+    Cov(Q)=\\mathbb{E}[(MA - \\mathbb(MA))^{T}(MA - \\mathbb(MA)))]
+
+    Cov(Q)=\\mathbb{E}[A^{T}(M - \\mathbb(M))^{T}(M - \\mathbb(M)))A]
+
+    Cov(Q)=A^{T}\\mathbb{E}[(M - \\mathbb(M))(M - \\mathbb(M)))A]
+
+    Cov(Q)=A^{T}C^{M}A]
+
+
+Pour obtenir la matrice :math:`Q\\in\\large{R}^{N^{s}-1\\times{m} }` tel que \
+:math:`Cov(Q)=C^{h}` une condition nécessaire et suffisante est que les matrices \
+:math:`L` et :math:`L^{h}` soient inversibles.
+
+Si cette condition est remplie alors posons :math:`Q=ML^{-1}L_{h}` et montrons que :math:`Cov(Q)=C^{h}`.
+
+Nous pouvons démontrer que :math:`\\mathbb{E}(AM)=A\\mathbb{E}(M)` et donc écrire \
+en posant :math:`A=L^{-1}L_{h}` que \
+:math:`(Q - \\mathbb{E}(Q)) = (M - \\mathbb{E}(M))A` donc nous avons \
+:math:`Cov(Q)=\\mathbb{E}[A^{T}(M - \\mathbb(M))(M - \\mathbb(M)))A]` ce qui équivaut \
+à écrire :math:`Cov(Q)=A^{T}C^{M}A=L^{T}_{h}{L^{-1}}^TC^{M}L^{-1}L_{h}` \
+or :math:`{L^{-1}}^TC^{M}L^{-1}=I` \
+soit :math:`Cov(Q)=L^{T}_{h}L_{h}`
+donc nous avons bien si :math:`L` et :math:`L_{h}` inversibles :math:`Cov(Q)=C^{h}` .
+
+
+Si nous revenons à la definition de la covariance de notre matrice :math:`M` composé de \
+:math:`m` vecteurs de dimension :math:`N^{s}-1`. Nous avons \
+:math:`C^{M}=\\mathbb{E}[(M - \\mathbb(M))^{T}(M - \\mathbb(M)))]` ce que l'on peut \
+réecrire :math:C^{M}=`.
+
+Nous pouvons utiliser le fait que si :math:`A`est une \
+matrice carré d'ordre math:`n` à coefficiant réels ou complexe alors: \
+:math:`{A^{T}}^{-1}={A^{-1}}^{T}` et écrire:
+
+.. math:: 
+    L^{-1}C^{M}(L^{-1})^T=I  
+    \\implies \\mathbb{E}[(M - \\mathbb(M))^{T}(M - \\mathbb(M)))]
+    \\implies \\
+
+
+
+Génerer des retours journaliers ayant le retour expéré désiré
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We have yet a matrix of daily returns :math:`Erd_{s}` that have the same covariance \
 matrix :math:`\\Sigma` as the one of our historical prices :math:`P`. But the anual \

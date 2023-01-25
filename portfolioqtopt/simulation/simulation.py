@@ -40,23 +40,17 @@ Generate daily returns with the desired covariance
 
 To do this, we first generate a matrix :math:`M\\in\\large{R}^{N^{s}-1\\times{m} }` \
 composed of random values drawn from the standard normal distribution.  
+
 We are going to generate the desired daily returns from :math:`M`.
 
-Puis comme nous savons que :math:`Cov(M)\\in\\large{R}^{m\\times{m}}` est une matrice \
-symetrique définie positive à valeur réelles qui n'est pas tout à fait la matrice \
-identité :math:`I`, nous utilisons la décomposition de Choleski qui \
-nous dit qu'il existe une unique matrice :math:`L\\in\\large{R}^{m\\times{m}}` upper \
-triangular with real and positive diagonal entries tel que :math:`Cov(M)=C^{M}=L^{T}L`.
+The covariance matrix :math:`Cov(M)` is a symmetric positive definite real-valued matrix which is not exactly the identity matrix :math:`I`, we use the Choleski decomposition which tells us that there is a unique matrix :math:`L\in\\large{R}^{m\times{m}}` upper triangular with real and positive diagonal entries such that :math:`Cov(M)=C^{M}=L^{T}L`.
 
-Nous pouvons faire de même pour :math:`C^{h}` et écrire qu'il existe une unique matrice \
-triangulaire supérieur :math:`L^{h}\\in\\large{R}^{m\\times{m}}` tel que \
-:math:`C^{h}=L_{h}^{T}L_{h}`.
+We can do the same for :math:`C^{h}` and write that there is a unique upper triangular \
+matrix :math:`L^{h}\\in\\large{R}^{m\\times{m}}` such that :math:`C^{h}=L_{h}^{T}L_{h}`.
 
-Nous suposons que les matrices :math:`L` et :math:`L^{h}` sont inversibles. \
-Montrons que si l'on pose :math:`Q=ML^{-1}L_{h}` alors :math:`Cov(Q)=C^{h}` .
+Now let's show that if the matrices :math:`L` and :math:`L^{h}` are invertible, then by setting :math:`Q=ML^{-1}L_{h}` it follows that :math:`Cov(Q)=C^{h}` .
 
-Pour cela utilisons le fait :math:`\\mathbb{E}(MA)=\\mathbb{E}(M)A` et revenons à la \
-définition de la covariance:
+To do this let's use the fact :math:`\\mathbb{E}(MA)=\\mathbb{E}(M)A` and return to the definition of covariance:
 
 .. math:: 
     Cov(Q) &= \\mathbb{E}[(MA - \\mathbb(MA))^{T}(MA - \\mathbb(MA)))]
@@ -81,12 +75,12 @@ or we have seen that by definition :math:`Cov(M)=C^{M}=L^{T}L` so we have \
 Generate daily returns with the desired expired return
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-We have yet a matrix of daily returns :math:`Erd_{s}` that have the same covariance \
+We have yet a matrix of daily returns :math:`Erd_{s} = Q` that have the same covariance \
 matrix :math:`\\Sigma` as the one of our historical prices :math:`P`. But the anual \
 expected return vector :math:`Er_{s}` that correspond to these simulated daily returns \
 is not the same as the original one :math:`Er`.
 
-By using the fact that, if :math:`c \\in `R^n` a vector then \
+By using the fact that, if :math:`c \\in `R^{n}` a constant vector then \
 :math:`\\mathbb{E}[Er_{s} +  c^T]=\\mathbb{E}[Er_{s}]`, we can easily demonstrate that \
 :math:`Cov(Er_{s} + c^T)=Cov(Er)`.
 

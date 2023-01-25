@@ -1,6 +1,6 @@
 Optimization
 ============
 
-.. automodule:: portfolioqtopt.optimization.optimization
+.. automodule:: portfolioqtopt.optimization.optimization_
     :members:
     :private-members: 

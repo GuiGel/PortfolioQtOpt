@@ -1,56 +1,64 @@
 """Module that implement the simulation core functionalities.
 
-L'objectif de la simulation est, pour un ensemble d'assets 
-:math:`A=(a_{1}, ..., a_{i}, ..., a_{m})`, connaissant:
+The objective of the simulation is, for a set of assets \
+    :math:`A=(a_{1}, ..., a_{i}, ..., a_{m})`, knowing:
 
-- L'historique de leur prix \
-:math:`P^{h}\\in\\large{R}^{N^{h}\\times{m}}` à la cloture des marchés financiés \
-durant :math:`N^{h}` jours.
+* Their price history :math:`P^{h}\\in\\large{R}^{N^{h}\\times{m}}` \
+    for :math:`N^{h}` days.
 
-- Un prix initial :math:`V\\in\\large{R}^{1\\times{m}}` pour chaque actif :math:`a_{i}`.
+* An initial price :math:`V\\in\\large{R}^{1\\times{m}}` for each asset :math:`a_{i}`.
 
-- Le nombre de jour de clotures :math:`N^{s}` où l'on doit simuler un prix pour chaque \
-asset.
+* The number of closing days :math:`N^{s}` where we have to simulate a price for \
+    each asset.
 
-- Le retour espéré de :math:`A` à la fin de la simulation \
-:math:`Er \\in \\large{R}^{1 \\times{m} }` avec \
-:math:`er_{i}=(p^{s}_{i,Nh} - p^{s}_{i,0})/p^{s}_{i,0}` le retour espéré de l'actif  \
-:math:`a_{i}` durant les :math:`N^{s}_{f}` jours simulés.
+* The expected return of :math:`A` at the end of the simulation \
+    :math:`Er \\in \\large{R}^{1 \\times{m} }`. We have \
+    :math:`er_{i}=(p^{s}_{i,Nh} - p^{s}_{i,0})/p^{s}_{i,0}` the expected return of \
+    the asset :math:`a_{i}` for the :math:`N^{s}_{f}` simulated days.
 
-de simulé les prix futurs :math:`P^{s}\\in\\large{R}^{N^{s}\\times{m}}` de \
-:math:`A` de tel sorte que:  
+to simulate the future prices :math:`P^{s}\\in\\large{R}^{N^{s}\\times{m}}` of \
+:math:`A` such that:  
 
-- :math:`C^{s}=C^{h}` avec :math:`C^{s}=Cov(Ed^{s})`et:math:`C^{h}=Cov(Ed^{h})` \
-ou :math:`Ed^{s}\\in\\large{R}^{N^{s}-1\\times{m}}` représente la matrice des \
-retours journalier des prix simulés des assets :math:`A` et \
-:math:`E^{h}_{d}\\in\\large{R}^{N^{h}-1\\times{m}}` ceux de leur prix historique. \
-Le retour journalier :math:`ed_{i,j}` de l'asset :math:`a_{i}` le jour :math:`j>1` \
-est tel que :math:`ed_{i,j}=(p_{i,j} - p_{i,j-1})/p_{i,j-1}`.
+* :math:`C^{s}=C^{h}`
 
+    :math:`C^{s}=Cov(Ed^{s})` \
+    and :math:`C^{h}=Cov(Ed^{h})` \
+    where :math:`Ed^{s}\\in\\large{R}^{N^{s}-1\\times{m}}` represents the matrix of \
+    the daily returns of the simulated asset prices :math:`A` and \
+    :math:`Ed^{h}\\in\\large{R}^{N^{h}-1\\times{m}}` those of their historical prices. \
+    The daily return :math:`ed_{i,j}` of the asset :math:`a_{i}` on day :math:`j>1` \
+    is such that :math:`ed_{i,j}=(p_{i,j} - p_{i,j-1})/p_{si,j-1}`.
 
-- :math:`Er^{s}=Er` ou :math:`Er^{s} \\in \\large{R}^{1 \\times{m} }` est le retour \
-espéré de A sur la période de temps de la simulation.
+* :math:`Er^{s}=Er`
+
+    :math:`Er^{s} \\in \\large{R}^{1 \\times{m} }` is the expected return of A over \
+    the time period of the simulation.
 
 
 How does it works ?
 -------------------
 
-Generate daily returns with the desired covariance
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1. Generate daily returns with a given covariance
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To do this, we first generate a matrix :math:`M\\in\\large{R}^{N^{s}-1\\times{m} }` \
-composed of random values drawn from the standard normal distribution.  
+composed of random values drawn from the standard normal distribution from which we \
+will generate the desired daily returns from :math:`M`.
 
-We are going to generate the desired daily returns from :math:`M`.
-
-The covariance matrix :math:`Cov(M)` is a symmetric positive definite real-valued matrix which is not exactly the identity matrix :math:`I`, we use the Choleski decomposition which tells us that there is a unique matrix :math:`L\in\\large{R}^{m\times{m}}` upper triangular with real and positive diagonal entries such that :math:`Cov(M)=C^{M}=L^{T}L`.
+The covariance matrix :math:`Cov(M)` is a symmetric positive definite real-valued \
+matrix which is not exactly the identity matrix :math:`I`, we use the Choleski \
+decomposition which tells us that there is a unique matrix \
+:math:`L\\in\\large{R}^{m\times{m}}` upper triangular with real and positive diagonal \
+entries such that :math:`Cov(M)=C^{M}=L^{T}L`.
 
 We can do the same for :math:`C^{h}` and write that there is a unique upper triangular \
 matrix :math:`L^{h}\\in\\large{R}^{m\\times{m}}` such that :math:`C^{h}=L_{h}^{T}L_{h}`.
 
-Now let's show that if the matrices :math:`L` and :math:`L^{h}` are invertible, then by setting :math:`Q=ML^{-1}L_{h}` it follows that :math:`Cov(Q)=C^{h}` .
+Now let's show that if the matrices :math:`L` and :math:`L^{h}` are invertible, then \
+by setting :math:`Q=ML^{-1}L_{h}` it follows that :math:`Cov(Q)=C^{h}` .
 
-To do this let's use the fact :math:`\\mathbb{E}(MA)=\\mathbb{E}(M)A` and return to the definition of covariance:
+To do this let's use the fact :math:`\\mathbb{E}(MA)=\\mathbb{E}(M)A` and return to \
+the definition of covariance: TODO Demostrate it is needed.
 
 .. math:: 
     Cov(Q) &= \\mathbb{E}[(MA - \\mathbb(MA))^{T}(MA - \\mathbb(MA)))]
@@ -72,31 +80,26 @@ or we have seen that by definition :math:`Cov(M)=C^{M}=L^{T}L` so we have \
     Cov(Q) &= C^{h}
 
 
-Generate daily returns with the desired expired return
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2. Generate daily returns with the given expected return
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-We have yet a matrix of daily returns :math:`Erd_{s} = Q` that have the same covariance \
-matrix :math:`\\Sigma` as the one of our historical prices :math:`P`. But the anual \
-expected return vector :math:`Er_{s}` that correspond to these simulated daily returns \
-is not the same as the original one :math:`Er`.
+We have a matrix of daily returns :math:`Q` that have the same covariance \
+matrix :math:`C^{h}` as the one of the daily return of our historical prices. But the \
+vector of anual expected returns :math:`Er^{q}` that correspond to these simulated \
+daily returns is not the same as the original one :math:`Er`.
 
-By using the fact that, if :math:`c \\in `R^{n}` a constant vector then \
-:math:`\\mathbb{E}[Er_{s} +  c^T]=\\mathbb{E}[Er_{s}]`, we can easily demonstrate that \
-:math:`Cov(Er_{s} + c^T)=Cov(Er)`.
+By using the fact that, if :math:`c \\in R^{N^{s}-1}` a constant vector then \
+:math:`\\mathbb{E}[Q+c^T]=\\mathbb{E}[Er^{s}]`, we can demonstrate that we still have \
+:math:`Cov(Q + c^T)=C^{h}`. (TODO Make the demo if needed)
 
-Our goal here is to found that vector :math:`c` such that :math:`Er_s + c^T = Er` so \
-let's go!
+So our goal is to found :math:`c` such that :math:`Er^{q} + c^T = Er`.
 
-For a given stock :math:`u`, the expected return :math:`r_{u}` between days \
-:math:`0, n` is:
+Given an asset :math:`a_{u}`, with an expected return :math:`r_{u}` between days \
+:math:`0` and :math:`t` we have:
 
-.. math:: r_{u}=\\frac{r_{u,n}-r_{u,0}}{r_{u,0}}
+.. math:: 1 + r_{u}=\\prod_{i=1}^{t}(1 + r_{u,i})
 
-and we can remarque that:
-
-.. math:: 1 + r_{u}=\\prod_{i=1}^n(1 + r_{u,i})
-
-If for all :math:`i` in :math:`[1,n]` we have :math:`r_{u,i} > -1` then:
+If for all :math:`i` in :math:`[1,t]` we have :math:`r_{u,i} > -1` then:
 
 .. math:: ln(1 + r_{u})=\\sum_{k=1}^n{ln(1+r_{u,i})} 
 
@@ -129,31 +132,34 @@ If :math:`x < 1` then the *Taylor-Young* formula stand that we have:
 In our particular case, we know that the daily returns :math:`r_{u, i}` are strictly \
 less than 1 for all :math:`i` and :math:`u`. We can therefore always find a strictly \
 positive integer :math:`n` such that :math:`ln(1+r_{u,i})` is approximated with a great \
-accuracy by is corresponding polynomial *Taylor-Young* approximation. 
+accuracy by is corresponding polynomial *Taylor-Young* approximation or order :math:`n` \
+. 
 
 .. math::
 
     \\lim_{n \\to +\\infty}ln(1 + r_{u,i}) - \\sum_{k=1}^{n}{(-1)^{k-1}\\frac{r_{u,i}^{k}}{k}} = 0
 
 
-So for a given stock :math:`u` with  :math:`m` daily returns, and :math:`r_{u, i}` a \
+So for a given stock :math:`u` with  :math:`N^{s}_{f}` daily returns, and :math:`r_{u, i}` a \
 daily return at day :math:`i`, we can try to found the constant :math:`c_{u}` such \
 that for a simulated daily return :math:`rs_{u,i}` we have:
 
-.. math:: \\sum_{i=1}^m{ln(1 + rs_{u,i} + c_{u})} = ln(1 + r_{u})
+.. math:: \\sum_{i=1}^{N^{s}_{f}}{ln(1 + rs_{u,i} + c_{u})} = ln(1 + r_{u})
 
 To solve this equation we will use the *Taylor-Young* approximation to create the \
 polynomial :math:`P_{u}^{n}(X)` of order :math:`n` such that:
 
-.. math:: P_{u}^{n}(X) = \\sum_{i=1}^{m} \\sum_{k=1}^n(-1)^{k-1}{\\frac{(rs_{u,i} + X)^{k}}{k}} - ln(1 + r_{u})
+.. math:: P_{u}^{n}(X) = \\sum_{i=1}^{N^{s}_{f}} \\sum_{k=1}^n(-1)^{k-1}{\\frac{(rs_{u,i} + X)^{k}}{k}} - ln(1 + r_{u})
 
 
-Let be :math:`c_{n,u}` a root of  :math:`P_{u}^{n}(X)`.
-If \
-:math:`\\forall n >=1, | \\underset{1 \\leq i \\leq n}{max}(rs_{u,i}) + c_{n,u} | < 1` \
-then we can observe that:
+Let be :math:`c_{n,u}` a root of  :math:`P_{u}^{n}(X)`.  
+
+If :math:`P_{u}^{n}(X)` as at least one real roots such that \
+:math:`| \\underset{1 \\leq i \\leq n}{max}(rs_{u,i}) + c_{n,u} | < 1` we take the  \
+smallest one of these roots :math:`c_{n,u}` and we can observe that:  (TODO demo ?)
 
 .. math:: \\lim_{n \\to +\\infty}(c_{n,u}) = c_{u}
+
 
 Our algorithm fails if :math:`P_{u}^{n}(X)` as no such root!
 

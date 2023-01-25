@@ -1,5 +1,38 @@
 """Module that implement the simulation core functionalities.
 
+L'objectif de la simulation est, pour un ensemble d'assets 
+:math:`A=(a_{1}, ..., a_{i}, ..., a_{m})`, connaissant:
+
+- L'historique de leur prix \
+:math:`P^{h}\\in\\large{R}^{N^{h}\\times{m}}` à la cloture des marchés financiés \
+durant :math:`N^{h}` jours.
+
+- Un prix initial :math:`V\\in\\large{R}^{1\\times{m}}` pour chaque actif :math:`a_{i}`.
+
+- Un nombre de jours :math:`N^{s}` qui représentent le nombre de jour de clotures où \
+l'on doit simuler un prix de tel sorte que l'ensemble des prix simulés pour :math:`A` \
+est donné par :math:`P^{s}\\in\\large{R}^{N^{s}\\times{m}}`
+
+- Le retour espéré à la fin de la simulation \
+:math:`Er \\in \\large{R}^{1 \\times{m} }` pour chaque actifs :math:`a_{i}` avec \
+:math:`er_{i}=(p^{s}_{i,Nh} - p^{s}_{i,0})/p^{s}_{i,0}` le retour espéré de l'actif  \
+:math:`a_{i}` durant les :math:`N^{s}_{f}` jours simulés.
+
+de créer :math:`P^{s}` de tel sorte que:  
+
+- :math:`C^{s}=C^{h}` avec :math:`C^{s}=Cov(Ed^{s})`et:math:`C^{h}=Cov(Ed^{h})` \
+ou :math:`Ed^{s}\\in\\large{R}^{N^{s}-1\\times{m}}` représente la matrice des \
+retours journalier des prix simulés des assets :math:`A` et \ 
+:math:`E^{h}_{d}\\in\\large{R}^{N^{h}-1\\times{m}}` ceux de leur prix historique. \
+Nous définissons le retour journalier de l'asset :math:`a_{i}` le jour :math:`j>1` \
+comme :math:`ed_{i,j}=(p_{i,j} - p_{i,j-1})/p_{i,j-1}`.
+
+
+- :math:`Er^{s}=Er` ou :math:`Er^{s} \\in \\large{R}^{1 \\times{m} }` est le retour \
+espéré de A sur la période de temps de la simulation.
+
+
+
 How does it works ?
 -------------------
 

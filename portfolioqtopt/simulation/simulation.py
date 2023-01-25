@@ -35,12 +35,12 @@ espéré de A sur la période de temps de la simulation.
 How does it works ?
 -------------------
 
-Génerer des retours journaliers ayant la covariance désirées
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Generate daily returns with the desired covariance
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To do this, we first generate a matrix :math:`M\\in\\large{R}^{N^{s}-1\\times{m} }` \
 composed of random values drawn from the standard normal distribution.  
-:math:`M` is our first version of the simulated daily expected returns.
+We are going to generate the desired daily returns from :math:`M`.
 
 Puis comme nous savons que :math:`Cov(M)\\in\\large{R}^{m\\times{m}}` est une matrice \
 symetrique définie positive à valeur réelles qui n'est pas tout à fait la matrice \
@@ -59,49 +59,27 @@ Pour cela utilisons le fait :math:`\\mathbb{E}(MA)=\\mathbb{E}(M)A` et revenons 
 définition de la covariance:
 
 .. math:: 
-    Cov(Q)=\\mathbb{E}[(MA - \\mathbb(MA))^{T}(MA - \\mathbb(MA)))]
+    Cov(Q) &= \\mathbb{E}[(MA - \\mathbb(MA))^{T}(MA - \\mathbb(MA)))]
 
-    Cov(Q)=\\mathbb{E}[A^{T}(M - \\mathbb(M))^{T}(M - \\mathbb(M)))A]
+    Cov(Q) &= \\mathbb{E}[A^{T}(M - \\mathbb(M))^{T}(M - \\mathbb(M)))A]
 
-    Cov(Q)=A^{T}\\mathbb{E}[(M - \\mathbb(M))(M - \\mathbb(M)))A]
+    Cov(Q) &= A^{T}\\mathbb{E}[(M - \\mathbb(M))(M - \\mathbb(M)))A]
 
-    Cov(Q)=A^{T}C^{M}A]
+    Cov(Q) &= A^{T}C^{M}A
 
+    Cov(Q) &= L^{T}_{h}{L^{-1}}^{T}C^{M}L^{-1}L_{h}
 
-Pour obtenir la matrice :math:`Q\\in\\large{R}^{N^{s}-1\\times{m} }` tel que \
-:math:`Cov(Q)=C^{h}` une condition nécessaire et suffisante est que les matrices \
-:math:`L` et :math:`L^{h}` soient inversibles.
-
-Si cette condition est remplie alors posons :math:`Q=ML^{-1}L_{h}` et montrons que :math:`Cov(Q)=C^{h}`.
-
-Nous pouvons démontrer que :math:`\\mathbb{E}(AM)=A\\mathbb{E}(M)` et donc écrire \
-en posant :math:`A=L^{-1}L_{h}` que \
-:math:`(Q - \\mathbb{E}(Q)) = (M - \\mathbb{E}(M))A` donc nous avons \
-:math:`Cov(Q)=\\mathbb{E}[A^{T}(M - \\mathbb(M))(M - \\mathbb(M)))A]` ce qui équivaut \
-à écrire :math:`Cov(Q)=A^{T}C^{M}A=L^{T}_{h}{L^{-1}}^TC^{M}L^{-1}L_{h}` \
-or :math:`{L^{-1}}^TC^{M}L^{-1}=I` \
-soit :math:`Cov(Q)=L^{T}_{h}L_{h}`
-donc nous avons bien si :math:`L` et :math:`L_{h}` inversibles :math:`Cov(Q)=C^{h}` .
-
-
-Si nous revenons à la definition de la covariance de notre matrice :math:`M` composé de \
-:math:`m` vecteurs de dimension :math:`N^{s}-1`. Nous avons \
-:math:`C^{M}=\\mathbb{E}[(M - \\mathbb(M))^{T}(M - \\mathbb(M)))]` ce que l'on peut \
-réecrire :math:C^{M}=`.
-
-Nous pouvons utiliser le fait que si :math:`A`est une \
-matrice carré d'ordre math:`n` à coefficiant réels ou complexe alors: \
-:math:`{A^{T}}^{-1}={A^{-1}}^{T}` et écrire:
+or we have seen that by definition :math:`Cov(M)=C^{M}=L^{T}L` so we have \
+:math:`{L^{-1}}^{T}C^{M}L^{-1}=I` and by the definition of :math:`L_{h}` we have:
 
 .. math:: 
-    L^{-1}C^{M}(L^{-1})^T=I  
-    \\implies \\mathbb{E}[(M - \\mathbb(M))^{T}(M - \\mathbb(M)))]
-    \\implies \\
+    Cov(Q) &= L^{T}_{h}L_{h}
+
+    Cov(Q) &= C^{h}
 
 
-
-Génerer des retours journaliers ayant le retour expéré désiré
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Generate daily returns with the desired expired return
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We have yet a matrix of daily returns :math:`Erd_{s}` that have the same covariance \
 matrix :math:`\\Sigma` as the one of our historical prices :math:`P`. But the anual \

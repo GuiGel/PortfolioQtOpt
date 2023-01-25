@@ -58,11 +58,11 @@ To do this let's use the fact that :math:`\\mathbb{E}(MA)=\\mathbb{E}(M)A` by \
 linearity of the expectation and the definition of covariance to write:
 
 .. math:: 
-    Cov(Q) &= \\mathbb{E}[(MA - \\mathbb(MA))^{T}(MA - \\mathbb(MA)))]
+    Cov(Q) &= \\mathbb{E}[(MA - \\mathbb{E}(MA))^{T}(MA - \\mathbb{E}(MA)))]
 
-    Cov(Q) &= \\mathbb{E}[A^{T}(M - \\mathbb(M))^{T}(M - \\mathbb(M)))A]
+    Cov(Q) &= \\mathbb{E}[A^{T}(M - \\mathbb{E}(M))^{T}(M - \\mathbb{E}(M)))A]
 
-    Cov(Q) &= A^{T}\\mathbb{E}[(M - \\mathbb(M))(M - \\mathbb(M)))A]
+    Cov(Q) &= A^{T}\\mathbb{E}[(M - \\mathbb{E}(M))(M - \\mathbb{E}(M)))A]
 
     Cov(Q) &= A^{T}C^{M}A
 

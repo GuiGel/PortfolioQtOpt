@@ -25,12 +25,9 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pandera as pa
-from dimod.typing import Bias, Variable
 from pydantic import BaseModel, validator
 
 Array = npt.NDArray[np.float64]
-
-Q = typing.Mapping[typing.Tuple[Variable, Variable], Bias]
 
 prices_schema = pa.DataFrameSchema(
     {
@@ -84,8 +81,8 @@ class Assets(BaseModel):
     def cov(self) -> Array:
         """The covariance matrix of the daily returns (:attr:`returns`)  of the assets.
 
-        The covariance indicates the level to which two variables vary together.  
-        We define the sample covariance element :math:`c_{u, v}`between assets 
+        The covariance indicates the level to which two variables vary together.
+        We define the sample covariance element :math:`c_{u, v}`between assets
         :math:`u` and :math:`v` as:
 
         .. math::
@@ -98,7 +95,7 @@ class Assets(BaseModel):
         .. note::
 
             The covariance of the daily returns are used in the simulation part of the
-            project by :class:`portfolioqtopt.simulation.simulation.Simulation`.   
+            project by :class:`portfolioqtopt.simulation.simulation.Simulation`.
 
         Returns:
             Array: The covariance matrix. (m, m)
@@ -302,7 +299,7 @@ class Assets(BaseModel):
 
         """
         if isinstance(key, slice):
-            df = self.df.iloc[:, key.start:key.stop:key.step]
+            df = self.df.iloc[:, key.start : key.stop : key.step]
         elif isinstance(key, np.ndarray):
             # array = self.prices[:, key]
             df = self.df.iloc[:, key]
@@ -353,7 +350,9 @@ if __name__ == "__main__":
     # Verify that both assets and assets_ produce the same outputs
     np.testing.assert_equal(assets.anual_returns, assets_.anual_returns)
     np.testing.assert_equal(assets_.normalized_prices, assets.normalized_prices)
-    np.testing.assert_equal(assets_.normalized_prices_approx, assets.normalized_prices_approx)
+    np.testing.assert_equal(
+        assets_.normalized_prices_approx, assets.normalized_prices_approx
+    )
 
     # Verify that both assets and stocks produce the same outputs
     np.testing.assert_equal(stocks.cov, assets.cov)

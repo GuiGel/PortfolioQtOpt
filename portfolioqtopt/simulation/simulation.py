@@ -1,15 +1,13 @@
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Hashable, List, Optional
 
 import numpy as np
 import numpy.linalg as la
-import numpy.typing as npt
+import pandas as pd
 from loguru import logger
 from numpy.polynomial import Polynomial as P
-import pandas as pd
 
-
+from portfolioqtopt.assets import Array, Assets
 from portfolioqtopt.simulation.errors import CovNotSymDefPos
-from portfolioqtopt.assets import Assets, Array
 
 # dr: daily returns
 # er: expected anual returns
@@ -28,8 +26,7 @@ class Simulation:
     Args:
         assets (Stocks): An Assets object. Shape (k, n) where k is the number days and
             n the number of assets.
-        er (npt.ArrayLike): The expected anual returns for each assets.
-            List of shape (n, ) where n is the number of assets.
+        er (Dict[Hashable, float]): The expected anual returns for each assets.
         ns (int): The number of future daily returns to simulate.
 
     Attributes:
@@ -37,17 +34,21 @@ class Simulation:
             (m, m) where m is the number of assets.
     """
 
-    def __init__(self, assets: Assets, er: Dict[str, float], ns: int) -> None:
+    def __init__(self, assets: Assets, er: Dict[Hashable, float], ns: int) -> None:
         # TODO check that er are strictly positives, m > 0 and
 
         self.k = assets.m
         self.assets = assets
         self.cov_h = assets.cov  # historical covariance
-        self.er: Array = np.array(list(er.values()))
+        self._er: Dict[Hashable, float] = er
         self.ns = ns
 
         assert len(self.er), len(self.er) == self.cov_h.shape
         assert ns > 0
+
+    @property
+    def er(self) -> Array:
+        return np.array([self._er[c] for c in self.assets.df.columns], np.float64)
 
     @property
     def init_prices(self) -> Array:
@@ -60,9 +61,7 @@ class Simulation:
         """
         return self.assets.prices.T[:, -1:]  # (k, 1)
 
-    def _chol(
-        self, a: Optional[Array] = None
-    ) -> Array:
+    def _chol(self, a: Optional[Array] = None) -> Array:
         """Choleski decomposition.
 
         Return the Cholesky decomposition, L * L.H, of the square matrix a, where L is \
@@ -124,9 +123,7 @@ Identity covariance matrix.
         return daily_returns  # (k, m)
 
     @staticmethod
-    def get_log_taylor_series(
-        cr: Array, er: Array, order: int = 4
-    ):
+    def get_log_taylor_series(cr: Array, er: Array, order: int = 4):
         """Obtain a polynomial approximation of the expected return.
 
         Args:
@@ -179,9 +176,7 @@ of the :math:`ln` function. Defaults to 4.
             root = select_roots[0]
         return root
 
-    def get_returns_adjustment(
-        self, cr: Array, order: int = 10
-    ) -> Array:
+    def get_returns_adjustment(self, cr: Array, order: int = 10) -> Array:
         # cr: correlated daily returns
         # order > 2
         lds = self.get_log_taylor_series(cr, self.er, order=order)
@@ -198,9 +193,7 @@ of the :math:`ln` function. Defaults to 4.
 
         return np.expand_dims(alpha, axis=1)  # (k, 1)
 
-    def get_future_prices(
-        self, init_prices: Array, returns: Array
-    ) -> Array:
+    def get_future_prices(self, init_prices: Array, returns: Array) -> Array:
         # init_prices: shape (k, 1)
         # returns: shape (k, m)
         # return: shape (k, m + 1)
@@ -238,9 +231,7 @@ of the :math:`ln` function. Defaults to 4.
         sar = np.exp(np.log(1 + daily_returns).sum(axis=-1)) - 1
         return sar
 
-    def __call__(
-        self, order: int = 10, precision: Optional[float] = None
-    ) -> Assets:
+    def __call__(self, order: int = 10, precision: Optional[float] = None) -> Assets:
         # simulated_returns (k, m)
         # future_price (k, m + 1)
 

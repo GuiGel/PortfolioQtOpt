@@ -1,8 +1,8 @@
 """Module that extract relevant information from the optimization results.
 
 All the functions extract only information from \
-:class:`portfolioqtopt.optimization._qubo.QuboData` and \
-:type:`portfolioqtopt.optimization._qbits.Qbits`."""
+:py:class:`portfolioqtopt.optimization._qubo.QuboData` and \
+:py:class:`portfolioqtopt.optimization._qbits.Qbits`."""
 import typing
 from dataclasses import dataclass
 
@@ -21,6 +21,7 @@ class IvtIdx(typing.NamedTuple):
     """Named Tuple that stores the indexes of the selected assets and their \
 corresponding investment.
     """
+
     investment: Array
     indexes: Indexes
 

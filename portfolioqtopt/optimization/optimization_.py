@@ -70,8 +70,7 @@ def reduce_dimension(
         steps (int): The number of repetitions.
 
     Returns:
-        Counter[int]: The selected funds indexes as well as the number of times they
-            have been selected.
+        Indexes: The selected funds indexes.
     """
     logger.info(f"universe reduction")
     c: typing.Counter[int] = Counter()

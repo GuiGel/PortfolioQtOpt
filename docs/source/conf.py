@@ -44,6 +44,21 @@ extensions = [
     "sphinxcontrib.bibtex",
 ]
 
+# Latex config
+mathjax3_config = {'chtml': {
+    "scale": 1,                      # global scaling factor for all expressions
+    "minScale": .5,                  # smallest scaling factor to use
+    "matchFontHeight": True,         # true to match ex-height of surrounding font
+    "mtextInheritFont": False,       # true to make mtext elements use surrounding font
+    "merrorInheritFont": True,       # true to make merror text use surrounding font
+    "mathmlSpacing": False,          # true for MathML spacing rules, false for TeX rules
+    "skipAttributes": {},            # RFDa and other attributes NOT to copy to the output
+    "exFactor": .5,                  # default size of ex in em units
+    "displayAlign": 'right',        # default for indentalign when set to 'auto'
+    "displayIndent": '0'             # default for indentshift when set to 'auto'
+  },
+};
+
 # Add bibliography file name
 bibtex_bibfiles = ['refs.bib']
 

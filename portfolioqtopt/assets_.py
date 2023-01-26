@@ -1,4 +1,19 @@
-"""This module defines the :class:`Assets` object."""
+"""This module defines the :class:`Assets` object.
+
+The :class:`Assets` object has various purposes.
+
+#. Serve for the runtime validation process of the prices.
+
+    * The prices values are all strictly positives.
+
+    * The prices exists and are not nan.
+
+    * The `pd.DataFrame` of prices have only one column level.
+
+#. Compute valores que dependen unicamente de los precios y sirven tanto en la \
+simulation que en la optimization.
+
+"""
 from __future__ import annotations
 
 import typing
@@ -67,7 +82,7 @@ class Assets(BaseModel):
     def cov(self) -> Array:
         """The covariance matrix of the daily returns (:attr:`returns`)  of the assets.
 
-        We define the sample covariance between assets :math:`u`and :math:`v as:
+        We define the sample covariance between assets :math:`u` and :math:`v` as:
 
         .. math::
 
@@ -240,4 +255,8 @@ if __name__ == "__main__":
     np.testing.assert_almost_equal(
         assets.returns.mean(axis=1), assets.average_daily_returns
     )
-    np.testing.assert_almost_equal(assets.normalized_prices, assets.normalized_prices)
+
+    # Verify that both assets and assets_ produce the same output
+    np.testing.assert_equal(assets.anual_returns, assets_.anual_returns)
+    np.testing.assert_equal(assets_.normalized_prices, assets.normalized_prices)
+    np.testing.assert_equal(assets_.normalized_prices_approx, assets.normalized_prices_approx)

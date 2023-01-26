@@ -26,28 +26,28 @@ class Simulation:
     and a given expected anual return.
 
     Args:
-        assets (Stocks): A Stock object. Shape (k, n) where k is the number days and
+        assets (Stocks): An Assets object. Shape (k, n) where k is the number days and
             n the number of assets.
         er (npt.ArrayLike): The expected anual returns for each assets.
             List of shape (n, ) where n is the number of assets.
-        m (int): The number of future daily returns to simulate.
+        ns (int): The number of future daily returns to simulate.
 
     Attributes:
         cov_h (Array): Historical prices covariance. Matrix of shape
-            (n, n) where n is the number of assets.
+            (m, m) where m is the number of assets.
     """
 
-    def __init__(self, assets: Assets, er: Dict[str, float], m: int) -> None:
+    def __init__(self, assets: Assets, er: Dict[str, float], ns: int) -> None:
         # TODO check that er are strictly positives, m > 0 and
 
         self.k = assets.m
         self.assets = assets
         self.cov_h = assets.cov  # historical covariance
         self.er: Array = np.array(list(er.values()))
-        self.m = m
+        self.ns = ns
 
         assert len(self.er), len(self.er) == self.cov_h.shape
-        assert m > 0
+        assert ns > 0
 
     @property
     def init_prices(self) -> Array:
@@ -96,7 +96,7 @@ the lower-triangular and diagonal elements of a are used. Only L is actually ret
 
         TODO This is a function that can be put outside of the class.
         """
-        x = np.random.normal(0, 1, size=(self.k, self.m))
+        x = np.random.normal(0, 1, size=(self.k, self.ns))
         cov = np.cov(x)
         L = self._chol(cov)
         return np.linalg.inv(L).dot(x)

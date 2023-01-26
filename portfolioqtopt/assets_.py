@@ -78,7 +78,7 @@ class Assets(BaseModel):
         return self.df.shape[0]
 
     @validator("df")
-    def schema(cls, v):
+    def schema(cls, v):  # type: ignore
         return prices_schema(v)
 
     @cached_property
@@ -168,7 +168,8 @@ class Assets(BaseModel):
         Returns:
             Array: The mean of the daily returns. (m,)
         """
-        return self.returns.mean(axis=1)  # (m,)
+        adr = self.returns.mean(axis=1)
+        return typing.cast(Array, adr)  # (m,)
 
     @cached_property
     def normalized_prices_approx(self) -> Array:

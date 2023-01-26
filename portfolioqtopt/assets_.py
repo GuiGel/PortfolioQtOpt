@@ -44,7 +44,11 @@ prices_schema = pa.DataFrameSchema(
 
 
 class Assets(BaseModel):
-    """Create the :class:`Assets` object that have only attributes related to prices.
+    """Create the :class:`Assets` class that contains all the relevant information
+    about the given portfolio.
+
+    The :class:`Assets` class only attributes related to prices. i.e que se pueden
+    deducir solo de los precios de cada asset.
 
     Attributes:
 

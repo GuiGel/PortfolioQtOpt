@@ -6,12 +6,14 @@ The :class:`Assets` object has various purposes.
 
     * The prices values are all strictly positives.
 
-    * The prices exists and are not nan.
+    * The prices exists and are always numbers.
 
     * The `pd.DataFrame` of prices have only one column level.
 
-#. Compute valores que dependen unicamente de los precios y sirven tanto en la \
-simulation que en la optimization.
+    * The prices are in floating point precision.
+
+#. Compute values that depend only on prices and are used in both simulation and \
+optimization.
 
 """
 from __future__ import annotations
@@ -82,7 +84,9 @@ class Assets(BaseModel):
     def cov(self) -> Array:
         """The covariance matrix of the daily returns (:attr:`returns`)  of the assets.
 
-        We define the sample covariance between assets :math:`u` and :math:`v` as:
+        The covariance indicates the level to which two variables vary together.  
+        We define the sample covariance element :math:`c_{u, v}`between assets 
+        :math:`u` and :math:`v` as:
 
         .. math::
 
@@ -94,8 +98,7 @@ class Assets(BaseModel):
         .. note::
 
             The covariance of the daily returns are used in the simulation part of the
-            project by :class:`portfolioqtopt.simulation.simulation.Simulation`.
-
+            project by :class:`portfolioqtopt.simulation.simulation.Simulation`.   
 
         Returns:
             Array: The covariance matrix. (m, m)
@@ -139,8 +142,6 @@ class Assets(BaseModel):
         .. note::
 
             The normalized prices are used in the optimization part of the project.
-
-        :math:`\\bar a`
 
         Returns:
             Array: A numpy array of normalized prices. (n, m)
@@ -223,6 +224,99 @@ class Assets(BaseModel):
         """
         return typing.cast(Array, (self.prices[-1] - self.prices[0]) / self.prices[0])
 
+    def __getitem__(self, key: typing.Any) -> Assets:
+        """Implement the getitem magic method for :class:`Assets`.      
+
+        Args:
+            key (typing.Any): _description_
+
+        Returns:
+            Assets: An :class:`Assets` instance with the columns corresponding to the
+                given keys.
+
+        Example:
+
+            Take a DataFrame composed of the prices on 4 days of 3 assets "A", "B" and 
+            "C"
+
+            >>> df = pd.DataFrame([[10, 12, 14, 13], [21, 24, 23, 22], \
+[101, 104, 102, 103]], index=["A", "B", "C"], dtype=float).T
+            >>> df
+                  A     B      C
+            0  10.0  21.0  101.0
+            1  12.0  24.0  104.0
+            2  14.0  23.0  102.0
+            3  13.0  22.0  103.0
+
+            Create the corresponding :class:`Assets` object.
+
+            >>> assets = Assets(df=df)
+  
+            Construct a new :class:`Assets` object with only columns "B" and "C".
+
+            Try with a python slice
+
+            >>> a = assets[1: 3]
+            >>> a.m
+            2
+
+            >>> a.df
+                  B      C
+            0  21.0  101.0
+            1  24.0  104.0
+            2  23.0  102.0
+            3  22.0  103.0
+
+            Try with a list of columns indexes
+
+            >>> assets[np.array([1, 2])].df
+                  B      C
+            0  21.0  101.0
+            1  24.0  104.0
+            2  23.0  102.0
+            3  22.0  103.0
+
+            Try with a list of indexes
+
+            >>> assets[1, 2].df
+                  B      C
+            0  21.0  101.0
+            1  24.0  104.0
+            2  23.0  102.0
+            3  22.0  103.0
+
+            Try directly with the columns names
+
+            >>> assets["B", "C"].df
+                  B      C
+            0  21.0  101.0
+            1  24.0  104.0
+            2  23.0  102.0
+            3  22.0  103.0
+
+        .. note::
+
+            We use this method in the optimization process 
+            :func:`portfolioqtopt.optimization.optimization_.optimize` portfolio just 
+            after the universe reduction.
+
+        """
+        if isinstance(key, slice):
+            df = self.df.iloc[:, key.start:key.stop:key.step]
+        elif isinstance(key, np.ndarray):
+            # array = self.prices[:, key]
+            df = self.df.iloc[:, key]
+        elif isinstance(key, tuple):
+            if isinstance(key[0], int):
+                df = self.df.iloc[:, list(key)]
+            else:
+                df = self.df[list(key)]
+        else:
+            print(f"{key=}")
+            df = self.df
+
+        return Assets(df=df)
+
     class Config:
         arbitrary_types_allowed = True
         keep_untouched = (
@@ -256,7 +350,10 @@ if __name__ == "__main__":
         assets.returns.mean(axis=1), assets.average_daily_returns
     )
 
-    # Verify that both assets and assets_ produce the same output
+    # Verify that both assets and assets_ produce the same outputs
     np.testing.assert_equal(assets.anual_returns, assets_.anual_returns)
     np.testing.assert_equal(assets_.normalized_prices, assets.normalized_prices)
     np.testing.assert_equal(assets_.normalized_prices_approx, assets.normalized_prices_approx)
+
+    # Verify that both assets and stocks produce the same outputs
+    np.testing.assert_equal(stocks.cov, assets.cov)

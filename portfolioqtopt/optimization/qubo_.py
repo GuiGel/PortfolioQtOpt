@@ -14,7 +14,6 @@ import typing
 from functools import cache
 
 import numpy as np
-import numpy.typing as npt
 from dimod.typing import Bias, Variable
 
 from portfolioqtopt.assets_ import Array, Assets
@@ -272,7 +271,7 @@ def get_qubo(
         theta3 (float): The third Lagrange multiplier.
 
     Returns:
-        Q: The qubo as a dict where the keys are a tuple representing the position of 
+        Q: The qubo as a dict where the keys are a tuple representing the position of
         the corresponding value in the qubo matrix.
     """
 

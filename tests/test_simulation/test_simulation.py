@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 from pytest import fixture
 
-from portfolioqtopt.simulation.simulation import Simulation
 from portfolioqtopt.assets import Assets
+from portfolioqtopt.simulation.simulation import Simulation
 
 
 @fixture
@@ -28,7 +28,6 @@ def simulation(assets) -> Simulation:
 
 
 class TestSimulation:
-
     def test_get_random_daily_returns(self, simulation: Simulation) -> None:
 
         expected_covariance = np.diag(np.ones(3))

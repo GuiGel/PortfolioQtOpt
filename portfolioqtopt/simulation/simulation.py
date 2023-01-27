@@ -1,12 +1,11 @@
-from typing import Dict, Hashable, List, Optional
 import typing
+from typing import Dict, Hashable, List, Optional
 
 import numpy as np
 import numpy.linalg as la
 import pandas as pd
 from loguru import logger
 from numpy.polynomial import Polynomial as P
-import numpy.typing as npt
 
 from portfolioqtopt.assets import Array, Assets
 from portfolioqtopt.simulation.errors import CovNotSymDefPos
@@ -100,8 +99,8 @@ index=["A", "B"]).T
     def er(self) -> Array:
         """The annual expected returns that must be yields at the end of the simulation.
 
-        This attribute is just for verification purpose un order to be sure that the 
-        order of the values in the resulting array correspond to the same columns as 
+        This attribute is just for verification purpose un order to be sure that the
+        order of the values in the resulting array correspond to the same columns as
         input :class:`Assets` `pd.DataFrame` columns.
 
         Returns:
@@ -187,11 +186,11 @@ Identity covariance matrix.
         """Obtain a polynomial approximation of the expected return.
 
         Args:
-            cr (Array): Matrix of daily returns with the same covariance matrix as the 
+            cr (Array): Matrix of daily returns with the same covariance matrix as the
                 historical daily returns. (m, n)
             er (Array): The anual expected returns. Hey must be strictly superior to -1.
                 (m,)
-            order (int, optional): Order of the polynomial Taylor-Young approximation 
+            order (int, optional): Order of the polynomial Taylor-Young approximation
                 of the :math:`ln` function. Defaults to 4.
 
         Returns:
@@ -315,13 +314,13 @@ Identity covariance matrix.
 
         return Assets(df=pd.DataFrame(future_prices, columns=self.assets.df.columns))
 
+
 if __name__ == "__main__":
-    import pandas as pd
     import numpy as np
+    import pandas as pd
 
     df = pd.DataFrame(
-        [[101.45, 102.34, 101.98], [10.34, 11.0, 11.32]],
-        index=["A", "B"]
+        [[101.45, 102.34, 101.98], [10.34, 11.0, 11.32]], index=["A", "B"]
     ).T
     assets = Assets(df=df)
     simulation = Simulation(assets, {"A": 0.01, "B": 0.1}, 5)
@@ -334,7 +333,3 @@ if __name__ == "__main__":
 
     assets_f = simulation()
     print(assets_f.anual_returns, simulation.er)
-
-
-
-

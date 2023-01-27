@@ -4,7 +4,7 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from portfolioqtopt.optimization.assets_ import Assets
+from portfolioqtopt.assets_ import Assets
 from portfolioqtopt.optimization.interpreter_ import Interpretation
 from portfolioqtopt.optimization.optimization_ import SolverTypes, optimize
 from portfolioqtopt.reader import read_welzia_stocks_file
@@ -15,10 +15,10 @@ def welzia() -> Assets:
     file_path = Path(__file__).parents[2] / "data/Histórico_carteras_Welzia_2018.xlsm"
     sheet_name = "BBG (valores)"
     df = read_welzia_stocks_file(file_path, sheet_name)
-    return Assets(df.to_numpy())
+    return Assets(df=df)
 
 
-def test_optimize(welzia):
+def test_optimize(welzia: Assets):
 
     qbits_iterator = iter(
         arr.flatten()
@@ -471,7 +471,7 @@ def test_optimize(welzia):
     ) as mocked_get_qbits:
         mocked_get_qbits.side_effect = qbits_iterator
 
-        indexes, interpretation = optimize(
+        assets, interpretation = optimize(
             welzia,
             b=1.0,
             w=5,
@@ -484,6 +484,7 @@ def test_optimize(welzia):
         )
 
         expected_indexes = np.array([1, 2, 4, 7, 8, 10, 12, 25, 30, 32, 38], np.int8)
+        expected_assets = welzia[expected_indexes]
         expected_interpretation = Interpretation(
             selected_indexes=np.array([0, 1, 3, 5, 6, 8, 10, 19, 23, 24, 28]),
             investments=np.array(
@@ -506,5 +507,6 @@ def test_optimize(welzia):
             sharpe_ratio=6.187263867161103,
         )
 
-        np.testing.assert_equal(indexes, expected_indexes)
+        # np.testing.assert_equal(assets.df.columns, expected_indexes)
+        assert assets.df.equals(expected_assets.df)
         assert interpretation == expected_interpretation

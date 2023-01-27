@@ -10,7 +10,7 @@ from dimod.sampleset import SampleSet
 from dwave.system import LeapHybridSampler  # type: ignore
 from loguru import logger
 
-from portfolioqtopt.optimization.assets_ import Assets
+from portfolioqtopt.assets_ import Assets
 from portfolioqtopt.optimization.interpreter_ import (
     Indexes,
     Interpretation,
@@ -58,7 +58,8 @@ def reduce_dimension(
     steps: int,
     solver: SolverTypes,
     token_api: str,
-) -> Indexes:
+    verbose: bool = False,
+) -> Assets:
     """Reduce the universe of possibilities.
 
     At first the whole problem is executed a number of times equal to the number of
@@ -66,20 +67,26 @@ def reduce_dimension(
     out, the universe of funds is reduced to only those in which in some of the runs
     an investment has been made.
 
+    .. note::
+        We have decided to introduce Assets as a function argument even if it's not
+        strictly needed (only the qubits are needed to obtain the prices indexes)
+        because it permit to directly works on the prices columns and thus avoid
+        some step between collecting indexes in the selecting assets and the original
+        ones in order to link them with the original assets names.
+
     Args:
         steps (int): The number of repetitions.
 
     Returns:
-        Indexes: The selected funds indexes.
+        Assets: The new assets made of the selected indexes.
     """
-    logger.info(f"universe reduction")
     c: typing.Counter[int] = Counter()
     for step in range(steps):
         logger.debug(f"run solver step {step}")
         qbits = get_qbits(q, solver, token_api)
-        logger.info(f"{qbits.shape=}")
         _, indexes = get_investments(qbits, w)
-        interpret(assets, qbits)
+        if verbose:
+            interpret(assets, qbits)  # Just to log some results
         logger.debug(f"selected indexes {indexes.tolist()}")
         c.update(Counter(indexes))
     distribution = pd.DataFrame.from_dict(
@@ -87,20 +94,22 @@ def reduce_dimension(
     ).T
     logger.debug(f"indexes distribution:\n{distribution}")
     outer_indexes = typing.cast(Indexes, np.sort(np.array([k for k in c])))
-    return outer_indexes
+    logger.info(
+        f"create new assets with reduce universe of {len(outer_indexes)} "
+        f"assets:\n{outer_indexes}"
+    )
+    return assets[outer_indexes]
 
 
 def find_best_sharpe_ratio(
     assets: Assets,
     q: Q,
-    indexes: Indexes,
     steps: int,
     solver: SolverTypes,
     token_api: str,
-):
+) -> typing.Tuple[Assets, typing.Optional[Interpretation]]:
     interpretation: typing.Optional[Interpretation] = None
     sharpe_ratio = 0.0
-    outer_indexes = inner_indexes = indexes
 
     for step in range(steps):
         logger.debug(f"run solver step {step}")
@@ -119,10 +128,9 @@ def find_best_sharpe_ratio(
 
     if interpretation is not None:
         inner_indexes = interpretation.selected_indexes
-        outer_indexes = outer_indexes[inner_indexes]  # type: ignore[assignment]
-        logger.info(f"final outer indexes {outer_indexes}")
+        assets = assets[inner_indexes]
 
-    return typing.cast(Indexes, outer_indexes), interpretation
+    return assets, interpretation
 
 
 def optimize(
@@ -135,22 +143,20 @@ def optimize(
     solver: SolverTypes,
     token_api: str,
     steps: int,
-) -> typing.Tuple[Indexes, typing.Optional[Interpretation]]:
+    verbose: bool = False,
+) -> typing.Tuple[Assets, typing.Optional[Interpretation]]:
 
+    logger.info("compute the qubo")
     q = get_qubo(assets, b, w, theta1, theta2, theta3)
-    outer_indexes = reduce_dimension(assets, q, w, steps, solver, token_api)
 
-    logger.info(
-        f"create new assets with reduce universe of {len(outer_indexes)} "
-        f"assets:\n{outer_indexes}"
+    logger.info("step 1: universe reduction")
+    assets = reduce_dimension(assets, q, w, steps, solver, token_api, verbose=verbose)
+
+    logger.info(f"recompute qubo with reduce universe")
+    inner_q = get_qubo(assets, b, w, theta1, theta2, theta3)
+
+    logger.info(f"step 2: iterate to find best sharpe ratio")
+    assets, interpreter = find_best_sharpe_ratio(
+        assets, inner_q, steps, solver, token_api
     )
-    assets = assets[outer_indexes]
-
-    logger.info(f"recompute qubo")
-    inner_qubo = get_qubo(assets, b, w, theta1, theta2, theta3)
-
-    logger.info(f"iterate to find best sharpe ratio")
-    outer_indexes, interpreter = find_best_sharpe_ratio(
-        assets, inner_qubo, outer_indexes, steps, solver, token_api
-    )
-    return outer_indexes, interpreter
+    return assets, interpreter

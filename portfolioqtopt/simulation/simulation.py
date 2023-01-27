@@ -96,9 +96,11 @@ index=["A", "B"]).T
             positive.
     """
 
-    def __init__(self, assets: Assets, er: Dict[Hashable, float], ns: int) -> None:
+    def __init__(
+        self, assets: Assets, er: Dict[typing.Tuple[Hashable, ...], float], ns: int
+    ) -> None:
         self.assets = assets
-        self._er: Dict[Hashable, float] = er
+        self._er: Dict[typing.Tuple[Hashable, ...], float] = er
         self.ns = ns
 
         assert (len(er), len(er)) == self.assets.cov.shape
@@ -110,12 +112,13 @@ index=["A", "B"]).T
 
         This attribute is just for verification purpose un order to be sure that the
         order of the values in the resulting array correspond to the same columns as
-        input :class:`Assets` `pd.DataFrame` columns.
+        input :attr:`Assets.df` columns.
 
         Returns:
             Array: The anual expected returns as an array. (m,)
         """
-        return np.array([self._er[c] for c in self.assets.df.columns], np.float64)
+        df_er = pd.DataFrame.from_dict(self._er, orient="index").T
+        return np.array([df_er[c][0] for c in self.assets.df], np.float64)
 
     @property
     def init_prices(self) -> Array:

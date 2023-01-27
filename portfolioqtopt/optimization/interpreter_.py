@@ -1,8 +1,7 @@
 """Module that extract relevant information from the optimization results.
 
 All the functions extract only information from \
-:py:class:`portfolioqtopt.optimization._qubo.QuboData` and \
-:py:class:`portfolioqtopt.optimization._qbits.Qbits`."""
+:class:`portfolioqtopt.assets_.Assets` and :class:`Qbits`."""
 import typing
 from dataclasses import dataclass
 
@@ -10,10 +9,13 @@ import numpy as np
 import numpy.typing as npt
 from loguru import logger
 
-from portfolioqtopt.optimization.assets_ import Array, Assets
+from portfolioqtopt.assets_ import Array, Assets
 from portfolioqtopt.optimization.qubo_ import get_pw
 
 Qbits = npt.NDArray[np.int8]
+"""A typing alias for documentation purpose of an 1D array made of only 0 and 1 
+integers."""
+
 Indexes = npt.NDArray[np.signedinteger[typing.Any]]
 
 
@@ -101,29 +103,39 @@ def interpret(a: Assets, qbits: Qbits) -> Interpretation:
 
         Define 5 prices for 4 assets.
  
-        >>> prices = np.array([\
-[100, 102, 104, 108, 116],\
-[10, 10.3, 10.9, 10.27, 10.81],\
-[100, 104, 116, 164, 356],\
-[100, 101, 102, 103, 104],\
-], dtype=np.float64).T
+        >>> import pandas as pd
+        >>> prices = pd.DataFrame(
+        ...     [
+        ...         [100, 102, 104, 108, 116],
+        ...         [10, 10.3, 10.9, 10.27, 10.81],
+        ...         [100, 104, 116, 164, 356],
+        ...         [100, 101, 102, 103, 104],
+        ...     ], 
+        ...     index=["A", "B", "C", "D"],
+        ...     dtype=np.float64
+        ...     ).T
 
         Create an instance of the :py:class:`portfolioqtopt.optimization.assets_.Assets`
         object.
 
-        >>> assets = Assets(prices)
+        >>> assets = Assets(df=prices)
 
         Define some fake qbits made of 0 and 1 for w = 6.
 
-        >>> qbits: Qbits = np.array([[0, 1, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0], \
-[0, 0, 0, 1, 0, 0], [0, 0, 0, 1, 0, 0]], dtype=np.int8).flatten()
+        >>> qbits: Qbits = np.array(
+        ...     [
+        ...         [0, 1, 1, 0, 0, 0],
+        ...         [0, 0, 0, 0, 0, 0],
+        ...         [0, 0, 0, 1, 0, 0],
+        ...         [0, 0, 0, 1, 0, 0]
+        ...     ],
+        ...     dtype=np.int8,
+        ...     ).flatten()
 
         Create an :class:`portfolioqtopt.optimization.interpreter_.Interpretation` object.
 
-        >>> interpret(assets, qbits)
-        Interpretation(selected_indexes=array([0, 2, 3]), \
-investments=array([0.75 , 0.125, 0.125]), expected_returns=44.5, \
-risk=17.153170260916784, sharpe_ratio=2.594272622676201)
+        >>> interpret(assets, qbits)  # doctest: +NORMALIZE_WHITESPACE
+        Interpretation(selected_indexes=array([0, 2, 3]), investments=array([0.75 , 0.125, 0.125]), expected_returns=44.5, risk=17.153170260916784, sharpe_ratio=2.594272622676201)
 
     Args:
         a (Assets): The assets.
@@ -140,7 +152,7 @@ of assets.
 
     a = a[selected_indexes]  # Reduce the assets to the selected ones.
 
-    deviation = ((np.std(a.prices, axis=0) ** 2) * (investments**2)).sum()
+    deviation: float = ((np.std(a.prices, axis=0) ** 2) * (investments**2)).sum()
 
     # Compute the covariance
     indexes = np.triu_indices(a.m, 1)

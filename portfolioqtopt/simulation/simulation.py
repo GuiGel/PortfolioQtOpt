@@ -265,8 +265,8 @@ index=["A", "B"]).T
 
     def get_returns_adjustment(self, cr: Array, order: int = 10) -> Array:
         """For a matrix :math:`Cr` with a desired covariance matrix, found
-        a vector :math:`\\alpha` such that the expected anual return of 
-        :math:`Cr + \\alpha` is the expected one. 
+        a vector :math:`\\alpha` such that the expected anual return of
+        :math:`Cr + \\alpha` is the expected one.
 
         Args:
             cr (Array): Simulated daily returns with the identity matrix as covariance

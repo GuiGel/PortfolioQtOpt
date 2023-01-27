@@ -361,3 +361,4 @@ if __name__ == "__main__":
 
     # Verify that both assets and stocks produce the same outputs
     np.testing.assert_equal(stocks.cov, assets.cov)
+    np.testing.assert_equal(stocks.prices, assets.prices.T)

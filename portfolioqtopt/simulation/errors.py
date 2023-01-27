@@ -7,7 +7,7 @@ class SimuStockError(Exception):
 
 
 class CovNotSymDefPos(SimuStockError):
-    def __init__(self, matrix, original_exception, msg=None):
+    def __init__(self, matrix, original_exception, msg=None) -> None:
         if msg is None:
             # Set some default useful error message
             msg = (

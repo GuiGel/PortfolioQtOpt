@@ -1,10 +1,12 @@
 from typing import Dict, Hashable, List, Optional
+import typing
 
 import numpy as np
 import numpy.linalg as la
 import pandas as pd
 from loguru import logger
 from numpy.polynomial import Polynomial as P
+import numpy.typing as npt
 
 from portfolioqtopt.assets import Array, Assets
 from portfolioqtopt.simulation.errors import CovNotSymDefPos
@@ -12,7 +14,7 @@ from portfolioqtopt.simulation.errors import CovNotSymDefPos
 # dr: daily returns
 # er: expected anual returns
 # cov_h: historical daily returns covariance
-# chol_h:
+# chol_h:simulation
 # cov_c: correlated covariance
 # cov_f: future covariance
 # dr: daily returns
@@ -23,8 +25,58 @@ class Simulation:
     """Simulate prices that have the same covariance has the historical prices
     and a given expected anual return.
 
+    Example:
+
+        First we create an :class:`Assets` instance.
+
+        >>> import pandas as pd
+        >>> df = pd.DataFrame([[101.45, 102.34, 101.98], [10.34, 11.0, 11.32]], \
+index=["A", "B"]).T
+        >>> assets = Assets(df=df)
+
+        Set a random seed to ensure reproducibility.
+
+        >>> np.random.seed(12)
+
+        Then we create a :class:`Simulation` instance with some expected returns for
+        assets "A" and "B" after 5 days that are collected into de er dictionary:
+
+        >>> predicted_expected_returns = {"A": 0.005, "B": 0.1}
+        >>> number_of_days = 5
+        >>> simulate = Simulation(assets, predicted_expected_returns, number_of_days)
+
+        Finally we simulate the future prices with the `simulate` callable.
+
+        >>> logger.disable("portfolioqtopt")  # Disable logging messages
+        >>> future_prices = simulate(order=5)
+
+        We can observe the simulate prices
+
+        >>> future_assets = future_prices
+        >>> future_assets.df
+                    A          B
+        0  101.980000  11.320000
+        1  102.663143  11.721991
+        2  102.325945  11.807491
+        3  102.807393  12.160255
+        4  101.563481  11.945974
+        5  102.489900  12.452001
+
+        Finally we can verified that the results are as expected:
+
+        - Check that the daily returns of the simulated prices are the same as 
+        those of the historical prices.
+
+        >>> np.testing.assert_almost_equal(future_assets.anual_returns, simulate.er)
+
+        -  Check that covariance of the daily returns of the simulated prices are the 
+        same as those of the historical prices.
+
+        >>> np.testing.assert_almost_equal(assets.cov, future_assets.cov)
+
+
     Args:
-        assets (Stocks): An Assets object. Shape (k, n) where k is the number days and
+        assets (Assets): An Assets object. Shape (k, n) where k is the number days and
             n the number of assets.
         er (Dict[Hashable, float]): The expected anual returns for each assets.
         ns (int): The number of future daily returns to simulate.
@@ -37,27 +89,34 @@ class Simulation:
     def __init__(self, assets: Assets, er: Dict[Hashable, float], ns: int) -> None:
         # TODO check that er are strictly positives, m > 0 and
 
-        self.k = assets.m
         self.assets = assets
-        self.cov_h = assets.cov  # historical covariance
         self._er: Dict[Hashable, float] = er
         self.ns = ns
 
-        assert len(self.er), len(self.er) == self.cov_h.shape
+        assert (len(er), len(er)) == self.assets.cov.shape
         assert ns > 0
 
     @property
     def er(self) -> Array:
+        """The annual expected returns that must be yields at the end of the simulation.
+
+        This attribute is just for verification purpose un order to be sure that the 
+        order of the values in the resulting array correspond to the same columns as 
+        input :class:`Assets` `pd.DataFrame` columns.
+
+        Returns:
+            Array: The anual expected returns as an array.
+        """
         return np.array([self._er[c] for c in self.assets.df.columns], np.float64)
 
     @property
     def init_prices(self) -> Array:
-        """Initialization price for the simulation.
+        """The vector of initial prices for the simulation.
 
         The last prices of the historical prices are taken as initial prices.
 
         Returns:
-            Array: A vector of floats.
+            Array: A vector of prices.
         """
         return self.assets.prices.T[:, -1:]  # (k, 1)
 
@@ -83,22 +142,23 @@ the lower-triangular and diagonal elements of a are used. Only L is actually ret
                 :attr:`Simulation.cov_h`
         """
         if a is None:
-            a = self.cov_h
+            a = self.assets.cov
         try:
             L = la.cholesky(a)
             return L
         except la.LinAlgError as e:
             raise CovNotSymDefPos(a, e)
 
-    def _get_random_daily_returns(self) -> Array:
+    def _get_random_unit_cov(self) -> Array:
         """Get random Gaussian vectors with the matrix identity as covariance matrix.
 
         TODO This is a function that can be put outside of the class.
         """
-        x = np.random.normal(0, 1, size=(self.k, self.ns))
+        x = np.random.normal(0, 1, size=(self.assets.m, self.ns))
         cov = np.cov(x)
         L = self._chol(cov)
-        return np.linalg.inv(L).dot(x)
+        x_ = np.linalg.inv(L).dot(x)
+        return typing.cast(Array, x_)
 
     def correlate(self) -> Array:
         """Create random vectors that have a given covariance matrix.
@@ -113,29 +173,29 @@ Identity covariance matrix.
         #. Simulate daily returns with the same covariance matrix as historical ones.
         """
         L = self._chol()
-        random_daily_returns = self._get_random_daily_returns()
+        random_daily_returns = self._get_random_unit_cov()
         daily_returns = L.dot(random_daily_returns)  # (k, m)
 
         # g are daily returns that must all be inferior to 1!
         if np.all(daily_returns < 1):
             logger.warning("Correlated daily returns not all inf to 1!")
 
-        return daily_returns  # (k, m)
+        return typing.cast(Array, daily_returns)  # (k, m)
 
     @staticmethod
-    def get_log_taylor_series(cr: Array, er: Array, order: int = 4):
+    def get_log_taylor_series(cr: Array, er: Array, order: int = 4):  # type: ignore[no-untyped-def]
         """Obtain a polynomial approximation of the expected return.
 
         Args:
-            cr (Array): Matrix of daily returns with the same \
-covariance matrix as the historical daily returns.
-            er (Array): The anual expected returns. Hey must be \
-strictly superior to -1.
-            order (int, optional): Order of the polynomial Taylor-Young approximation \
-of the :math:`ln` function. Defaults to 4.
+            cr (Array): Matrix of daily returns with the same covariance matrix as the 
+                historical daily returns. (m, n)
+            er (Array): The anual expected returns. Hey must be strictly superior to -1.
+                (m,)
+            order (int, optional): Order of the polynomial Taylor-Young approximation 
+                of the :math:`ln` function. Defaults to 4.
 
         Returns:
-            _type_: _description_
+            Any: An array of polynomials. (m,)
         """
         # cr: correlated daily returns (k, m)
         # er: anual expected returns (k)
@@ -151,12 +211,13 @@ of the :math:`ln` function. Defaults to 4.
         for i in range(2, order):
             lds += (-1) ** (i - 1) / i * (x**i).sum(axis=-1)
         lds -= np.log(1 + er)
-        return lds  # (k,)
+        logger.info(f"{type(lds)=}")
+        return lds
 
     @staticmethod
     def get_root(dl: P, min_r: float, max_r: float) -> float:
         # ------------- compute limited development roots
-        roots = P.roots(dl)
+        roots = P.roots(dl)  # type: ignore[no-untyped-call]
 
         # ------------- select real roots
         # In our case roots is dim 1 so np.where is a tuple of just one element.
@@ -171,13 +232,13 @@ of the :math:`ln` function. Defaults to 4.
         select_roots = real_roots[w]
         if len(select_roots) > 1:  # This permit (ri + root)^n --> 0
             root_arg = np.argmin(select_roots + max_r)
-            root = select_roots[root_arg]
+            root: float = select_roots[root_arg]
         else:
             root = select_roots[0]
         return root
 
     def get_returns_adjustment(self, cr: Array, order: int = 10) -> Array:
-        # cr: correlated daily returns
+        # cr: correlated daily returns. (m, n)
         # order > 2
         lds = self.get_log_taylor_series(cr, self.er, order=order)
 
@@ -191,21 +252,21 @@ of the :math:`ln` function. Defaults to 4.
             root = self.get_root(dl, r_min, r_max)
             alpha.append(root)  # Todo --> Look for max...
 
-        return np.expand_dims(alpha, axis=1)  # (k, 1)
+        return np.expand_dims(alpha, axis=1)  # (m, 1)
 
     def get_future_prices(self, init_prices: Array, returns: Array) -> Array:
         # init_prices: shape (k, 1)
         # returns: shape (k, m)
         # return: shape (k, m + 1)
         returns_extend = np.concatenate(
-            [np.ones((self.k, 1)), (returns + 1).cumprod(axis=1)], axis=1
+            [np.ones((self.assets.m, 1)), (returns + 1).cumprod(axis=1)], axis=1
         )  # (k, m + 1)
         prices = (
             returns_extend * init_prices
-        )  # Reconstruct the price from the last prices values. (k, m + 1)
-        return prices.T  # (m + 1, k)
+        )  # Reconstruct the price from the last prices values. (m, n + 1)
+        return typing.cast(Array, prices.T)  # (n + 1, m)
 
-    def check_returns(self, simulated_returns):
+    def check_returns(self, simulated_returns: Array) -> None:
         # Check that the simulated anual returns are near to the expected ones
         sr = Simulation.get_anual_returns_from_daily_returns(simulated_returns)
         check = np.allclose(sr, self.er)
@@ -219,7 +280,7 @@ of the :math:`ln` function. Defaults to 4.
             logger.debug(f"anual returns error: {name_returns}")
 
     def check_covariance(self, cov_s: Array) -> None:
-        check = np.allclose(cov_s, self.cov_h)
+        check = np.allclose(cov_s, self.assets.cov)
         logger.debug(
             f"Is the simulated covariance matrix the same as the historical one? {check}"
         )
@@ -229,7 +290,7 @@ of the :math:`ln` function. Defaults to 4.
         # daily_returns (k, m)
         # returns: (k,)
         sar = np.exp(np.log(1 + daily_returns).sum(axis=-1)) - 1
-        return sar
+        return typing.cast(Array, sar)
 
     def __call__(self, order: int = 10, precision: Optional[float] = None) -> Assets:
         # simulated_returns (k, m)
@@ -252,7 +313,28 @@ of the :math:`ln` function. Defaults to 4.
         # Compute simulated prices
         future_prices = self.get_future_prices(self.init_prices, simulated_returns)
 
-        # future_assets_df = pd.DataFrame(future_prices.T, columns=self.er)
-        # future_assets = Stocks(df=future_assets_df)
-
         return Assets(df=pd.DataFrame(future_prices, columns=self.assets.df.columns))
+
+if __name__ == "__main__":
+    import pandas as pd
+    import numpy as np
+
+    df = pd.DataFrame(
+        [[101.45, 102.34, 101.98], [10.34, 11.0, 11.32]],
+        index=["A", "B"]
+    ).T
+    assets = Assets(df=df)
+    simulation = Simulation(assets, {"A": 0.01, "B": 0.1}, 5)
+
+    q_ = simulation._get_random_unit_cov()
+    np.testing.assert_almost_equal(np.cov(q_), np.diag(np.ones((q_.shape[0]))))
+
+    q = simulation.correlate()
+    np.testing.assert_almost_equal(np.cov(q), simulation.assets.cov)
+
+    assets_f = simulation()
+    print(assets_f.anual_returns, simulation.er)
+
+
+
+

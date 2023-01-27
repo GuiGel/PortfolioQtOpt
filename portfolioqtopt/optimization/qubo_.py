@@ -1,12 +1,12 @@
 """Preliminary calculations.
 
-In this module, we calculate the qubo dict on \
-:py:class:`portfolioqtopt.optimization.assets_.Assets`, granularity depth :math:`w` \
-and the budget :math:`b`.
+In this module, we calculate the qubo dict for a given portfolio represented by a 
+:class:`portfolioqtopt.assets_.Assets` object, with a granularity depth :math:`w` 
+and a budget :math:`b`.
 
 .. note:: 
-    We keep most of the small functions we have implemented as they help to \
-understand the calculations for this project and are an aid to accurate unit testing.
+    We keep most of the small functions we have implemented as they help to understand 
+    the calculations for this project and are an aid to accurate unit testing.
 """
 from __future__ import annotations
 
@@ -14,15 +14,16 @@ import typing
 from functools import cache
 
 import numpy as np
+import numpy.typing as npt
 from dimod.typing import Bias, Variable
 
-from portfolioqtopt.optimization.assets_ import Array, Assets
+from portfolioqtopt.assets_ import Array, Assets
 
 Q = typing.Mapping[typing.Tuple[Variable, Variable], Bias]
 
 
 def expand(array: Array, pw: Array, b: float = 1.0) -> Array:
-    """Expand a 1D or 2D array by multiplying all its values with pw values.
+    """Expand a 1D or 2D array by multiplying all its values with :math:`p_w` values.
 
     Example:
 
@@ -108,14 +109,62 @@ def get_pw_broadcast(pw: Array, m: int) -> Array:
 
 
 def get_qubo_prices_linear(pw_broadcast: Array, b: float) -> Array:
+    """Compute the linear prices part of the qubo.
+
+    Example:
+
+        >>> get_qubo_prices_linear([1, 2, 1, 2], 3)
+        array([[ 6.,  0.,  0.,  0.],
+               [ 0., 12.,  0.,  0.],
+               [ 0.,  0.,  6.,  0.],
+               [ 0.,  0.,  0., 12.]])
+
+    Args:
+        pw_broadcast (Array): A 1D array. (p,)
+        b (float): The budget.
+
+    Returns:
+        Array: A 2D array. (p, p)
+    """
     return 2.0 * b * np.diag(pw_broadcast)  # (p, p)
 
 
 def get_qubo_prices_quadratic(pw_broadcast: Array) -> Array:
-    return np.outer(pw_broadcast, pw_broadcast)  # (p, p)
+    """Compute the quadratic part of the qubo.
+
+    Example:
+
+        >>> pw_broadcast = [1, 2, 3]
+        >>> get_qubo_prices_quadratic(pw_broadcast)
+        array([[1, 2, 3],
+               [2, 4, 6],
+               [3, 6, 9]])
+
+    Args:
+        pw_broadcast (Array): A 1D matrix. (p,)
+
+    Returns:
+        Array: The outer product of input vector by himself. (p, p)
+    """
+    return np.outer(pw_broadcast, pw_broadcast)
 
 
 def get_qubo_returns(average_daily_returns_partition: Array) -> Array:
+    """Get the qubo returns part.
+
+    Example:
+
+        >>> get_qubo_returns([1, 2, 3])
+        array([[1, 0, 0],
+               [0, 2, 0],
+               [0, 0, 3]])
+
+    Args:
+        average_daily_returns_partition (Array): A 1D array. (p,)
+
+    Returns:
+        Array: A diagonal array. (p, p)
+    """
     return np.diag(average_daily_returns_partition)
 
 
@@ -223,8 +272,8 @@ def get_qubo(
         theta3 (float): The third Lagrange multiplier.
 
     Returns:
-        Q: The qubo as a dict where the keys are a tuple representing the position of \
-the corresponding value in the qubo matrix.
+        Q: The qubo as a dict where the keys are a tuple representing the position of 
+        the corresponding value in the qubo matrix.
     """
 
     # Compute the granularity partition

@@ -58,6 +58,7 @@ def reduce_dimension(
     steps: int,
     solver: SolverTypes,
     token_api: str,
+    verbose: bool = False,
 ) -> Assets:
     """Reduce the universe of possibilities.
 
@@ -83,9 +84,9 @@ def reduce_dimension(
     for step in range(steps):
         logger.debug(f"run solver step {step}")
         qbits = get_qbits(q, solver, token_api)
-        logger.info(f"{qbits.shape=}")
         _, indexes = get_investments(qbits, w)
-        interpret(assets, qbits)  # Just to log some results
+        if verbose:
+            interpret(assets, qbits)  # Just to log some results
         logger.debug(f"selected indexes {indexes.tolist()}")
         c.update(Counter(indexes))
     distribution = pd.DataFrame.from_dict(
@@ -142,13 +143,14 @@ def optimize(
     solver: SolverTypes,
     token_api: str,
     steps: int,
+    verbose: bool = False,
 ) -> typing.Tuple[Assets, typing.Optional[Interpretation]]:
 
     logger.info("compute the qubo")
     q = get_qubo(assets, b, w, theta1, theta2, theta3)
 
     logger.info("step 1: universe reduction")
-    assets = reduce_dimension(assets, q, w, steps, solver, token_api)
+    assets = reduce_dimension(assets, q, w, steps, solver, token_api, verbose=verbose)
 
     logger.info(f"recompute qubo with reduce universe")
     inner_q = get_qubo(assets, b, w, theta1, theta2, theta3)

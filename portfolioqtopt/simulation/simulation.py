@@ -10,19 +10,10 @@ from numpy.polynomial import Polynomial as P
 from portfolioqtopt.assets import Array, Assets
 from portfolioqtopt.simulation.errors import CovNotSymDefPos
 
-# dr: daily returns
-# er: expected anual returns
-# cov_h: historical daily returns covariance
-# chol_h:simulation
-# cov_c: correlated covariance
-# cov_f: future covariance
-# dr: daily returns
-# sim_dr
-
 
 class Simulation:
-    """Simulate prices that have the same covariance has the historical prices
-    and a given expected anual return.
+    """Simulate prices that have daily returns with a covariance matrix identical to 
+    that of the daily returns of historical prices and a given expected annual return.
 
     Example:
 
@@ -47,11 +38,10 @@ index=["A", "B"]).T
         Finally we simulate the future prices with the `simulate` callable.
 
         >>> logger.disable("portfolioqtopt")  # Disable logging messages
-        >>> future_prices = simulate(order=5)
+        >>> future_assets = simulate(order=5)
 
         We can observe the simulate prices
 
-        >>> future_assets = future_prices
         >>> future_assets.df
                     A          B
         0  101.980000  11.320000
@@ -63,31 +53,50 @@ index=["A", "B"]).T
 
         Finally we can verified that the results are as expected:
 
-        - Check that the daily returns of the simulated prices are the same as 
-        those of the historical prices.
+        - Check that the daily returns of the simulated prices are the same as those \
+            of the historical prices.  
 
         >>> np.testing.assert_almost_equal(future_assets.anual_returns, simulate.er)
 
-        -  Check that covariance of the daily returns of the simulated prices are the 
-        same as those of the historical prices.
+        -  Check that covariance of the daily returns of the simulated prices are the \
+            same as those of the historical prices.  
 
         >>> np.testing.assert_almost_equal(assets.cov, future_assets.cov)
 
+        If the order is too small the simulation doesn't works as the residual of the 
+        Taylor expansion is not small enough. To verify ot we take an order value of 4.
+
+        >>> future_assets = simulate(order=3)
+        >>> np.testing.assert_almost_equal(future_assets.anual_returns, simulate.er)  # doctest: +IGNORE_EXCEPTION_DETAIL
+        Traceback (most recent call last):
+            ...
+        AssertionError:
+        Arrays are not almost equal to 7 decimals
+
+        Mismatched elements: 1 / 2 (50%)
+        Max absolute difference: 5.78131155e-05
+        Max relative difference: 0.00057813
+        x: array([0.0050001, 0.1000578])
+        y: array([0.005, 0.1  ])
 
     Args:
-        assets (Assets): An Assets object. Shape (k, n) where k is the number days and
-            n the number of assets.
-        er (Dict[Hashable, float]): The expected anual returns for each assets.
-        ns (int): The number of future daily returns to simulate.
+        assets (Assets): An Assets object. Contains the historical prices as a 
+            :class:`pd.DataFrame` of shape (n, m) where n is the number days and m the 
+            number of assets.
+        er (Dict[Hashable, float]): The expected anual returns for each assets. Must be 
+            have the same key name and numbers has the `assets.df.columns`.
+        ns (int): The number of future daily returns to simulate. Must be strictly 
+            positive.
 
     Attributes:
-        cov_h (Array): Historical prices covariance. Matrix of shape
-            (m, m) where m is the number of assets.
+        assets (Array): An Assets object. Contains the historical prices as a 
+            :class:`pd.DataFrame` of shape (n, m) where n is the number days and m the 
+            number of assets.
+        ns (int): The number of future daily returns to simulate. Must be strictly 
+            positive.
     """
 
     def __init__(self, assets: Assets, er: Dict[Hashable, float], ns: int) -> None:
-        # TODO check that er are strictly positives, m > 0 and
-
         self.assets = assets
         self._er: Dict[Hashable, float] = er
         self.ns = ns
@@ -104,7 +113,7 @@ index=["A", "B"]).T
         input :class:`Assets` `pd.DataFrame` columns.
 
         Returns:
-            Array: The anual expected returns as an array.
+            Array: The anual expected returns as an array. (m,)
         """
         return np.array([self._er[c] for c in self.assets.df.columns], np.float64)
 
@@ -115,43 +124,49 @@ index=["A", "B"]).T
         The last prices of the historical prices are taken as initial prices.
 
         Returns:
-            Array: A vector of prices.
+            Array: A vector of prices. (m,)
         """
         return self.assets.prices.T[:, -1:]  # (k, 1)
 
-    def _chol(self, a: Optional[Array] = None) -> Array:
+    def _chol(self, C: Optional[Array] = None) -> Array:
         """Choleski decomposition.
 
-        Return the Cholesky decomposition, L * L.H, of the square matrix a, where L is \
-lower-triangular and .H is the conjugate transpose operator (which is the ordinary \
-transpose if a is real-valued). a must be Hermitian (symmetric if real-valued) and \
-positive-definite (which is the case if a is the covariance matrix of the daily returns\
-). No checking is performed to verify whether a is Hermitian or not. In addition, only \
-the lower-triangular and diagonal elements of a are used. Only L is actually returned.
+        Return the Cholesky decomposition, :math:`L * L^H`, of the square matrix
+        :math:`C`, where :math:`L` is lower-triangular and :math:`L^H` is the
+        conjugate transpose operator (which is the ordinary transpose if a is
+        real-valued). C must be Hermitian (symmetric if real-valued) and
+        positive-definite (which is the case if a is the covariance
+        matrix of the daily returns). No checking is performed to verify whether a is
+        Hermitian or not. In addition, only the lower-triangular and diagonal elements
+        of a are used. Only L is actually returned.
+
+        If :math:`C` is not invertible, a :class:`CovNotSymDefPos` exception is raised.
 
         Args:
-            a (Optional[Array], optional): A Matrix but here a
-                symmetric positive matrix. Defaults to None.
+            C (Optional[Array], optional): A symmetric positive definite matrix.
+                Defaults to None. (m, m)
 
         Raises:
-            CovNotSymDefPos: The matrix a is not symmetric definite positive.
+            CovNotSymDefPos: The matrix C is not symmetric definite positive.
 
         Returns:
             Array: If a is None, return the Choleski decomposition of
-                :attr:`Simulation.cov_h`
+                :attr:`Simulation.asset.cov`. (m, m)
         """
-        if a is None:
-            a = self.assets.cov
+        if C is None:
+            C = self.assets.cov
         try:
-            L = la.cholesky(a)
-            return L
+            L = la.cholesky(C)
         except la.LinAlgError as e:
-            raise CovNotSymDefPos(a, e)
+            raise CovNotSymDefPos(C, e)
+        else:
+            return L
 
     def _get_random_unit_cov(self) -> Array:
         """Get random Gaussian vectors with the matrix identity as covariance matrix.
 
-        TODO This is a function that can be put outside of the class.
+        Returns:
+            Array: A numpy array. (m, ns)
         """
         x = np.random.normal(0, 1, size=(self.assets.m, self.ns))
         cov = np.cov(x)
@@ -166,24 +181,30 @@ the lower-triangular and diagonal elements of a are used. Only L is actually ret
         as the assets returns.
 
         #. Compute the Choleski decomposition of the covariance of the daily returns \
-of the assets prices.
+            of the assets prices.
         #. Generate random Gaussian vectors that simulate daily returns with an \
-Identity covariance matrix.
+            Identity covariance matrix.
         #. Simulate daily returns with the same covariance matrix as historical ones.
+
+        Returns:
+            Array: A numpy array. (m, ns)
         """
         L = self._chol()
         random_daily_returns = self._get_random_unit_cov()
-        daily_returns = L.dot(random_daily_returns)  # (k, m)
+        daily_returns = L.dot(random_daily_returns)
 
         # g are daily returns that must all be inferior to 1!
         if np.all(daily_returns < 1):
             logger.warning("Correlated daily returns not all inf to 1!")
 
-        return typing.cast(Array, daily_returns)  # (k, m)
+        return typing.cast(Array, daily_returns)
 
     @staticmethod
     def get_log_taylor_series(cr: Array, er: Array, order: int = 4):  # type: ignore[no-untyped-def]
         """Obtain a polynomial approximation of the expected return.
+
+        For this we use the Taylor expansion of :math:`ln(1+x)` with
+        :math:`x = cr + \\alpha`
 
         Args:
             cr (Array): Matrix of daily returns with the same covariance matrix as the
@@ -194,14 +215,8 @@ Identity covariance matrix.
                 of the :math:`ln` function. Defaults to 4.
 
         Returns:
-            Any: An array of polynomials. (m,)
+            Any: An array of m polynomials. (m,)
         """
-        # cr: correlated daily returns (k, m)
-        # er: anual expected returns (k)
-        # limited development of the function ln(1+x) with x = rc + alpha
-        # Returns array of polynomials of shape (k,)
-        # TODO check that Here 1 + expected returns is always be positive!
-
         assert np.all(er > -1)
         p = P([0, 1])
         x = np.array(p) + cr  # array of polynomials
@@ -215,6 +230,18 @@ Identity covariance matrix.
 
     @staticmethod
     def get_root(dl: P, min_r: float, max_r: float) -> float:
+        """Found a real root of the polynomial :math:`dl` such that \
+            :math:`(1 + \\text{real_roots} + min_r > 0)\\space` and :math:`\\space\
+            (\\text{real_roots} + max_r < 1)`.
+
+        Args:
+            dl (P): A polynomial
+            min_r (float): The min value.
+            max_r (float): The max value.
+
+        Returns:
+            float: The found roof.
+        """
         # ------------- compute limited development roots
         roots = P.roots(dl)  # type: ignore[no-untyped-call]
 
@@ -237,6 +264,20 @@ Identity covariance matrix.
         return root
 
     def get_returns_adjustment(self, cr: Array, order: int = 10) -> Array:
+        """For a matrix :math:`Cr` with a desired covariance matrix, found
+        a vector :math:`\\alpha` such that the expected anual return of 
+        :math:`Cr + \\alpha` is the expected one. 
+
+        Args:
+            cr (Array): Simulated daily returns with the identity matrix as covariance
+                matrix. (m, ns)
+            order (int, optional): The order of the taylor expansion of the :math:`ln`
+                function. The biggest the better the results but expensive to compute.
+                Defaults to 10.
+
+        Returns:
+            Array: The adjustment vector. (m, 1)
+        """
         # cr: correlated daily returns. (m, n)
         # order > 2
         lds = self.get_log_taylor_series(cr, self.er, order=order)

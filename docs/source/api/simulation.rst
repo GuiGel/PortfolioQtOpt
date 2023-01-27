@@ -170,3 +170,4 @@ we have:
 
 .. automodule:: portfolioqtopt.simulation.simulation
     :members:
+    :private-members: _chol, _get_random_unit_cov

@@ -10,7 +10,7 @@ from dimod.sampleset import SampleSet
 from dwave.system import LeapHybridSampler  # type: ignore
 from loguru import logger
 
-from portfolioqtopt.assets_ import Assets
+from portfolioqtopt.assets import Assets
 from portfolioqtopt.optimization.interpreter_ import (
     Indexes,
     Interpretation,

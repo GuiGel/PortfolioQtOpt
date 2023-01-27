@@ -16,7 +16,7 @@ from functools import cache
 import numpy as np
 from dimod.typing import Bias, Variable
 
-from portfolioqtopt.assets_ import Array, Assets
+from portfolioqtopt.assets import Array, Assets
 
 Q = typing.Mapping[typing.Tuple[Variable, Variable], Bias]
 

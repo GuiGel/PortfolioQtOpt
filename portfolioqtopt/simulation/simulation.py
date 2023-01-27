@@ -1,4 +1,5 @@
 import typing
+from datetime import date, timedelta
 from typing import Dict, Hashable, List, Optional
 
 import numpy as np
@@ -9,6 +10,8 @@ from numpy.polynomial import Polynomial as P
 
 from portfolioqtopt.assets import Array, Assets
 from portfolioqtopt.simulation.errors import CovNotSymDefPos
+
+Scalar = typing.Union[str, bytes, date, timedelta, int, float, complex]
 
 
 class Simulation:
@@ -97,10 +100,13 @@ index=["A", "B"]).T
     """
 
     def __init__(
-        self, assets: Assets, er: Dict[typing.Tuple[Hashable, ...], float], ns: int
+        self,
+        assets: Assets,
+        er: Dict[typing.Union[Scalar, typing.Tuple[Hashable, ...]], float],
+        ns: int,
     ) -> None:
         self.assets = assets
-        self._er: Dict[typing.Tuple[Hashable, ...], float] = er
+        self._er = er
         self.ns = ns
 
         assert (len(er), len(er)) == self.assets.cov.shape
@@ -281,8 +287,6 @@ index=["A", "B"]).T
         Returns:
             Array: The adjustment vector. (m, 1)
         """
-        # cr: correlated daily returns. (m, n)
-        # order > 2
         lds = self.get_log_taylor_series(cr, self.er, order=order)
 
         min_daily_returns = cr.min(axis=-1)
@@ -290,7 +294,6 @@ index=["A", "B"]).T
 
         alpha: List[float] = []
         for dl, r_min, r_max in zip(lds, min_daily_returns, max_daily_returns):
-            # r_min can be negative
             logger.info(f"{dl=}, {r_min=}, {r_max=}")
             root = self.get_root(dl, r_min, r_max)
             alpha.append(root)  # Todo --> Look for max...
@@ -357,6 +360,16 @@ index=["A", "B"]).T
         future_prices = self.get_future_prices(self.init_prices, simulated_returns)
 
         return Assets(df=pd.DataFrame(future_prices, columns=self.assets.df.columns))
+
+
+def simulate_assets(
+    assets: Assets,
+    er: typing.Dict[typing.Union[Scalar, typing.Tuple[Hashable, ...]], float],
+    ns: int,
+    order: int = 12,
+) -> Assets:
+    simulate = Simulation(assets, er, ns)
+    return simulate(order=order)
 
 
 if __name__ == "__main__":

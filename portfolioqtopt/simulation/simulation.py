@@ -116,7 +116,7 @@ index=["A", "B"]).T
     def er(self) -> Array:
         """The annual expected returns that must be yields at the end of the simulation.
 
-        This attribute is just for verification purpose un order to be sure that the
+        This attribute is just for verification purpose in order to be sure that the
         order of the values in the resulting array correspond to the same columns as
         input :attr:`Assets.df` columns.
 
@@ -364,10 +364,28 @@ index=["A", "B"]).T
 
 def simulate_assets(
     assets: Assets,
-    er: typing.Dict[typing.Union[Scalar, typing.Tuple[Hashable, ...]], float],
     ns: int,
+    er: typing.Optional[
+        typing.Dict[typing.Union[Scalar, typing.Tuple[Hashable, ...]], float]
+    ] = None,
     order: int = 12,
 ) -> Assets:
+    """Function that create the future assets.
+
+    Args:
+        assets (Assets): The input assets.
+        ns (int): The number of prices to simulate.
+        er (typing.Dict[typing.Union[Scalar, typing.Tuple[Hashable, ...]], float]): A
+            mapping between each asset name and it's predicted expected returns.
+            Defaults to the input expected returns.
+        order (int, optional): The order of the polynomial approximation of the
+            expected returns. Defaults to 12.
+
+    Returns:
+        Assets: The future assets.
+    """
+    if er is None:
+        er = dict(zip(assets.df.columns, assets.anual_returns))
     simulate = Simulation(assets, er, ns)
     return simulate(order=order)
 

@@ -96,7 +96,7 @@ class Interpretation:
         )
 
 
-def interpret(a: Assets, qbits: Qbits) -> Interpretation:
+def interpret(assets: Assets, qbits: Qbits) -> Interpretation:
     """Interpret the optimization results.
 
     Example:
@@ -138,7 +138,7 @@ def interpret(a: Assets, qbits: Qbits) -> Interpretation:
         Interpretation(selected_indexes=array([0, 2, 3]), investments=array([0.75 , 0.125, 0.125]), expected_returns=44.5, risk=17.153170260916784, sharpe_ratio=2.594272622676201)
 
     Args:
-        a (Assets): The assets.
+        assets (Assets): The assets.
         qbits (Qbits): The qbits resulting of the optimization.
 
     Returns:
@@ -146,23 +146,23 @@ def interpret(a: Assets, qbits: Qbits) -> Interpretation:
 of assets.
     """
     p = len(qbits)
-    w = int(p / a.m)
+    w = int(p / assets.m)
 
     investments, selected_indexes = get_investments(qbits, w)
 
-    a = a[selected_indexes]  # Reduce the assets to the selected ones.
+    assets = assets[selected_indexes]  # Reduce the assets to the selected ones.
 
-    deviation: float = ((np.std(a.prices, axis=0) ** 2) * (investments**2)).sum()
+    deviation: float = ((np.std(assets.prices, axis=0) ** 2) * (investments**2)).sum()
 
     # Compute the covariance
-    indexes = np.triu_indices(a.m, 1)
-    prices_cov = np.cov(a.prices, rowvar=False)[indexes]
+    indexes = np.triu_indices(assets.m, 1)
+    prices_cov = np.cov(assets.prices, rowvar=False)[indexes]
     investments_prod = np.outer(investments, investments)[indexes]
     covariance: float = (investments_prod * prices_cov).sum() * 2
 
     risk = np.sqrt(deviation + covariance)
 
-    returns = a.anual_returns * investments
+    returns = assets.anual_returns * investments
     expected_returns = 100 * returns.sum()
     logger.info(f"{expected_returns=}")
 

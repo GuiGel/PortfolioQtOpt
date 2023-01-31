@@ -18,7 +18,7 @@ from portfolioqtopt.optimization.interpreter_ import (
     get_investments,
     interpret,
 )
-from portfolioqtopt.optimization.qubo_ import Q, get_qubo
+from portfolioqtopt.optimization.qubo import Q, get_qubo
 
 
 @unique

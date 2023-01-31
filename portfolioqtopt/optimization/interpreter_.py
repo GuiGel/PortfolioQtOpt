@@ -10,7 +10,7 @@ import numpy.typing as npt
 from loguru import logger
 
 from portfolioqtopt.assets import Array, Assets
-from portfolioqtopt.optimization.qubo_ import get_pw
+from portfolioqtopt.optimization.qubo import get_pw
 
 Qbits = npt.NDArray[np.int8]
 """A typing alias for documentation purpose of an 1D array made of only 0 and 1 

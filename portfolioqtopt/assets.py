@@ -195,7 +195,7 @@ class Assets(BaseModel):
         .. note::
 
             :math:`\\bar a_{u}` is pass to the function
-            :func:`portfolioqtopt.optimization.qubo_.get_qubo`
+            :func:`portfolioqtopt.optimization.qubo.get_qubo`
             that prepare the qubo for the optimization process.
 
         Returns:

@@ -9,7 +9,7 @@ import numpy as np
 import numpy.typing as npt
 from loguru import logger
 
-from portfolioqtopt.assets_ import Array, Assets
+from portfolioqtopt.assets import Array, Assets
 from portfolioqtopt.optimization.qubo_ import get_pw
 
 Qbits = npt.NDArray[np.int8]

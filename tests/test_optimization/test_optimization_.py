@@ -4,7 +4,7 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from portfolioqtopt.assets_ import Assets
+from portfolioqtopt.assets import Assets
 from portfolioqtopt.optimization.interpreter_ import Interpretation
 from portfolioqtopt.optimization.optimization_ import SolverTypes, optimize
 from portfolioqtopt.reader import read_welzia_stocks_file

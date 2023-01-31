@@ -1,7 +1,7 @@
 Assets
 ======
 
-.. automodule:: portfolioqtopt.assets_
+.. automodule:: portfolioqtopt.assets
     :members:
     :private-members: 
     :special-members:

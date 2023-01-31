@@ -1,4 +1,5 @@
 import typing
+from datetime import date, timedelta
 from typing import Dict, Hashable, List, Optional
 
 import numpy as np
@@ -9,6 +10,8 @@ from numpy.polynomial import Polynomial as P
 
 from portfolioqtopt.assets import Array, Assets
 from portfolioqtopt.simulation.errors import CovNotSymDefPos
+
+Scalar = typing.Union[str, bytes, date, timedelta, int, float, complex]
 
 
 class Simulation:
@@ -96,9 +99,14 @@ index=["A", "B"]).T
             positive.
     """
 
-    def __init__(self, assets: Assets, er: Dict[Hashable, float], ns: int) -> None:
+    def __init__(
+        self,
+        assets: Assets,
+        er: Dict[typing.Union[Scalar, typing.Tuple[Hashable, ...]], float],
+        ns: int,
+    ) -> None:
         self.assets = assets
-        self._er: Dict[Hashable, float] = er
+        self._er = er
         self.ns = ns
 
         assert (len(er), len(er)) == self.assets.cov.shape
@@ -108,14 +116,15 @@ index=["A", "B"]).T
     def er(self) -> Array:
         """The annual expected returns that must be yields at the end of the simulation.
 
-        This attribute is just for verification purpose un order to be sure that the
+        This attribute is just for verification purpose in order to be sure that the
         order of the values in the resulting array correspond to the same columns as
-        input :class:`Assets` `pd.DataFrame` columns.
+        input :attr:`Assets.df` columns.
 
         Returns:
             Array: The anual expected returns as an array. (m,)
         """
-        return np.array([self._er[c] for c in self.assets.df.columns], np.float64)
+        df_er = pd.DataFrame.from_dict(self._er, orient="index").T
+        return np.array([df_er[c][0] for c in self.assets.df], np.float64)
 
     @property
     def init_prices(self) -> Array:
@@ -225,7 +234,6 @@ index=["A", "B"]).T
         for i in range(2, order):
             lds += (-1) ** (i - 1) / i * (x**i).sum(axis=-1)
         lds -= np.log(1 + er)
-        logger.info(f"{type(lds)=}")
         return lds
 
     @staticmethod
@@ -250,6 +258,7 @@ index=["A", "B"]).T
         no_imag = np.imag(roots) == 0
         real_idxs = np.argwhere(no_imag).flatten()
         real_roots = np.real(np.take(roots, real_idxs))
+        logger.debug(f"found real roots: {[root for root in real_roots]}")
 
         # ------------- select the roots that respect the constrains
         w = (1 + real_roots + min_r > 0) & (real_roots + max_r < 1)
@@ -278,8 +287,6 @@ index=["A", "B"]).T
         Returns:
             Array: The adjustment vector. (m, 1)
         """
-        # cr: correlated daily returns. (m, n)
-        # order > 2
         lds = self.get_log_taylor_series(cr, self.er, order=order)
 
         min_daily_returns = cr.min(axis=-1)
@@ -287,8 +294,8 @@ index=["A", "B"]).T
 
         alpha: List[float] = []
         for dl, r_min, r_max in zip(lds, min_daily_returns, max_daily_returns):
-            # r_min can be negative
-            logger.info(f"{dl=}, {r_min=}, {r_max=}")
+            logger.trace(f"{dl}")
+            logger.debug(f"daily returns in [{r_min:3.2e}, {r_max:3.2g}]")
             root = self.get_root(dl, r_min, r_max)
             alpha.append(root)  # Todo --> Look for max...
 
@@ -321,7 +328,7 @@ index=["A", "B"]).T
 
     def check_covariance(self, cov_s: Array) -> None:
         check = np.allclose(cov_s, self.assets.cov)
-        logger.debug(
+        logger.info(
             f"Is the simulated covariance matrix the same as the historical one? {check}"
         )
 
@@ -354,6 +361,34 @@ index=["A", "B"]).T
         future_prices = self.get_future_prices(self.init_prices, simulated_returns)
 
         return Assets(df=pd.DataFrame(future_prices, columns=self.assets.df.columns))
+
+
+def simulate_assets(
+    assets: Assets,
+    ns: int,
+    er: typing.Optional[
+        typing.Dict[typing.Union[Scalar, typing.Tuple[Hashable, ...]], float]
+    ] = None,
+    order: int = 12,
+) -> Assets:
+    """Function that create the future assets.
+
+    Args:
+        assets (Assets): The input assets.
+        ns (int): The number of prices to simulate.
+        er (typing.Dict[typing.Union[Scalar, typing.Tuple[Hashable, ...]], float]): A
+            mapping between each asset name and it's predicted expected returns.
+            Defaults to the input expected returns.
+        order (int, optional): The order of the polynomial approximation of the
+            expected returns. Defaults to 12.
+
+    Returns:
+        Assets: The future assets.
+    """
+    if er is None:
+        er = dict(zip(assets.df.columns, assets.anual_returns))
+    simulate = Simulation(assets, er, ns)
+    return simulate(order=order)
 
 
 if __name__ == "__main__":

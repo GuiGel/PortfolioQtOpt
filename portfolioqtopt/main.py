@@ -33,15 +33,6 @@ def store_results(funds: pd.Index, interpretation: Interpretation) -> None:
     logger.success(f"{final_results=}")
 
 
-# Il me faut penser à comment faire le lien avec les autres parties du programme.
-# Au départ un pd.DataFrame qui vient de plusieurs sources.
-# L'algo the Tecnalia doit pouvoir prendre en entrée un DataFrame ou un numpy array
-# avec une série d'indexes. Ou à moi de transformer la sortie de la simulation en
-# dataframe.
-# Il faut aussi penser à la simulation...
-# Il y a au moins le lien avec stooq ou yahoo finance qui peut être faire.
-
-
 def main(
     file_path: Union[Path, str],
     sheet_name: str,
@@ -82,7 +73,22 @@ def main(
             results. Defaults to None.
 
     Raises:
-        ValueError: The TOKEN_API environment variable has not been defined 
+        ValueError: The TOKEN_API environment variable has not been defined
+
+    Example:
+
+        >>> main(
+        ...     file_path="data/Histórico_carteras_Welzia_2018.xlsm",
+        ...     sheet_name="BBG (valores)",
+        ...     ns=254,
+        ...     w=5,
+        ...     steps=5,
+        ...     expected_returns=None,
+        ...     budget=1.0,
+        ...     theta1=0.9,
+        ...     theta2=0.4,
+        ...     theta3=0.1,
+        ... )  # doctest: +SKIP
     """
     if seed is None:
         seed = 42
@@ -105,7 +111,6 @@ def main(
         solver = SolverTypes.hybrid_solver
 
     if token_api is None:
-        logger.info(f"token api is None")
         if (token_api := os.getenv("TOKEN_API")) is None:
             raise ValueError(
                 "TOKEN_API env var not set. Please pass your dwave token-api trough "

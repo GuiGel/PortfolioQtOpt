@@ -29,6 +29,8 @@ import pandera as pa
 from pydantic import BaseModel, validator
 
 Array = npt.NDArray[np.float64]
+"""Custom typing alias used for all the `numpy.ndarray` in the project."""
+
 Scalar = typing.Union[str, bytes, date, timedelta, int, float, complex]
 
 prices_schema = pa.DataFrameSchema(
@@ -61,11 +63,11 @@ class Assets(BaseModel):
     df: pd.DataFrame
 
     @property
-    def prices(self) -> npt.NDArray[np.float64]:
+    def prices(self) -> Array:
         """Convert :py:attr:`Assets.df` to a numpy array.
 
         Returns:
-            npt.NDArray[np.float64]: The prices of each asset. (n, m)
+            :class:`Array`: The prices of each asset. (n, m)
         """
         return self.df.to_numpy()
 
@@ -104,7 +106,7 @@ class Assets(BaseModel):
             project by :class:`portfolioqtopt.simulation.simulation.Simulation`.
 
         Returns:
-            Array: The covariance matrix. (m, m)
+            :class:`Array`: The covariance matrix. (m, m)
         """
         return np.cov(self.returns, rowvar=True)
 
@@ -126,7 +128,7 @@ class Assets(BaseModel):
 
 
         Returns:
-            Array: The daily returns. (m, n-1)
+            :class:`Array`: The daily returns. (m, n-1)
         """
         return self.df.pct_change()[1:].to_numpy().T  # (m, n-1)
 
@@ -147,7 +149,7 @@ class Assets(BaseModel):
             The normalized prices are used in the optimization part of the project.
 
         Returns:
-            Array: A numpy array of normalized prices. (n, m)
+            :class:`Array`: A numpy array of normalized prices. (n, m)
         """
         factor = np.divide(1, self.prices[-1, :], dtype=np.float64, casting="safe")
         normalized_prices = self.prices * factor
@@ -168,7 +170,7 @@ class Assets(BaseModel):
             We don't use this attribute yet.
 
         Returns:
-            Array: The mean of the daily returns. (m,)
+            :class:`Array`: The mean of the daily returns. (m,)
         """
         adr = self.returns.mean(axis=1)
         return typing.cast(Array, adr)  # (m,)
@@ -201,7 +203,7 @@ class Assets(BaseModel):
             that prepare the qubo for the optimization process.
 
         Returns:
-            Array: A numpy array of approximate daily returns.
+            :class:`Array`: A numpy array of approximate daily returns.
         """
         diff = self.normalized_prices[-1] - self.normalized_prices[0]
         return typing.cast(Array, diff / (self.n - 1))
@@ -224,7 +226,7 @@ class Assets(BaseModel):
 
 
         Returns:
-            Array: The annual returns. (m,)
+            :class:`Array`: The annual returns. (m,)
         """
         return typing.cast(Array, (self.prices[-1] - self.prices[0]) / self.prices[0])
 

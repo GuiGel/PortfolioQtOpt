@@ -485,8 +485,9 @@ def test_optimize(welzia: Assets):
 
         expected_indexes = np.array([1, 2, 4, 7, 8, 10, 12, 25, 30, 32, 38], np.int8)
         expected_assets = welzia[expected_indexes]
+        np.array([0, 1, 3, 5, 6, 8, 10, 19, 23, 24, 28])
         expected_interpretation = Interpretation(
-            selected_indexes=np.array([0, 1, 3, 5, 6, 8, 10, 19, 23, 24, 28]),
+            selected_indexes=expected_assets.df.columns,
             investments=np.array(
                 [
                     0.0625,

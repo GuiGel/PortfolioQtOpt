@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import numpy.typing as npt
+import pandas as pd
 from loguru import logger
 
 from portfolioqtopt.assets import Array, Assets
@@ -51,11 +52,12 @@ dtype=np.int8)
         array([0, 1])
 
     Args:
-        qbits (Qbits): The dwave output array made of 0 and 1. (p,).
+        qbits (:class:`Qbits`): The dwave output array made of 0 and 1. (p,).
         w (int): The depth of granularity.
 
     Returns:
-        npt.NDArray[np.floating[typing.Any]]: The total investment for each funds. (m,).
+        :class:`IvtIdx`: A tuple that store the investment for each fund and the
+            corresponding indexes.
     """
     qbits = qbits.reshape(-1, w)  # type: ignore[assignment]
     pw = get_pw(w).reshape(1, -1)
@@ -75,7 +77,7 @@ dtype=np.int8)
 
 @dataclass(eq=False)
 class Interpretation:
-    selected_indexes: Indexes
+    selected_indexes: pd.Index
     investments: Array
     expected_returns: float
     risk: float
@@ -86,7 +88,9 @@ class Interpretation:
             return NotImplemented
         return (
             (
-                np.testing.assert_equal(self.selected_indexes, other.selected_indexes)
+                pd.testing.assert_index_equal(
+                    self.selected_indexes, other.selected_indexes
+                )
                 is None
             )
             and (np.testing.assert_equal(self.investments, other.investments) is None)
@@ -102,7 +106,7 @@ def interpret(assets: Assets, qbits: Qbits) -> Interpretation:
     Example:
 
         Define 5 prices for 4 assets.
- 
+
         >>> import pandas as pd
         >>> prices = pd.DataFrame(
         ...     [
@@ -110,12 +114,12 @@ def interpret(assets: Assets, qbits: Qbits) -> Interpretation:
         ...         [10, 10.3, 10.9, 10.27, 10.81],
         ...         [100, 104, 116, 164, 356],
         ...         [100, 101, 102, 103, 104],
-        ...     ], 
+        ...     ],
         ...     index=["A", "B", "C", "D"],
         ...     dtype=np.float64
         ...     ).T
 
-        Create an instance of the :py:class:`portfolioqtopt.optimization.assets_.Assets`
+        Create an instance of the :class:`~portfolioqtopt.assets.Assets`
         object.
 
         >>> assets = Assets(df=prices)
@@ -132,18 +136,19 @@ def interpret(assets: Assets, qbits: Qbits) -> Interpretation:
         ...     dtype=np.int8,
         ...     ).flatten()
 
-        Create an :class:`portfolioqtopt.optimization.interpreter.Interpretation` object.
+        Create an :class:`~portfolioqtopt.optimization.interpreter.Interpretation`
+        object.
 
         >>> interpret(assets, qbits)  # doctest: +NORMALIZE_WHITESPACE
-        Interpretation(selected_indexes=array([0, 2, 3]), investments=array([0.75 , 0.125, 0.125]), expected_returns=44.5, risk=17.153170260916784, sharpe_ratio=2.594272622676201)
+        Interpretation(selected_indexes=Index(['A', 'C', 'D'], dtype='object'), investments=array([0.75 , 0.125, 0.125]), expected_returns=44.5, risk=17.153170260916784, sharpe_ratio=2.594272622676201)
 
     Args:
-        assets (Assets): The assets.
-        qbits (Qbits): The qbits resulting of the optimization.
+        assets (:class:`~portfolioqtopt.assets.Assets`): The assets.
+        qbits (:class:`Qbits`): The qbits resulting of the optimization.
 
     Returns:
-        Interpretation: The interpretation of the optimization process for a given set \
-of assets.
+        Interpretation: The interpretation of the optimization process for a given set
+            of assets.
     """
     p = len(qbits)
     w = int(p / assets.m)
@@ -172,7 +177,7 @@ of assets.
         raise
 
     return Interpretation(
-        selected_indexes=selected_indexes,
+        selected_indexes=assets.df.columns,
         investments=investments,
         expected_returns=expected_returns,
         risk=risk,

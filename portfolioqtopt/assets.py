@@ -282,11 +282,14 @@ class Assets(BaseModel):
         """Implement the getitem magic method for :class:`Assets`.      
 
         Args:
-            key (typing.Any): _description_
+            key (typing.Any): The columns of :attr:`~Assets.df` to choose.
 
         Returns:
             Assets: An :class:`Assets` instance with the columns corresponding to the
                 given keys.
+
+        Raises:
+            ValueError: The key type is not treated yet.
 
         Example:
 
@@ -348,11 +351,19 @@ class Assets(BaseModel):
             2  23.0  102.0
             3  22.0  103.0
 
+            >>> assets[("B", "C")].df
+                  B      C
+            0  21.0  101.0
+            1  24.0  104.0
+            2  23.0  102.0
+            3  22.0  103.0
+
         .. note::
 
             We use this method in the optimization process 
-            :func:`portfolioqtopt.optimization.optimization.optimize` portfolio just 
-            after the universe reduction.
+            :func:`~portfolioqtopt.optimization.optimization.optimize` portfolio just 
+            after the universe reduction in order to create a new :class:`Assets`object
+            with the selected indexes.
 
         """
         if isinstance(key, slice):
@@ -360,14 +371,17 @@ class Assets(BaseModel):
         elif isinstance(key, np.ndarray):
             # array = self.prices[:, key]
             df = self.df.iloc[:, key]
+        elif isinstance(key, pd.Index):
+            df = self.df[key]
         elif isinstance(key, tuple):
             if isinstance(key[0], int):
                 df = self.df.iloc[:, list(key)]
             else:
                 df = self.df[list(key)]
-        else:
-            print(f"{key=}")
+        elif key is None:
             df = self.df
+        else:
+            raise ValueError(f"The key type {type(key)} is not allow!")
 
         return Assets(df=df)
 

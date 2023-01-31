@@ -234,7 +234,6 @@ index=["A", "B"]).T
         for i in range(2, order):
             lds += (-1) ** (i - 1) / i * (x**i).sum(axis=-1)
         lds -= np.log(1 + er)
-        logger.info(f"{type(lds)=}")
         return lds
 
     @staticmethod
@@ -259,6 +258,7 @@ index=["A", "B"]).T
         no_imag = np.imag(roots) == 0
         real_idxs = np.argwhere(no_imag).flatten()
         real_roots = np.real(np.take(roots, real_idxs))
+        logger.debug(f"found real roots: {[root for root in real_roots]}")
 
         # ------------- select the roots that respect the constrains
         w = (1 + real_roots + min_r > 0) & (real_roots + max_r < 1)
@@ -294,7 +294,8 @@ index=["A", "B"]).T
 
         alpha: List[float] = []
         for dl, r_min, r_max in zip(lds, min_daily_returns, max_daily_returns):
-            logger.info(f"{dl=}, {r_min=}, {r_max=}")
+            logger.trace(f"{dl}")
+            logger.debug(f"daily returns in [{r_min:3.2e}, {r_max:3.2g}]")
             root = self.get_root(dl, r_min, r_max)
             alpha.append(root)  # Todo --> Look for max...
 
@@ -327,7 +328,7 @@ index=["A", "B"]).T
 
     def check_covariance(self, cov_s: Array) -> None:
         check = np.allclose(cov_s, self.assets.cov)
-        logger.debug(
+        logger.info(
             f"Is the simulated covariance matrix the same as the historical one? {check}"
         )
 

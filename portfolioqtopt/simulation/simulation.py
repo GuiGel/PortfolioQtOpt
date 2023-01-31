@@ -1,5 +1,4 @@
 import typing
-from datetime import date, timedelta
 from typing import Dict, Hashable, List, Optional
 
 import numpy as np
@@ -8,10 +7,8 @@ import pandas as pd
 from loguru import logger
 from numpy.polynomial import Polynomial as P
 
-from portfolioqtopt.assets import Array, Assets
+from portfolioqtopt.assets import Array, Assets, Scalar
 from portfolioqtopt.simulation.errors import CovNotSymDefPos
-
-Scalar = typing.Union[str, bytes, date, timedelta, int, float, complex]
 
 
 class Simulation:

@@ -19,6 +19,7 @@ optimization.
 from __future__ import annotations
 
 import typing
+from datetime import date, timedelta
 from functools import cached_property
 
 import numpy as np
@@ -28,6 +29,7 @@ import pandera as pa
 from pydantic import BaseModel, validator
 
 Array = npt.NDArray[np.float64]
+Scalar = typing.Union[str, bytes, date, timedelta, int, float, complex]
 
 prices_schema = pa.DataFrameSchema(
     {
@@ -225,6 +227,54 @@ class Assets(BaseModel):
             Array: The annual returns. (m,)
         """
         return typing.cast(Array, (self.prices[-1] - self.prices[0]) / self.prices[0])
+
+    @cached_property
+    def columns2idx(
+        self,
+    ) -> typing.Dict[typing.Union[Scalar, typing.Tuple[typing.Hashable, ...]], int]:
+        """Return a `dict`  that map each column name of
+        :attr:`~portfolioqtopt.assets.Assets.df` to it's positional order.
+
+        Example:
+
+            >>> df = pd.DataFrame(
+            ...     [
+            ...         [10, 12, 14, 13],
+            ...         [21, 24, 23, 22],
+            ...         [101, 104, 102, 103],
+            ...     ],
+            ...     index=["A", "B", "C"],
+            ...     dtype=float,
+            ... ).T
+            >>> assets = Assets(df=df)
+            >>> assets.columns2idx
+            {'A': 0, 'B': 1, 'C': 2}
+        """
+        return dict(zip(self.df, range(self.m)))
+
+    @cached_property
+    def idx2columns(
+        self,
+    ) -> typing.Dict[int, typing.Union[Scalar, typing.Tuple[typing.Hashable, ...]]]:
+        """Return a `dict`  that map each column position of
+        :attr:`~portfolioqtopt.assets.Assets.df` to it's value.
+
+        Example:
+
+            >>> df = pd.DataFrame(
+            ...     [
+            ...         [10, 12, 14, 13],
+            ...         [21, 24, 23, 22],
+            ...         [101, 104, 102, 103],
+            ...     ],
+            ...     index=["A", "B", "C"],
+            ...     dtype=float,
+            ... ).T
+            >>> assets = Assets(df=df)
+            >>> assets.idx2columns
+            {0: 'A', 1: 'B', 2: 'C'}
+        """
+        return dict(zip(range(self.m), self.df))
 
     def __getitem__(self, key: typing.Any) -> Assets:
         """Implement the getitem magic method for :class:`Assets`.      

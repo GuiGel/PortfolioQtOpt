@@ -6,7 +6,7 @@ import pytest
 
 from portfolioqtopt.assets import Assets
 from portfolioqtopt.optimization.interpreter import Interpretation
-from portfolioqtopt.optimization.optimization_ import SolverTypes, optimize
+from portfolioqtopt.optimization.optimization import SolverTypes, optimize
 from portfolioqtopt.reader import read_welzia_stocks_file
 
 
@@ -467,7 +467,7 @@ def test_optimize(welzia: Assets):
     )
 
     with patch(
-        "portfolioqtopt.optimization.optimization_.get_qbits"
+        "portfolioqtopt.optimization.optimization.get_qbits"
     ) as mocked_get_qbits:
         mocked_get_qbits.side_effect = qbits_iterator
 

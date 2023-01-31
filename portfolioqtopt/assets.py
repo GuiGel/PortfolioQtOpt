@@ -299,7 +299,7 @@ class Assets(BaseModel):
         .. note::
 
             We use this method in the optimization process 
-            :func:`portfolioqtopt.optimization.optimization_.optimize` portfolio just 
+            :func:`portfolioqtopt.optimization.optimization.optimize` portfolio just 
             after the universe reduction.
 
         """

@@ -1,7 +1,7 @@
 """Module that extract relevant information from the optimization results.
 
 All the functions extract only information from \
-:class:`portfolioqtopt.assets_.Assets` and :class:`Qbits`."""
+:class:`~portfolioqtopt.assets.Assets` and :class:`Qbits`."""
 import typing
 from dataclasses import dataclass
 
@@ -77,11 +77,20 @@ dtype=np.int8)
 
 @dataclass(eq=False)
 class Interpretation:
+    """Dataclass that hold the relevant information after the optimization process.
+    """
     selected_indexes: pd.Index
+    """The funds that have been selected."""
     investments: Array
+    """The proportion of the budget allocated to each selected fund."""
     expected_returns: float
+    """The expected returns of the selected funds. This is the sum of the annual return
+    of each fund weighted by its corresponding investment.
+    """
     risk: float
+    """The risk of the selected funds."""
     sharpe_ratio: float
+    """The sharpe ratio of the selected funds."""
 
     def __eq__(self, other):
         if not isinstance(other, Interpretation):

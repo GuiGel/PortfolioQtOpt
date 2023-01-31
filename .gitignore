@@ -18,6 +18,9 @@ data
 docs/build
 *.ipynb_checkpoints
 
+# Keep env var safe
+.env
+
 # temporary folder
 to_remove
 logs

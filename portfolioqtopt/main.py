@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from loguru import logger
 
 from portfolioqtopt.assets import Assets
-from portfolioqtopt.optimization.interpreter_ import Interpretation
+from portfolioqtopt.optimization.interpreter import Interpretation
 from portfolioqtopt.optimization.optimization_ import SolverTypes, optimize
 from portfolioqtopt.reader import read_welzia_stocks_file
 from portfolioqtopt.simulation.simulation import Scalar, simulate_assets

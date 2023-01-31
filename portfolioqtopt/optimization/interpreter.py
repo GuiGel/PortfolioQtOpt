@@ -132,7 +132,7 @@ def interpret(a: Assets, qbits: Qbits) -> Interpretation:
         ...     dtype=np.int8,
         ...     ).flatten()
 
-        Create an :class:`portfolioqtopt.optimization.interpreter_.Interpretation` object.
+        Create an :class:`portfolioqtopt.optimization.interpreter.Interpretation` object.
 
         >>> interpret(assets, qbits)  # doctest: +NORMALIZE_WHITESPACE
         Interpretation(selected_indexes=array([0, 2, 3]), investments=array([0.75 , 0.125, 0.125]), expected_returns=44.5, risk=17.153170260916784, sharpe_ratio=2.594272622676201)

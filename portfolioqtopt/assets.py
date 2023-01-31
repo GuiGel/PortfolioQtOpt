@@ -217,7 +217,7 @@ class Assets(BaseModel):
         .. note::
 
             This attribute is used in the interpretation part
-            :func:`portfolioqtopt.optimization.interpreter_.interpret` to compute the
+            :func:`portfolioqtopt.optimization.interpreter.interpret` to compute the
             sharpe ratio of the portfolio.
 
 

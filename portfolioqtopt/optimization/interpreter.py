@@ -1,7 +1,8 @@
 """Module that extract relevant information from the optimization results.
 
 All the functions extract only information from \
-:class:`~portfolioqtopt.assets.Assets` and :class:`Qbits`."""
+:class:`~portfolioqtopt.assets.Assets` and :class:`Qbits`.
+"""
 import typing
 from dataclasses import dataclass
 

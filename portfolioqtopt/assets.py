@@ -51,8 +51,7 @@ class Assets(BaseModel):
     """Create the :class:`Assets` class that contains all the relevant information
     about the given portfolio.
 
-    The :class:`Assets` class only attributes related to prices. i.e que se pueden
-    deducir solo de los precios de cada asset.
+    All attributes of :class:`Assets` can be deducted only from the prices of each asset.
 
     Attributes:
 

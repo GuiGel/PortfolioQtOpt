@@ -1,10 +1,11 @@
-import time
 import os
+import time
 from pathlib import Path
 from typing import Dict, Hashable, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from dotenv import load_dotenv
 from loguru import logger
 
 from portfolioqtopt.assets import Assets
@@ -12,6 +13,9 @@ from portfolioqtopt.optimization.interpreter_ import Interpretation
 from portfolioqtopt.optimization.optimization_ import SolverTypes, optimize
 from portfolioqtopt.reader import read_welzia_stocks_file
 from portfolioqtopt.simulation.simulation import Scalar, simulate_assets
+
+# Loading environment variables
+load_dotenv()
 
 # logger.add(f"logs/{round(time.time() * 1000)}.log", level="DEBUG")
 
@@ -53,6 +57,33 @@ def main(
     token_api: Optional[str] = None,
     seed: Optional[int] = None,
 ):
+    """Markovitz Portfolio Optimization with simulated datas and quantum computing.
+
+    Args:
+        file_path (Union[Path, str]): Path to xlsx file.
+        sheet_name (str): Name of the xlsx sheet to read.
+        ns (int): Number of prices to simulate.
+        w (int): The granularity depth.
+        steps (int): The number of step to run for universe reduction and sharpe ratio
+            discovery.
+        expected_returns (Optional[Dict[Union[Scalar, Tuple[Hashable, ...]], float]], \
+            optional): The predicted expected returns. Defaults to None.
+        budget (Optional[float], optional): The budget to allocate. Defaults to None.
+        theta1 (Optional[float], optional): The optimization first Lagrange multiplier.
+            Defaults to None.
+        theta2 (Optional[float], optional): The optimization second Lagrange multiplier.
+            Defaults to None.
+        theta3 (Optional[float], optional): The optimization third Lagrange multiplier.
+            Defaults to None.
+        solver (Optional[SolverTypes], optional): The chosen solver. Defaults to None.
+        token_api (Optional[str], optional): The token api to access dwave leap solver.
+            Defaults to None.
+        seed (Optional[int], optional): The random seed to have reproducible simulation
+            results. Defaults to None.
+
+    Raises:
+        ValueError: The TOKEN_API environment variable has not been defined 
+    """
     if seed is None:
         seed = 42
 
@@ -81,7 +112,6 @@ def main(
                 "the 'token_api' parameter or define the TOKEN_API env var."
             )
 
-
     df = read_welzia_stocks_file(file_path, sheet_name)
     historical_assets = Assets(df=df)
 
@@ -97,7 +127,7 @@ def main(
         theta2=theta2,
         theta3=theta3,
         solver=solver,
-        token_api=token_api,  # "DEV-a0c729a02f82af930c096956e80b8887ce7b3f6e",  # "DEV-d9751cb50bc095c993f55b3255f728d5b2793c36",
+        token_api=token_api,
         steps=steps,
     )
 
@@ -107,9 +137,3 @@ def main(
         logger.info(f"{selected_funds}")
     else:
         logger.warning(f"No positive sharpe ratio have been found!")
-
-if __name__ == "__main__":
-    file_path = "/home/ggelabert/Projects/PortfolioQtOpt/data/Histórico_carteras_Welzia_2018.xlsm"
-    sheet_name = "BBG (valores)"
-    ns = 254
-    main(file_path, sheet_name, ns, 5, 5)

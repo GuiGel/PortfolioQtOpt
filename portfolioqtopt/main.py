@@ -64,7 +64,7 @@ def main(
         First if you want to see some logs, don't forget to enable the logs.
 
         >>> from portfolioqtopt import log
-        >>> log.enable("INFO")
+        >>> log.enable(log.LevelName.INFO)
 
         Then we can directly call the main function to run the portfolio optimization.
         

@@ -176,7 +176,7 @@ class Interpretation:
         output_str += f"{'-':-^51}\n"
         output_str += f"{' selected funds':>24} : {'investment':<24}\n"
         for idx, ivt in it.zip_longest(self.selected_indexes, self.investments):
-            output_str += f"{idx:>24} : {ivt:<24}\n"
+            output_str += f"{idx:>24} : {ivt:<24}\n"  # type: ignore[str-bytes-safe]
         output_str += f"{' expected return':>24} : {self.expected_returns:<24}\n"
         output_str += f"{' risk':>24} : {self.risk:<24}\n"
         output_str += f"{' sharpe ratio':>24} : {self.sharpe_ratio:<24}\n"

@@ -64,7 +64,6 @@ dtype=np.int8)
     qbits = qbits.reshape(-1, w)  # type: ignore[assignment]
     pw = get_pw(w).reshape(1, -1)
     investments: Array = (qbits * pw).sum(axis=1)
-    logger.debug(f"{investments.tolist()=}")
 
     indexes = typing.cast(Indexes, investments.nonzero()[0])  # selected indexes
 
@@ -160,15 +159,15 @@ class Interpretation:
             >>> output = interpretation.to_str()
             >>> print(output)
             ---------------------------------------------------
-                              Interpretation                   
+                              Interpretation
             ---------------------------------------------------
-                      selected funds : investment              
-                                   A : 0.75                    
-                                   C : 0.125                   
-                                   D : 0.125                   
-                     expected return : 44.5                    
-                                risk : 17.153170260916784      
-                        sharpe ratio : 2.594272622676201       
+                      selected funds : investment
+                                   A : 0.75
+                                   C : 0.125
+                                   D : 0.125
+                     expected return : 44.5
+                                risk : 17.153170260916784
+                        sharpe ratio : 2.594272622676201
             ---------------------------------------------------
         """
 
@@ -269,10 +268,3 @@ def interpret(assets: Assets, qbits: Qbits) -> Interpretation:
         risk=risk,
         sharpe_ratio=sharpe_ratio,
     )
-
-
-if __name__ == "__main__":
-    print(f"{' fund name':->20} : {'investment':-<20}")
-    print(f"{'coucoucoucouuuuuuuuuuc':>20} : 16.0")
-    print(f"{'coco':>20} : 16.0")
-    print(f"{' Interpretation ':-^43}")

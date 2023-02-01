@@ -5,8 +5,8 @@ import numpy as np
 import pytest
 
 from portfolioqtopt.assets import Assets
-from portfolioqtopt.optimization.interpreter_ import Interpretation
-from portfolioqtopt.optimization.optimization_ import SolverTypes, optimize
+from portfolioqtopt.optimization.interpreter import Interpretation
+from portfolioqtopt.optimization.optimization import SolverTypes, optimize
 from portfolioqtopt.reader import read_welzia_stocks_file
 
 
@@ -467,7 +467,7 @@ def test_optimize(welzia: Assets):
     )
 
     with patch(
-        "portfolioqtopt.optimization.optimization_.get_qbits"
+        "portfolioqtopt.optimization.optimization.get_qbits"
     ) as mocked_get_qbits:
         mocked_get_qbits.side_effect = qbits_iterator
 
@@ -485,8 +485,9 @@ def test_optimize(welzia: Assets):
 
         expected_indexes = np.array([1, 2, 4, 7, 8, 10, 12, 25, 30, 32, 38], np.int8)
         expected_assets = welzia[expected_indexes]
+        np.array([0, 1, 3, 5, 6, 8, 10, 19, 23, 24, 28])
         expected_interpretation = Interpretation(
-            selected_indexes=np.array([0, 1, 3, 5, 6, 8, 10, 19, 23, 24, 28]),
+            selected_indexes=expected_assets.df.columns,
             investments=np.array(
                 [
                     0.0625,

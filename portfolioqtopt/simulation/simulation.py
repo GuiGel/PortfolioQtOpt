@@ -1,5 +1,4 @@
 import typing
-from datetime import date, timedelta
 from typing import Dict, Hashable, List, Optional
 
 import numpy as np
@@ -8,10 +7,8 @@ import pandas as pd
 from loguru import logger
 from numpy.polynomial import Polynomial as P
 
-from portfolioqtopt.assets import Array, Assets
+from portfolioqtopt.assets import Array, Assets, Scalar
 from portfolioqtopt.simulation.errors import CovNotSymDefPos
-
-Scalar = typing.Union[str, bytes, date, timedelta, int, float, complex]
 
 
 class Simulation:
@@ -203,7 +200,7 @@ index=["A", "B"]).T
         daily_returns = L.dot(random_daily_returns)
 
         # g are daily returns that must all be inferior to 1!
-        if np.all(daily_returns < 1):
+        if np.all(daily_returns >= 1):
             logger.warning("Correlated daily returns not all inf to 1!")
 
         return typing.cast(Array, daily_returns)
@@ -313,24 +310,28 @@ index=["A", "B"]).T
         )  # Reconstruct the price from the last prices values. (m, n + 1)
         return typing.cast(Array, prices.T)  # (n + 1, m)
 
-    def check_returns(self, simulated_returns: Array) -> None:
+    def check_returns(self, simulated_returns: Array) -> bool:
         # Check that the simulated anual returns are near to the expected ones
         sr = Simulation.get_anual_returns_from_daily_returns(simulated_returns)
         check = np.allclose(sr, self.er)
-        logger.info(
-            f"Are the simulated anual returns equal to the expected ones?  {check}"
-        )
         if not check:
+            logger.warning(
+                f"the simulated anual returns are not equal to the expected ones!"
+            )
             returns_errors = sr - self.er
             assets_name = self.assets.df.columns.to_list()
             name_returns = dict(zip(assets_name, returns_errors))
             logger.debug(f"anual returns error: {name_returns}")
+        return check
 
-    def check_covariance(self, cov_s: Array) -> None:
+    def check_covariance(self, cov_s: Array) -> bool:
         check = np.allclose(cov_s, self.assets.cov)
-        logger.info(
-            f"Is the simulated covariance matrix the same as the historical one? {check}"
-        )
+        if not check:
+            logger.warning(
+                f"the simulated covariance matrix the not the same as the "
+                f"historical one!"
+            )
+        return check
 
     @staticmethod
     def get_anual_returns_from_daily_returns(daily_returns: Array) -> Array:
@@ -352,10 +353,13 @@ index=["A", "B"]).T
 
         # ------------- check that the covariance is correct
         cov_s = np.cov(simulated_returns)
-        self.check_covariance(cov_s)
+        cov_equal = self.check_covariance(cov_s)
 
         # ------------- check that the daily returns are correct
-        self.check_returns(simulated_returns)
+        returns_equal = self.check_returns(simulated_returns)
+
+        if cov_equal and returns_equal:
+            logger.success("done!")
 
         # Compute simulated prices
         future_prices = self.get_future_prices(self.init_prices, simulated_returns)
@@ -385,6 +389,7 @@ def simulate_assets(
     Returns:
         Assets: The future assets.
     """
+    logger.info("simulate future assets")
     if er is None:
         er = dict(zip(assets.df.columns, assets.anual_returns))
     simulate = Simulation(assets, er, ns)

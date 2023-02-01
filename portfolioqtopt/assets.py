@@ -19,6 +19,7 @@ optimization.
 from __future__ import annotations
 
 import typing
+from datetime import date, timedelta
 from functools import cached_property
 
 import numpy as np
@@ -28,6 +29,9 @@ import pandera as pa
 from pydantic import BaseModel, validator
 
 Array = npt.NDArray[np.float64]
+"""Custom typing alias used for all the `numpy.ndarray` in the project."""
+
+Scalar = typing.Union[str, bytes, date, timedelta, int, float, complex]
 
 prices_schema = pa.DataFrameSchema(
     {
@@ -47,8 +51,7 @@ class Assets(BaseModel):
     """Create the :class:`Assets` class that contains all the relevant information
     about the given portfolio.
 
-    The :class:`Assets` class only attributes related to prices. i.e que se pueden
-    deducir solo de los precios de cada asset.
+    All attributes of :class:`Assets` can be deducted only from the prices of each asset.
 
     Attributes:
 
@@ -59,11 +62,11 @@ class Assets(BaseModel):
     df: pd.DataFrame
 
     @property
-    def prices(self) -> npt.NDArray[np.float64]:
+    def prices(self) -> Array:
         """Convert :py:attr:`Assets.df` to a numpy array.
 
         Returns:
-            npt.NDArray[np.float64]: The prices of each asset. (n, m)
+            :class:`Array`: The prices of each asset. (n, m)
         """
         return self.df.to_numpy()
 
@@ -102,7 +105,7 @@ class Assets(BaseModel):
             project by :class:`portfolioqtopt.simulation.simulation.Simulation`.
 
         Returns:
-            Array: The covariance matrix. (m, m)
+            :class:`Array`: The covariance matrix. (m, m)
         """
         return np.cov(self.returns, rowvar=True)
 
@@ -124,7 +127,7 @@ class Assets(BaseModel):
 
 
         Returns:
-            Array: The daily returns. (m, n-1)
+            :class:`Array`: The daily returns. (m, n-1)
         """
         return self.df.pct_change()[1:].to_numpy().T  # (m, n-1)
 
@@ -145,7 +148,7 @@ class Assets(BaseModel):
             The normalized prices are used in the optimization part of the project.
 
         Returns:
-            Array: A numpy array of normalized prices. (n, m)
+            :class:`Array`: A numpy array of normalized prices. (n, m)
         """
         factor = np.divide(1, self.prices[-1, :], dtype=np.float64, casting="safe")
         normalized_prices = self.prices * factor
@@ -166,7 +169,7 @@ class Assets(BaseModel):
             We don't use this attribute yet.
 
         Returns:
-            Array: The mean of the daily returns. (m,)
+            :class:`Array`: The mean of the daily returns. (m,)
         """
         adr = self.returns.mean(axis=1)
         return typing.cast(Array, adr)  # (m,)
@@ -195,11 +198,11 @@ class Assets(BaseModel):
         .. note::
 
             :math:`\\bar a_{u}` is pass to the function
-            :func:`portfolioqtopt.optimization.qubo_.get_qubo`
+            :func:`portfolioqtopt.optimization.qubo.get_qubo`
             that prepare the qubo for the optimization process.
 
         Returns:
-            Array: A numpy array of approximate daily returns.
+            :class:`Array`: A numpy array of approximate daily returns.
         """
         diff = self.normalized_prices[-1] - self.normalized_prices[0]
         return typing.cast(Array, diff / (self.n - 1))
@@ -217,24 +220,75 @@ class Assets(BaseModel):
         .. note::
 
             This attribute is used in the interpretation part
-            :func:`portfolioqtopt.optimization.interpreter_.interpret` to compute the
+            :func:`portfolioqtopt.optimization.interpreter.interpret` to compute the
             sharpe ratio of the portfolio.
 
 
         Returns:
-            Array: The annual returns. (m,)
+            :class:`Array`: The annual returns. (m,)
         """
         return typing.cast(Array, (self.prices[-1] - self.prices[0]) / self.prices[0])
+
+    @cached_property
+    def columns2idx(
+        self,
+    ) -> typing.Dict[typing.Union[Scalar, typing.Tuple[typing.Hashable, ...]], int]:
+        """Return a `dict`  that map each column name of
+        :attr:`~portfolioqtopt.assets.Assets.df` to it's positional order.
+
+        Example:
+
+            >>> df = pd.DataFrame(
+            ...     [
+            ...         [10, 12, 14, 13],
+            ...         [21, 24, 23, 22],
+            ...         [101, 104, 102, 103],
+            ...     ],
+            ...     index=["A", "B", "C"],
+            ...     dtype=float,
+            ... ).T
+            >>> assets = Assets(df=df)
+            >>> assets.columns2idx
+            {'A': 0, 'B': 1, 'C': 2}
+        """
+        return dict(zip(self.df, range(self.m)))
+
+    @cached_property
+    def idx2columns(
+        self,
+    ) -> typing.Dict[int, typing.Union[Scalar, typing.Tuple[typing.Hashable, ...]]]:
+        """Return a `dict`  that map each column position of
+        :attr:`~portfolioqtopt.assets.Assets.df` to it's value.
+
+        Example:
+
+            >>> df = pd.DataFrame(
+            ...     [
+            ...         [10, 12, 14, 13],
+            ...         [21, 24, 23, 22],
+            ...         [101, 104, 102, 103],
+            ...     ],
+            ...     index=["A", "B", "C"],
+            ...     dtype=float,
+            ... ).T
+            >>> assets = Assets(df=df)
+            >>> assets.idx2columns
+            {0: 'A', 1: 'B', 2: 'C'}
+        """
+        return dict(zip(range(self.m), self.df))
 
     def __getitem__(self, key: typing.Any) -> Assets:
         """Implement the getitem magic method for :class:`Assets`.      
 
         Args:
-            key (typing.Any): _description_
+            key (typing.Any): The columns of :attr:`~Assets.df` to choose.
 
         Returns:
             Assets: An :class:`Assets` instance with the columns corresponding to the
                 given keys.
+
+        Raises:
+            ValueError: The key type is not treated yet.
 
         Example:
 
@@ -296,11 +350,19 @@ class Assets(BaseModel):
             2  23.0  102.0
             3  22.0  103.0
 
+            >>> assets[("B", "C")].df
+                  B      C
+            0  21.0  101.0
+            1  24.0  104.0
+            2  23.0  102.0
+            3  22.0  103.0
+
         .. note::
 
             We use this method in the optimization process 
-            :func:`portfolioqtopt.optimization.optimization_.optimize` portfolio just 
-            after the universe reduction.
+            :func:`~portfolioqtopt.optimization.optimization.optimize` portfolio just 
+            after the universe reduction in order to create a new :class:`Assets`object
+            with the selected indexes.
 
         """
         if isinstance(key, slice):
@@ -308,14 +370,17 @@ class Assets(BaseModel):
         elif isinstance(key, np.ndarray):
             # array = self.prices[:, key]
             df = self.df.iloc[:, key]
+        elif isinstance(key, pd.Index):
+            df = self.df[key]
         elif isinstance(key, tuple):
             if isinstance(key[0], int):
                 df = self.df.iloc[:, list(key)]
             else:
                 df = self.df[list(key)]
-        else:
-            print(f"{key=}")
+        elif key is None:
             df = self.df
+        else:
+            raise ValueError(f"The key type {type(key)} is not allow!")
 
         return Assets(df=df)
 

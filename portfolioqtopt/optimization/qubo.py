@@ -107,12 +107,12 @@ def get_pw_broadcast(pw: Array, m: int) -> Array:
     return broadcast_array.flatten()  # (p,)
 
 
-def get_qubo_prices_linear(pw_broadcast: Array, b: float) -> Array:
+def get_quboprices_linear(pw_broadcast: Array, b: float) -> Array:
     """Compute the linear prices part of the qubo.
 
     Example:
 
-        >>> get_qubo_prices_linear([1, 2, 1, 2], 3)
+        >>> get_quboprices_linear([1, 2, 1, 2], 3)
         array([[ 6.,  0.,  0.,  0.],
                [ 0., 12.,  0.,  0.],
                [ 0.,  0.,  6.,  0.],
@@ -128,13 +128,13 @@ def get_qubo_prices_linear(pw_broadcast: Array, b: float) -> Array:
     return 2.0 * b * np.diag(pw_broadcast)  # (p, p)
 
 
-def get_qubo_prices_quadratic(pw_broadcast: Array) -> Array:
+def get_quboprices_quadratic(pw_broadcast: Array) -> Array:
     """Compute the quadratic part of the qubo.
 
     Example:
 
         >>> pw_broadcast = [1, 2, 3]
-        >>> get_qubo_prices_quadratic(pw_broadcast)
+        >>> get_quboprices_quadratic(pw_broadcast)
         array([[1, 2, 3],
                [2, 4, 6],
                [3, 6, 9]])
@@ -148,12 +148,12 @@ def get_qubo_prices_quadratic(pw_broadcast: Array) -> Array:
     return np.outer(pw_broadcast, pw_broadcast)
 
 
-def get_qubo_returns(average_daily_returns_partition: Array) -> Array:
+def get_quboreturns(average_daily_returns_partition: Array) -> Array:
     """Get the qubo returns part.
 
     Example:
 
-        >>> get_qubo_returns([1, 2, 3])
+        >>> get_quboreturns([1, 2, 3])
         array([[1, 0, 0],
                [0, 2, 0],
                [0, 0, 3]])
@@ -167,7 +167,7 @@ def get_qubo_returns(average_daily_returns_partition: Array) -> Array:
     return np.diag(average_daily_returns_partition)
 
 
-def get_qubo_covariance(normalized_prices_partition: Array) -> Array:
+def get_qubocovariance(normalized_prices_partition: Array) -> Array:
     return np.cov(normalized_prices_partition.T)  # (p, p)
 
 
@@ -227,7 +227,7 @@ def get_lower_triangular(a: Array) -> Array:
     return np.tril(a, -1) + np.tril(a, 0)
 
 
-def get_qubo_dict(q: Array) -> Q:
+def get_qubodict(q: Array) -> Q:
     """Create a dictionary from a symmetric matrix upper indexes and values.
 
     This function is utilize to generate the qubo dictionary, which we will use to solve
@@ -239,7 +239,7 @@ def get_qubo_dict(q: Array) -> Q:
         array([[1, 2, 3],
                [2, 1, 4],
                [3, 4, 1]])
-        >>> get_qubo_dict(q)  # doctest: +NORMALIZE_WHITESPACE
+        >>> get_qubodict(q)  # doctest: +NORMALIZE_WHITESPACE
         {(0, 0): 1, (0, 1): 2, (0, 2): 3, (1, 0): 2, (1, 1): 1, (1, 2): 4, (2, 0): 3,
         (2, 1): 4, (2, 2): 1}
 
@@ -251,8 +251,8 @@ def get_qubo_dict(q: Array) -> Q:
             corresponding matrix value q[i, j].
     """
     n = len(q)
-    qubo_dict: Q = {(i, j): q[i, j] for i in range(n) for j in range(n)}
-    return qubo_dict
+    qubodict: Q = {(i, j): q[i, j] for i in range(n) for j in range(n)}
+    return qubodict
 
 
 def get_qubo(
@@ -291,17 +291,17 @@ def get_qubo(
     )  # (p,) Tecnalia option as describe in the article.
 
     # Set qubo values
-    qubo_covariance = get_qubo_covariance(npp)
-    qubo_returns = get_qubo_returns(adrp)  # (p, p)
+    qubocovariance = get_qubocovariance(npp)
+    quboreturns = get_quboreturns(adrp)  # (p, p)
     pw_broadcast = get_pw_broadcast(pw, a.m)
-    qubo_linear = get_qubo_prices_linear(pw_broadcast, b)
-    qubo_quadratic = get_qubo_prices_quadratic(pw_broadcast)
+    qubolinear = get_quboprices_linear(pw_broadcast, b)
+    quboquadratic = get_quboprices_quadratic(pw_broadcast)
 
     # Create qubo.
-    qi = -theta1 * qubo_returns - theta2 * qubo_linear  # (p, p).  eq (21a)
-    qij = theta2 * qubo_quadratic + theta3 * qubo_covariance  # (p, p). eq (21b)
-    qubo_ = typing.cast(Array, qi + qij)
-    qubo_matrix = get_upper_triangular(qubo_)
-    q = get_qubo_dict(qubo_matrix)
+    qi = -theta1 * quboreturns - theta2 * qubolinear  # (p, p).  eq (21a)
+    qij = theta2 * quboquadratic + theta3 * qubocovariance  # (p, p). eq (21b)
+    qubo = typing.cast(Array, qi + qij)
+    qubomatrix = get_upper_triangular(qubo)
+    q = get_qubodict(qubomatrix)
 
     return q

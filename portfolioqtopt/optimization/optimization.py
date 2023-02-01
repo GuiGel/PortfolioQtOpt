@@ -11,28 +11,42 @@ from dwave.system import LeapHybridSampler  # type: ignore
 from loguru import logger
 
 from portfolioqtopt.assets import Assets
-from portfolioqtopt.optimization.interpreter_ import (
+from portfolioqtopt.optimization.interpreter import (
     Indexes,
     Interpretation,
     Qbits,
     get_investments,
     interpret,
 )
-from portfolioqtopt.optimization.qubo_ import Q, get_qubo
+from portfolioqtopt.optimization.qubo import Q, get_qubo
 
 
 @unique
 class SolverTypes(Enum):
+    """Enumeration of the different solver types
+
+    Example:
+
+        >>> SolverTypes.hybrid_solver
+        <SolverTypes.hybrid_solver: 'hybrid_solver'>
+
+        If we want to recuperate the string associated with
+        :attr:`SolverTypes.hybrid_solver` just write:
+
+        >>> SolverTypes.hybrid_solver.value
+        'hybrid_solver'
+    """
+
     Clique_Embedding = "Clique_Embedding"
     Find_Embedding = "Find_Embedding"
     hybrid_solver = "hybrid_solver"
+    "Chose the dwave leap hybrid solver"
     SA = "SA"
     exact = "exact"
 
 
 def solve_qubo(q: Q, solver: SolverTypes, api_token: str) -> SampleSet:
 
-    # api_token = 'DEV-d9751cb50bc095c993f55b3255f728d5b2793c36'
     _URL = "https://na-west-1.cloud.dwavesys.com/sapi/v2/"
 
     if solver.value == "hybrid_solver":

@@ -1,38 +1,21 @@
 import os
-import time
 from pathlib import Path
 from typing import Dict, Hashable, Optional, Tuple, Union
 
 import numpy as np
-import pandas as pd
 from dotenv import load_dotenv
 from loguru import logger
 
-from portfolioqtopt.assets import Assets
-from portfolioqtopt.optimization.interpreter_ import Interpretation
-from portfolioqtopt.optimization.optimization_ import SolverTypes, optimize
+from portfolioqtopt.assets import Assets, Scalar
+from portfolioqtopt.optimization import SolverTypes, optimize
 from portfolioqtopt.reader import read_welzia_stocks_file
-from portfolioqtopt.simulation.simulation import Scalar, simulate_assets
+from portfolioqtopt.simulation import simulate_assets
 
 # Loading environment variables
 load_dotenv()
 
-# logger.add(f"logs/{round(time.time() * 1000)}.log", level="DEBUG")
 
-
-def store_results(funds: pd.Index, interpretation: Interpretation) -> None:
-    final_results = {
-        "selected funds": funds,
-        "investment": interpretation.investments,
-        "expected return": interpretation.expected_returns,
-        "risk": interpretation.risk,
-        "sharpe_ratio": interpretation.sharpe_ratio,
-    }
-    curr_time = round(time.time() * 1000)
-    logger.info(f"{curr_time=}")
-    logger.success(f"{final_results=}")
-
-
+@logger.catch
 def main(
     file_path: Union[Path, str],
     sheet_name: str,
@@ -40,6 +23,7 @@ def main(
     w: int,
     steps: int,
     expected_returns: Optional[Dict[Union[Scalar, Tuple[Hashable, ...]], float]] = None,
+    order: Optional[int] = None,
     budget: Optional[float] = None,
     theta1: Optional[float] = None,
     theta2: Optional[float] = None,
@@ -73,10 +57,17 @@ def main(
             results. Defaults to None.
 
     Raises:
-        ValueError: The TOKEN_API environment variable has not been defined
+        ValueError: The TOKEN_API environment variable has not been defined.
 
     Example:
 
+        First if you want to see some logs, don't forget to enable the logs.
+
+        >>> from portfolioqtopt import log
+        >>> log.enable(log.LevelName.INFO)
+
+        Then we can directly call the main function to run the portfolio optimization.
+        
         >>> main(
         ...     file_path="data/Histórico_carteras_Welzia_2018.xlsm",
         ...     sheet_name="BBG (valores)",
@@ -94,6 +85,9 @@ def main(
         seed = 42
 
     np.random.seed(seed)
+
+    if order is None:
+        order = 12
 
     if budget is None:
         budget = 1.0
@@ -117,12 +111,48 @@ def main(
                 "the 'token_api' parameter or define the TOKEN_API env var."
             )
 
+    # ----- Historical data
+    output_str = f"\n{'-':-^51}\n"
+    output_str += f"{' Historical data ':^51}\n"
+    output_str += f"{'-':-^51}\n"
+    output_str += f"{' file path':>24} : {file_path:<24}\n"
+    output_str += f"{' sheet name':>24} : {sheet_name:<24}\n"
+
     df = read_welzia_stocks_file(file_path, sheet_name)
     historical_assets = Assets(df=df)
 
+    # ----- Simulation
+    output_str += f"{'-':-^51}\n"
+    output_str += f"{' Simulation ':^51}\n"
+    output_str += f"{'-':-^51}\n"
+    if expected_returns is not None:
+        output_str += f"{' fund':>24} : {'expected return':<24}\n"
+        for idx, ivt in expected_returns.items():
+            output_str += f"{idx:>24} : {ivt:<24}\n"
+    else:
+        output_str += f"{' expected returns':>24} : {'None':<24}\n"
+    output_str += f"{' ns':>24} : {ns:<24}\n"
+    output_str += f"{' order':>24} : {order:<24}\n"
+
     future_assets = simulate_assets(
-        historical_assets, er=expected_returns, ns=ns, order=12
+        historical_assets,
+        er=expected_returns,
+        ns=ns,
+        order=order,
     )
+
+    # ----- Optimization
+    output_str += f"{'-':-^51}\n"
+    output_str += f"{' Optimization ':^51}\n"
+    output_str += f"{'-':-^51}\n"
+    output_str += f"{' budget':>24} : {budget:<24}\n"
+    output_str += f"{' w':>24} : {w:<24}\n"
+    output_str += f"{' theta1':>24} : {theta1:<24}\n"
+    output_str += f"{' theta2':>24} : {theta2:<24}\n"
+    output_str += f"{' theta3':>24} : {theta3:<24}\n"
+    output_str += f"{' budget':>24} : {budget:<24}\n"
+    output_str += f"{' solver':>24} : {solver.value:<24}\n"
+    output_str += f"{' steps':>24} : {steps:<24}\n"
 
     _, interpretation = optimize(
         future_assets,
@@ -137,8 +167,8 @@ def main(
     )
 
     if interpretation is not None:
-        selected_funds = future_assets.df.columns
-        store_results(selected_funds, interpretation)
-        logger.info(f"{selected_funds}")
+        output_str += interpretation.to_str()
     else:
         logger.warning(f"No positive sharpe ratio have been found!")
+
+    logger.info(output_str)

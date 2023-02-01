@@ -66,6 +66,8 @@ def main(
         >>> from portfolioqtopt import log
         >>> log.enable("INFO")
 
+        Then we can directly call the main function to run the portfolio optimization.
+        
         >>> main(
         ...     file_path="data/Histórico_carteras_Welzia_2018.xlsm",
         ...     sheet_name="BBG (valores)",

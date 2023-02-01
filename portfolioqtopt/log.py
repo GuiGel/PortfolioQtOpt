@@ -1,13 +1,24 @@
+import enum
 import sys
 import typing
 
 from loguru import logger
 
 
+class LevelName(enum.Enum):
+    TRACE = 5
+    DEBUG = 10
+    INFO = 20
+    SUCCESS = 25
+    WARNING = 30
+    ERROR = 40
+    CRITICAL = 50
+
+
 def enable(
-    level: str,
+    level: LevelName,
     file_dir: typing.Optional[str] = None,
-    file_level: typing.Optional[str] = None,
+    file_level: typing.Optional[LevelName] = None,
 ) -> None:
     """Enable logging message.
 
@@ -28,6 +39,6 @@ def enable(
     if file_dir:
         file_path = "/".join([f"{file_dir}", "{time}.log"])
         if file_level is None:
-            file_level = "INFO"
-        logger.add(file_path, level=file_level)
-    logger.add(sys.stderr, level=level)
+            file_level = LevelName.INFO
+        logger.add(file_path, level=file_level.value)
+    logger.add(sys.stderr, level=level.value)

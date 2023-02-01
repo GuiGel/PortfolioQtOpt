@@ -3,6 +3,7 @@
 All the functions extract only information from \
 :class:`~portfolioqtopt.assets.Assets` and :class:`Qbits`.
 """
+import itertools as it
 import typing
 from dataclasses import dataclass
 
@@ -36,6 +37,14 @@ def get_investments(
 ) -> IvtIdx:
     """Get the investment per selected funds and their indexes.
 
+    Args:
+        qbits (:class:`Qbits`): The dwave output array made of 0 and 1. (p,).
+        w (int): The depth of granularity.
+
+    Returns:
+        :class:`IvtIdx`: A tuple that store the investment for each fund and the
+            corresponding indexes.
+
     Example:
 
         >>> qbits = np.array([0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0], \
@@ -51,14 +60,6 @@ dtype=np.int8)
         We have the corresponding selected indexes
         >>> ivt_idx.indexes
         array([0, 1])
-
-    Args:
-        qbits (:class:`Qbits`): The dwave output array made of 0 and 1. (p,).
-        w (int): The depth of granularity.
-
-    Returns:
-        :class:`IvtIdx`: A tuple that store the investment for each fund and the
-            corresponding indexes.
     """
     qbits = qbits.reshape(-1, w)  # type: ignore[assignment]
     pw = get_pw(w).reshape(1, -1)
@@ -79,7 +80,34 @@ dtype=np.int8)
 @dataclass(eq=False)
 class Interpretation:
     """Dataclass that hold the relevant information after the optimization process.
+
+    Example:
+
+        Let's define an :class:`Interpretation` instance.
+
+        >>> interpretation1 = Interpretation(
+        ...     selected_indexes=pd.Index(['A', 'C', 'D'], dtype='object'),
+        ...     investments=np.array([0.75 , 0.125, 0.125]),
+        ...     expected_returns=44.5,
+        ...     risk=17.153170260916784,
+        ...     sharpe_ratio=2.594272622676201,
+        ...     )
+
+        We can verify that both interpretation object are the same or not. For this we
+        define an interpretation with a slightly different risk value.
+
+        >>> interpretation2 = Interpretation(
+        ...     selected_indexes=pd.Index(['A', 'C', 'D'], dtype='object'),
+        ...     investments=np.array([0.75 , 0.125, 0.125]),
+        ...     expected_returns=44.5,
+        ...     risk=17.153170260916479,
+        ...     sharpe_ratio=2.594272622676201,
+        ...     )
+        >>> interpretation2 == interpretation1
+        False
+
     """
+
     selected_indexes: pd.Index
     """The funds that have been selected."""
     investments: Array
@@ -109,9 +137,64 @@ class Interpretation:
             and self.sharpe_ratio == other.sharpe_ratio
         )
 
+    def to_str(self) -> str:
+        """_summary_
+
+        Returns:
+            str: _description_
+
+        Example:
+
+            Let's define an :class:`Interpretation` instance.
+
+            >>> interpretation = Interpretation(
+            ...     selected_indexes=pd.Index(['A', 'C', 'D'], dtype='object'),
+            ...     investments=np.array([0.75 , 0.125, 0.125]),
+            ...     expected_returns=44.5,
+            ...     risk=17.153170260916784,
+            ...     sharpe_ratio=2.594272622676201,
+            ...     )
+
+            Transform the interpretation object as a str to further log.
+
+            >>> output = interpretation.to_str()
+            >>> print(output)
+            ---------------------------------------------------
+                              Interpretation
+            ---------------------------------------------------
+                      selected funds : investment
+                                   A : 0.75
+                                   C : 0.125
+                                   D : 0.125
+                     expected return : 44.5
+                                risk : 17.153170260916784
+                        sharpe ratio : 2.594272622676201
+            ---------------------------------------------------
+        """
+
+        output_str = f"{'-':-^51}\n"
+        output_str += f"{' Interpretation ':^51}\n"
+        output_str += f"{'-':-^51}\n"
+        output_str += f"{' selected funds':>24} : {'investment':<24}\n"
+        for idx, ivt in it.zip_longest(self.selected_indexes, self.investments):
+            output_str += f"{idx:>24} : {ivt:<24}\n"
+        output_str += f"{' expected return':>24} : {self.expected_returns:<24}\n"
+        output_str += f"{' risk':>24} : {self.risk:<24}\n"
+        output_str += f"{' sharpe ratio':>24} : {self.sharpe_ratio:<24}\n"
+        output_str += f"{'-':-^51}"
+        return output_str
+
 
 def interpret(assets: Assets, qbits: Qbits) -> Interpretation:
     """Interpret the optimization results.
+
+    Args:
+        assets (:class:`~portfolioqtopt.assets.Assets`): The assets.
+        qbits (:class:`Qbits`): The qbits resulting of the optimization.
+
+    Returns:
+        Interpretation: The interpretation of the optimization process for a given set
+            of assets.
 
     Example:
 
@@ -152,13 +235,6 @@ def interpret(assets: Assets, qbits: Qbits) -> Interpretation:
         >>> interpret(assets, qbits)  # doctest: +NORMALIZE_WHITESPACE
         Interpretation(selected_indexes=Index(['A', 'C', 'D'], dtype='object'), investments=array([0.75 , 0.125, 0.125]), expected_returns=44.5, risk=17.153170260916784, sharpe_ratio=2.594272622676201)
 
-    Args:
-        assets (:class:`~portfolioqtopt.assets.Assets`): The assets.
-        qbits (:class:`Qbits`): The qbits resulting of the optimization.
-
-    Returns:
-        Interpretation: The interpretation of the optimization process for a given set
-            of assets.
     """
     p = len(qbits)
     w = int(p / assets.m)
@@ -193,3 +269,10 @@ def interpret(assets: Assets, qbits: Qbits) -> Interpretation:
         risk=risk,
         sharpe_ratio=sharpe_ratio,
     )
+
+
+if __name__ == "__main__":
+    print(f"{' fund name':->20} : {'investment':-<20}")
+    print(f"{'coucoucoucouuuuuuuuuuc':>20} : 16.0")
+    print(f"{'coco':>20} : 16.0")
+    print(f"{' Interpretation ':-^43}")

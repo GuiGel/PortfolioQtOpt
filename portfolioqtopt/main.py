@@ -61,6 +61,11 @@ def main(
 
     Example:
 
+        First if you want to see some logs, don't forget to enable the logs.
+
+        >>> from portfolioqtopt import log
+        >>> log.enable("INFO")
+
         >>> main(
         ...     file_path="data/Histórico_carteras_Welzia_2018.xlsm",
         ...     sheet_name="BBG (valores)",
@@ -146,8 +151,6 @@ def main(
     output_str += f"{' budget':>24} : {budget:<24}\n"
     output_str += f"{' solver':>24} : {solver.value:<24}\n"
     output_str += f"{' steps':>24} : {steps:<24}\n"
-
-    raise ZeroDivisionError()
 
     _, interpretation = optimize(
         future_assets,

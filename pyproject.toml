@@ -4,6 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["ggelabert <ggelabert@serikat.es>"]
 readme = "README.md"
+include = ["portfolioqtopt/py.typed"]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.9.7 || >3.9.7,<3.11"
@@ -16,6 +17,7 @@ pandera = "^0.13.4"
 pandas-datareader = "^0.10.0"
 python-dotenv = "^0.21.1"
 streamlit = "^1.17.0"
+bokeh = "2.4.3"
 
 [tool.poetry.group.dev.dependencies]
 autoflake = "^2.0.0"

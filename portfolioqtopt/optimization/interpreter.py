@@ -138,10 +138,10 @@ class Interpretation:
         )
 
     def to_str(self) -> str:
-        """_summary_
+        """Serialize the interpretation as a str to log or write to a file.
 
         Returns:
-            str: _description_
+            str: An informative str about the interpretation contents.
 
         Example:
 
@@ -160,15 +160,15 @@ class Interpretation:
             >>> output = interpretation.to_str()
             >>> print(output)
             ---------------------------------------------------
-                              Interpretation
+                              Interpretation                   
             ---------------------------------------------------
-                      selected funds : investment
-                                   A : 0.75
-                                   C : 0.125
-                                   D : 0.125
-                     expected return : 44.5
-                                risk : 17.153170260916784
-                        sharpe ratio : 2.594272622676201
+                      selected funds : investment              
+                                   A : 0.75                    
+                                   C : 0.125                   
+                                   D : 0.125                   
+                     expected return : 44.5                    
+                                risk : 17.153170260916784      
+                        sharpe ratio : 2.594272622676201       
             ---------------------------------------------------
         """
 

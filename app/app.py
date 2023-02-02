@@ -8,10 +8,15 @@ from bokeh.plotting import figure
 from bokeh.palettes import Turbo256
 from bokeh.models import Legend
 from typing import Hashable, Dict, Tuple, Union
+from portfolioqtopt.assets import Scalar
+
+"# Optimización de un portfolio con optimización cuántica"
 
 
+
+"## 1. Empezamos con la carga de los datos históricos"
 # uploaded_file = st.file_uploader("Elige un fichero al formato Welzia", type="xlsm")
-uploaded_file = "/home/ggelabert/Projects/PortfolioQtOpt/data/Histórico_carteras_Welzia_2018.xlsm"
+uploaded_file = "/home/ggelabert/Projects/PortfolioQtOpt/data/Histórico_carteras_Welzia_2017.xlsm"
 
 
 if uploaded_file is not None:
@@ -21,7 +26,8 @@ if uploaded_file is not None:
 
     if len(sheet_name) != 0:
         df = read_welzia_stocks_file(uploaded_file, sheet_name)
-        # st.text(f"Tabla `{Path(uploaded_file.name).stem}` hoja `{sheet_name}`")
+        # f"Tabla `{Path(uploaded_file.name).stem}` hoja `{sheet_name}`")
+        f"Se ha cargo el valor de {df.shape[1]} fondos durante {df.shape[0]} dias."
         st.dataframe(data=df)
 
         # ----- bokeh visualization
@@ -42,15 +48,13 @@ if uploaded_file is not None:
 
         # ----- simulation part
 
-        st.title("Simulate the future data")
+        st.title("Simulation de los datos futuros")
 
         historical_assets = Assets(df=df)
 
         with st.form(key='columns_in_form'):
-            st.text("Elije el numero días simulados:")
-            ns = st.number_input('Insert a number', min_value = 256, step=1)
+            ns = st.number_input("numero de días a simular", min_value = 256, step=1)
 
-            from portfolioqtopt.assets import Scalar
 
             st.text("Elije el retorno para cada activo:")
 
@@ -61,10 +65,10 @@ if uploaded_file is not None:
             submitted = st.form_submit_button("Enviar")
 
         if submitted:
+            st.write(f"{ns=}")
             future_assets = simulate_assets(historical_assets, ns.as_integer_ratio()[0], sliders)
 
             # ----- bokeh visualization
-            st.text("We can visualize the future datas")
 
             p = figure(
                 title='Future assets',
@@ -76,7 +80,7 @@ if uploaded_file is not None:
 
             for i, column in enumerate(df):
                 color = Turbo256[int(256 * i / future_assets.df.shape[1])]
-                p.line(future_assets.df.index, future_assets.df[column], legend_label=column, line_width=2, color=color)
+                p.line(future_assets.df.index, future_assets.df[column], legend_label=column, line_width=1, color=color)
             st.bokeh_chart(p, use_container_width=True)
 
             # ----- optimization part

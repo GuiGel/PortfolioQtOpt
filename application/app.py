@@ -10,13 +10,10 @@ from bokeh.models import Legend
 from typing import Hashable, Dict, Tuple, Union
 from portfolioqtopt.assets import Scalar
 
-"# Optimización de un portfolio con optimización cuántica"
-
-
-
-"## 1. Empezamos con la carga de los datos históricos"
+"""# Optimización de un portfolio con ordenador cuántico
+## 1. Empezamos con la carga de los datos históricos"""
 # uploaded_file = st.file_uploader("Elige un fichero al formato Welzia", type="xlsm")
-uploaded_file = "/home/ggelabert/Projects/PortfolioQtOpt/data/Histórico_carteras_Welzia_2017.xlsm"
+uploaded_file = "/home/ggelabert/Projects/PortfolioQtOpt/data/Histórico_carteras_Welzia_2018.xlsm"
 
 
 if uploaded_file is not None:

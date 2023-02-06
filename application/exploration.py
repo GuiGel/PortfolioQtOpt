@@ -2,14 +2,11 @@
 # Streamlit run the module evert time a button is click.
 import streamlit as st
 from loguru import logger
-from typing import Dict, Any, Tuple, List
-from collections import defaultdict
-from contextlib import contextmanager
-from application.memory import Item, register
-import pandas as pd
+
+from application.memory import register
+
 
 class App:
-
     @staticmethod
     def f1():
         logger.info("enter f1")
@@ -39,7 +36,7 @@ class App:
         with st.form(key="f2"):
             a = st.text_input("val1", 10, key="f2_v1")
             b = st.text_input("val2", 30, key="f2_v2")
-            args = (a, b)
+            (a, b)
             submit = st.form_submit_button(
                 "submit values",
                 on_click=register,
@@ -94,6 +91,7 @@ class App:
         logger.info(f"{'-':->50}")
         logger.info(f"{' Done ':^50}")
         logger.info(f"{'-':->50}")
+
 
 app = App()
 

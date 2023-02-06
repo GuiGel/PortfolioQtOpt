@@ -1,9 +1,10 @@
-from loguru import logger
 from collections import defaultdict
-from typing import DefaultDict, Any, Optional, List
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from typing import Any, DefaultDict
+
 import streamlit as st
 from loguru import logger
+
 
 @dataclass
 class Item:
@@ -17,7 +18,7 @@ class Register:
 
     __MEMORY: DefaultDict[str, Item] = defaultdict(Item)
 
-    def __call__(self, name: str, order: int, *parameters:str) -> None:
+    def __call__(self, name: str, order: int, *parameters: str) -> None:
         logger.debug(f"call register")
 
         self.__MEMORY[name].calls += 1

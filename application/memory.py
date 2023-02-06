@@ -3,6 +3,7 @@ from collections import defaultdict
 from typing import DefaultDict, Any, Optional, List
 from dataclasses import dataclass, field
 import streamlit as st
+from loguru import logger
 
 @dataclass
 class Item:
@@ -12,37 +13,28 @@ class Item:
     val: Any = None
 
 
-def registry(name: str, order: int, parameters: List[str]) -> None:
-    logger.debug(f"register_args")
+class Register:
 
-    # Update call number to the form
-    logger.info(f"{memo[name]=}")
-    memo[name].calls += 1
-    memo[name].order = order
+    __MEMORY: DefaultDict[str, Item] = defaultdict(Item)
 
-    logger.info(f"v1 = {st.session_state.f1_v1}")
-    logger.info(f"v2 = {st.session_state.f1_v2}")
-    logger.info(f"F1 = {st.session_state.keys()}")
+    def __call__(self, name: str, order: int, *parameters:str) -> None:
+        logger.debug(f"call register")
 
-    memo[name].args = tuple(map(st.session_state.get, parameters))
-    logger.info(f"{memo[name].args=}")
+        self.__MEMORY[name].calls += 1
+        self.__MEMORY[name].order = order
+        self.__MEMORY[name].args = tuple(map(st.session_state.get, parameters))
 
-@dataclass
-class controller:
-    forms: DefaultDict[str, int] = field(default_factory=lambda: defaultdict(int))
+        logger.info(f"update memory {self.__MEMORY[name]=}")
 
-    def add_form(self):
-        pass
+    def __getattr__(self, name: str) -> Item:
+        if self.__MEMORY.get(name, False):
+            return self.__MEMORY[name]
+        else:
+            raise AttributeError(f"The function {name} has not been registered yet!")
 
 
-
-
-logger.info("Initialize MEMORY")
-MEMORY: DefaultDict[str, int] = defaultdict(int)
-
-memo: DefaultDict[str, Item] = defaultdict(Item)
-
+register = Register()
 
 if __name__ == "__main__":
-    memo["form1"] = Item(0, 0, "a")
-    print(memo)
+    register("f1", 10, ["a", "b"])
+    print(register.f1)

@@ -34,9 +34,9 @@ class App:
     def f2():
         logger.info("enter f2")
         with st.form(key="f2"):
-            a = st.text_input("val1", 10, key="f2_v1")
-            b = st.text_input("val2", 30, key="f2_v2")
-            (a, b)
+            st.text_input("val1", 10, key="f2_v1")
+            st.text_input("val2", 30, key="f2_v2")
+
             submit = st.form_submit_button(
                 "submit values",
                 on_click=register,
@@ -61,12 +61,12 @@ class App:
         submit_1 = App.f1()
         logger.info(f"{submit_1=}")
 
-        # ----- compute step 1
-        if submit_1:
-            register.f1.val = App.calc_1(*register.f1.args)
-
         # ----- argument for step 1 has been collected
         if hasattr(register, "f1"):
+
+            # ----- compute step 1
+            if submit_1:
+                register.f1.val = App.calc_1(*register.f1.args)
 
             # ----- display results of step 1
             st.text(f"F1 TEST STAY {register.f1.val}")

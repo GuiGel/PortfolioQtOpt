@@ -36,7 +36,7 @@ class Register:
         To register the function `f1`, and it's position in the order of execution.
         >>> register("f1", 10)
         >>> register.f1
-        Item(order=10, calls=1, args=(None,), val=None)
+        Item(order=10, calls=1, args=(), val=None)
     """
 
     __MEMORY: DefaultDict[str, Item] = defaultdict(Item)

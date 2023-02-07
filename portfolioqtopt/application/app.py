@@ -8,7 +8,7 @@ from bokeh.plotting import figure  # type: ignore[import]
 from dotenv import load_dotenv
 from loguru import logger
 
-from application.memory import register
+from portfolioqtopt.application.memory import register
 from portfolioqtopt import log
 from portfolioqtopt.assets import Assets
 from portfolioqtopt.optimization import Interpretation, SolverTypes, optimize

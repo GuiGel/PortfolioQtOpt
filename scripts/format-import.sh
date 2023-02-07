@@ -2,5 +2,5 @@
 set -x
 
 # Sort imports one per line, so autoflake can remove unused imports
-isort --force-single-line-imports portfolioqtopt tests application
+isort --force-single-line-imports portfolioqtopt tests
 sh ./scripts/format.sh

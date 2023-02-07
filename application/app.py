@@ -1,5 +1,3 @@
-# File to explore ideas about forms and session state
-# Streamlit run the module evert time a button is click.
 from typing import List, Optional, cast
 
 import pandas as pd
@@ -165,7 +163,6 @@ def step_2_compute(
         time.sleep(2)
         _, interpretation = optimize(assets, b, w, theta1, theta2, theta3, solver, "token_api", steps, verbose=verbose)
         """import numpy as np
-        import pandas as pd
 
         from portfolioqtopt.optimization.interpreter import Interpretation
 
@@ -445,8 +442,6 @@ class App:
         logger.info(f"{' Done ':^50}")
         logger.info(f"{'-':->50}")
 
-
-# app = App()
 
 if __name__ == "__main__":
     log.enable(log.LevelName.DEBUG)

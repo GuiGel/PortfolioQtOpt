@@ -1,9 +1,11 @@
+import os
 from typing import List, Optional, cast
 
 import pandas as pd
 import streamlit as st
 from bokeh.palettes import Turbo256  # type: ignore[import]
 from bokeh.plotting import figure  # type: ignore[import]
+from dotenv import load_dotenv
 from loguru import logger
 
 from application.memory import register
@@ -12,8 +14,6 @@ from portfolioqtopt.assets import Assets
 from portfolioqtopt.optimization import Interpretation, SolverTypes, optimize
 from portfolioqtopt.reader import read_welzia_stocks_file
 from portfolioqtopt.simulation import simulate_assets
-from dotenv import load_dotenv
-import os
 
 load_dotenv()
 
@@ -24,7 +24,7 @@ if token_api is None:
             "TOKEN_API env var not set. Please pass your dwave token-api trough "
             "the 'token_api' parameter or define the TOKEN_API env var."
         )
-        
+
 
 def step_0_form() -> bool:
     with st.form(key="xlsm"):
@@ -161,7 +161,18 @@ def step_2_compute(
     logger.info(f"step 2")
     with st.spinner("Optimización en curso..."):
         time.sleep(2)
-        _, interpretation = optimize(assets, b, w, theta1, theta2, theta3, solver, "token_api", steps, verbose=verbose)
+        _, interpretation = optimize(
+            assets,
+            b,
+            w,
+            theta1,
+            theta2,
+            theta3,
+            solver,
+            "token_api",
+            steps,
+            verbose=verbose,
+        )
         """import numpy as np
 
         from portfolioqtopt.optimization.interpreter import Interpretation
@@ -247,7 +258,6 @@ def app():
     st.markdown("---")
     st.markdown("## 1. Select the historical assets")
 
-
     # ----- collect arguments for creating assets
     submit_0 = step_0_form()
     logger.info(f"{submit_0}")
@@ -272,7 +282,6 @@ def app():
 
         st.markdown("## 2. Simulate future asset prices")
 
-
         submit_1 = step_1_form(register.xlsm.val)
         logger.info(f"{submit_1=}")
 
@@ -290,7 +299,6 @@ def app():
 
                 register.step_1.val = step_1_compute(assets, ns, er)
 
-
             st.markdown("**Look at the simulated assets.**")
 
             # ----- display results of step 1
@@ -299,7 +307,6 @@ def app():
 
             with st.expander("Plot the future assets"):
                 step_0_visualize(register.step_1.val)
-
 
             st.markdown("## 3. Found the best porfolio")
 

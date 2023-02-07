@@ -1,3 +1,15 @@
+"""Module that implement to memory logic of the application.
+
+The app use :class:`streamlit.form`s. Outside of forms, any time a user interacts with 
+a widget the app's script is rerun. What st.form does is make it so users can 
+interact with the widgets as much as they want, without causing a rerun! Instead, to 
+update the app, the user should click on the form's submit button.
+
+But by doing this, the fact that previous buttons have been clicked or not disappears.
+As the `st.forms` used depend on each other, it becomes necessary to set up a memory.
+To ensure that this memory is not reset every time a button is pressed, it must be
+initialized outside the scope of the module where our application is defined.
+"""
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, DefaultDict
@@ -15,6 +27,17 @@ class Item:
 
 
 class Register:
+    """A simple register.
+
+    Example:
+
+        >>> register = Register()
+
+        To register the function `f1`, and it's position in the order of execution.
+        >>> register("f1", 10)
+        >>> register.f1
+        Item(order=10, calls=1, args=(None,), val=None)
+    """
 
     __MEMORY: DefaultDict[str, Item] = defaultdict(Item)
 
@@ -37,5 +60,5 @@ class Register:
 register = Register()
 
 if __name__ == "__main__":
-    register("f1", 10, ["a", "b"])
+    register("f1", 10)
     print(register.f1)

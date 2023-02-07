@@ -80,7 +80,7 @@ class Assets(BaseModel):
         """The number of days in the historical data for each asset."""
         return self.df.shape[0]
 
-    @validator("df")
+    @validator("df", allow_reuse=True)
     def schema(cls, v):  # type: ignore
         return prices_schema(v)
 
@@ -357,7 +357,7 @@ class Assets(BaseModel):
             2  23.0  102.0
             3  22.0  103.0
 
-        .. note::
+        .. note::  
 
             We use this method in the optimization process 
             :func:`~portfolioqtopt.optimization.optimization.optimize` portfolio just 

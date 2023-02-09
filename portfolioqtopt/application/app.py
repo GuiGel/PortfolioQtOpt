@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass
-from typing import Dict, Hashable, Optional, Tuple, Union
 from pathlib import Path
+from typing import Dict, Hashable, Optional, Tuple, Union
 
 import pandas as pd
 import streamlit as st
@@ -15,7 +15,7 @@ from portfolioqtopt.optimization import Interpretation, SolverTypes, optimize
 from portfolioqtopt.optimization.interpreter import Interpretation
 from portfolioqtopt.reader import read_welzia_stocks_file
 from portfolioqtopt.simulation import simulate_assets
-    
+
 load_dotenv()
 
 token_api = None
@@ -278,9 +278,9 @@ def app():
         initial_sidebar_state="collapsed",
     )
 
-    
     st.image(logo_path)
     st.markdown("**Markowitz Portfolio Quantum Optimization**")
+    st.markdown(":blue[by: Serikat and Tecnalia]")
     st.markdown("---")
 
     with st.sidebar:

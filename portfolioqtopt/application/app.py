@@ -1,6 +1,7 @@
 import os
 from dataclasses import dataclass
 from typing import Dict, Hashable, Optional, Tuple, Union
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
@@ -14,7 +15,7 @@ from portfolioqtopt.optimization import Interpretation, SolverTypes, optimize
 from portfolioqtopt.optimization.interpreter import Interpretation
 from portfolioqtopt.reader import read_welzia_stocks_file
 from portfolioqtopt.simulation import simulate_assets
-
+    
 load_dotenv()
 
 token_api = None
@@ -267,14 +268,20 @@ def app():
     logger.info(f"{' Enter App ':^50}")
     logger.info(f"{'-':->50}")
 
+    logo_path = str(Path(__file__).parent / "images/logo.png")
+    icon_path = str(Path(__file__).parent / "images/icon.png")
+
     st.set_page_config(
         page_title="QOptimiza",
-        page_icon="./page_icon.png",
+        page_icon=icon_path,
         layout="centered",
         initial_sidebar_state="collapsed",
     )
 
-    st.title("Portfolio Quantum Optimization")
+    
+    st.image(logo_path)
+    st.markdown("**Markowitz Portfolio Quantum Optimization**")
+    st.markdown("---")
 
     with st.sidebar:
         st.title("Parameter selection")

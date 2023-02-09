@@ -1,17 +1,18 @@
 import os
-from typing import List, Optional, cast
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, Hashable, Optional, Tuple, Union
 
 import pandas as pd
 import streamlit as st
-from bokeh.palettes import Turbo256  # type: ignore[import]
-from bokeh.plotting import figure  # type: ignore[import]
 from dotenv import load_dotenv
 from loguru import logger
+from streamlit.runtime.uploaded_file_manager import UploadedFile
 
-from portfolioqtopt import log
-from portfolioqtopt.application.memory import register
-from portfolioqtopt.assets import Assets
+from portfolioqtopt.application.utils import visualize_assets
+from portfolioqtopt.assets import Assets, Scalar
 from portfolioqtopt.optimization import Interpretation, SolverTypes, optimize
+from portfolioqtopt.optimization.interpreter import Interpretation
 from portfolioqtopt.reader import read_welzia_stocks_file
 from portfolioqtopt.simulation import simulate_assets
 
@@ -26,122 +27,138 @@ if token_api is None:
         )
 
 
-def step_0_form() -> bool:
-    with st.form(key="xlsm"):
-        logger.info("load data")
-
-        st.file_uploader("Elige un fichero al formato Welzia", type="xlsm", key="xlsm")
-        # uploaded_file = "/home/ggelabert/Projects/PortfolioQtOpt/data/Histórico_carteras_Welzia_2018.xlsm"
-
-        st.text_input(
-            "Elige el nombre de la hoja a leer.",
-            value="BBG (valores)",
-            key="sheet_name",
-        )
-
-        logger.info(f"F1 = {st.session_state.keys()}")
-
-        submit = st.form_submit_button(
-            "submit values",
-            on_click=register,
-            args=("xlsm", 0, "xlsm", "sheet_name"),  # register arguments
-        )
-        logger.info(f"{submit=}")
-        return submit
+memory = st.session_state
 
 
-def step_0_compute(*args: str) -> Assets:
-    df = read_welzia_stocks_file(*args)
+@dataclass
+class Record:
+    order: int = 0
+    count: int = 0
+    last: int = 0
+
+
+def form_submit_button_callback(key: str, order: int) -> None:
+    logger.info(f"Callback key: {key=}")
+    if not key in memory:
+        # The submit button has been pressed
+        memory[key] = Record(1, order)
+    else:
+        memory[key].order += 1
+        memory[key].last += 1
+    logger.debug(f"memory[{key}]={memory[key]}")
+
+
+def step_0_form() -> Tuple[bool, Optional[UploadedFile], str]:
+    with st.sidebar:
+        st.markdown(f"## Load historical assets")
+        with st.form(key="xlsm"):
+            with st.expander("from xlsm file"):
+
+                file = st.file_uploader(
+                    "Elige un fichero al formato Welzia", type="xlsm"
+                )
+
+                sheet_name = st.text_input(
+                    "Elige el nombre de la hoja a leer.",
+                    value="BBG (valores)",
+                )
+
+            submit = st.form_submit_button(
+                "submit values",
+                on_click=form_submit_button_callback,
+                args=("step_0_form", 1),  # register arguments
+            )
+
+    if submit and (file is None or sheet_name is None):
+        e = ValueError("You must chose a file and a sheet name before submit!")
+        st.exception(e)
+        submit = False
+
+    return submit, file, sheet_name
+
+
+def step_0_compute(file_path: UploadedFile, sheet_name: str) -> Assets:
+    df = read_welzia_stocks_file(file_path, sheet_name)
     return Assets(df=df)
 
 
-def step_0_visualize(assets: Assets) -> None:
-    logger.info("visualize df")
-    # ----- bokeh visualization
-    p = figure(
-        title="simple line example",
-        x_axis_label="Fechas",
-        y_axis_label="Activos",
-        x_axis_type="datetime",
-        y_axis_type="log",
-        background_fill_color="#fafafa",
-    )
+def step_1_form(
+    assets: Assets,
+) -> Tuple[bool, int, Optional[Dict[Union[Scalar, Tuple[Hashable, ...]], float]]]:
+    with st.sidebar:
+        st.markdown("## Simulate future assets")
+        with st.form(key="simulation"):
+            with st.expander(
+                "Rellenar las distintas opciones si se necesita o seguir con los "
+                "valores por defecto."
+            ):
+                # ----- select number of days
+                days_number = st.number_input(
+                    "Choose a number of days to simulate",
+                    help="Chose a number of days for which a prices must be simulated.",
+                    value=256,
+                    step=1,
+                )
 
-    for i, column in enumerate(assets.df):
-        color = Turbo256[int(256 * i / assets.df.shape[1])]
-        p.line(
-            assets.df.index,
-            assets.df[column],
-            legend_label=column,
-            line_width=1,
-            color=color,
-        )
-    st.bokeh_chart(p, use_container_width=True)
+                # ----- select expected return for each asset
+                st.text("Choose an expected returns")
+                expected_returns: Dict[Union[Scalar, Tuple[Hashable, ...]], float] = {}
+                for fund, er in zip(assets.df, assets.anual_returns.tolist()):
+                    expected_returns[fund] = st.number_input(
+                        str(fund), min_value=-1.0, value=er
+                    )
 
-
-def step_1_form(assets: Assets) -> bool:
-    logger.info("get simulation args")
-    with st.form(key="simulation"):
-        with st.expander(
-            "Rellenar las distintas opciones si se necesita o seguir con los "
-            "valores por defecto."
-        ):
-            # ----- select number of days
-            st.number_input("numero de días a simular", value=256, step=1, key="ns")
-
-            # ----- select expected return for each asset
-            st.text("Elije el retorno para cada activo:")
-            funds: List[str] = assets.df.columns.tolist()
-            for fund, er in zip(assets.df, assets.anual_returns.tolist()):
-                st.slider(str(fund), -1.0, 3.0, er, key=cast(str, fund))
-
-        # ----- submit form
-        submit = st.form_submit_button(
-            "submit values",
-            on_click=register,
-            args=("step_1", 1, "ns", *funds),  # register arguments
-        )
-        logger.info(f"{submit=}")
-        return submit
+            # ----- submit form
+            submit = st.form_submit_button(
+                "submit values",
+                on_click=form_submit_button_callback,
+                args=("step_1_form", 2),
+            )
+    return submit, int(days_number), expected_returns
 
 
-def step_1_compute(*args) -> Assets:
+@st.cache(suppress_st_warning=True)
+def step_1_compute(
+    assets: Assets,
+    ns: int,
+    er: Optional[Dict[Union[Scalar, Tuple[Hashable, ...]], float]] = None,
+    order: int = 12,
+) -> Assets:
     logger.info("step 1")
     with st.spinner("Generation en curso ..."):
-        future = simulate_assets(*args)
+        future = simulate_assets(assets, ns, er, order)
     st.success("Hecho!", icon="✅")
     return future
 
 
-def step_2_form() -> bool:
+def step_2_form() -> Tuple[bool, float, int, float, float, float, int]:
     logger.info("optimize portfolio")
-    with st.form(key="optimization"):
-        with st.expander(
-            "Rellenar las distintas opciones si se necesita o seguir con los "
-            "valores por defecto (lo aconsejado)."
-        ):
-            st.number_input("budget", value=1.0, key="b")
-            st.number_input("granularity", value=5, key="w")
-            st.number_input("theta1", value=0.9, key="theta1")
-            st.number_input("theta2", value=0.4, key="theta2")
-            st.number_input("theta3", value=0.1, key="theta3")
-            st.number_input("steps", value=5, step=1, key="steps")
+    with st.sidebar:
+        st.markdown("## Portfolio Optimization")
+        with st.form(key="optimization"):
+            with st.expander(
+                "Rellenar las distintas opciones si se necesita o seguir con los "
+                "valores por defecto (lo aconsejado)."
+            ):
+                budget = float(
+                    st.number_input(
+                        "budget",
+                        value=1.0,
+                    )
+                )
+                w = int(st.number_input("granularity", value=5))
+                theta1 = float(st.number_input("theta1", value=0.9))
+                theta2 = float(st.number_input("theta2", value=0.4))
+                theta3 = float(st.number_input("theta3", value=0.1))
+                steps = int(st.number_input("steps", value=5, step=1))
 
-        submit = st.form_submit_button(
-            "Run optimization",
-            on_click=register,
-            args=(
-                "step_2",
-                2,
-                "b",
-                "w",
-                "theta1",
-                "theta2",
-                "theta3",
-                "steps",
-            ),  # register arguments
-        )
-        return submit
+            submit = st.form_submit_button(
+                "submit values",
+                on_click=form_submit_button_callback,
+                args=("step_2_form", 3),
+            )
+
+        return submit, budget, w, theta1, theta2, theta3, steps
 
 
 def step_2_compute(
@@ -159,7 +176,7 @@ def step_2_compute(
     import time
 
     logger.info(f"step 2")
-    with st.spinner("Optimización en curso..."):
+    with st.spinner("Ongoing optimization... Take your time it can last!"):
         time.sleep(2)
         _, interpretation = optimize(
             assets,
@@ -173,17 +190,15 @@ def step_2_compute(
             steps,
             verbose=verbose,
         )
-        """import numpy as np
-
-        from portfolioqtopt.optimization.interpreter import Interpretation
-
-        interpretation = Interpretation(
-            selected_indexes=pd.Index(["A", "C", "D"], dtype="object"),
-            investments=np.array([0.75, 0.125, 0.125]),
-            expected_returns=44.5,
-            risk=17.153170260916784,
-            sharpe_ratio=2.594272622676201,
-        )"""
+        # import numpy as np
+        #
+        # interpretation = Interpretation(
+        #     selected_indexes=pd.Index(["A", "C", "D"], dtype="object"),
+        #     investments=np.array([0.75, 0.125, 0.125]),
+        #     expected_returns=44.5,
+        #     risk=17.153170260916784,
+        #     sharpe_ratio=2.594272622676201,
+        # )
     st.success("Hecho!", icon="✅")
     return interpretation
 
@@ -248,208 +263,94 @@ def step_2_display(interpretation: Optional[Interpretation] = None):
 
 
 def app():
+
     logger.info(f"{'-':->50}")
     logger.info(f"{' Enter App ':^50}")
     logger.info(f"{'-':->50}")
 
-    st.markdown("# QOptimiza  ")
+    logo_path = str(Path(__file__).parent / "images/logo.png")
+    icon_path = str(Path(__file__).parent / "images/icon.png")
+
+    st.set_page_config(
+        page_title="QOptimiza",
+        page_icon=icon_path,
+        layout="centered",
+        initial_sidebar_state="collapsed",
+    )
+
+    st.image(logo_path)
+    st.markdown("**Markowitz Portfolio Quantum Optimization**")
+    st.markdown(":blue[by: Serikat and Tecnalia]")
     st.markdown("---")
-    st.markdown("Quantum optimization of Markovitz Porfolio")
-    st.markdown("---")
-    st.markdown("## 1. Select the historical assets")
 
-    # ----- collect arguments for creating assets
-    submit_0 = step_0_form()
-    logger.info(f"{submit_0}")
+    with st.sidebar:
+        st.title("Parameter selection")
+        st.markdown(
+            "In this sidebar you are invited to parametrize the optimization process "
+            "in 3 ordered steps."
+        )
+        st.markdown("---")
 
-    # ----- argument for step 1 has been collected
-    if hasattr(register, "xlsm"):
+    sub0, file_path, sheet_name = step_0_form()
 
-        # ----- compute step 1
-        if submit_0:
-            register.xlsm.val = step_0_compute(*register.xlsm.args)
+    if sub0 or memory.get("step_1_form"):
 
-        st.markdown("**Look at the historical assets loaded.**")
+        assert file_path is not None
 
-        # ----- display results of step 0
-        with st.expander("Explore the historical assets"):
-            st.dataframe(data=register.xlsm.val.df)
+        st.markdown("## 1. Historical assets")
 
-        with st.expander("Plot the historical assets"):
-            step_0_visualize(register.xlsm.val)
+        history = step_0_compute(file_path, sheet_name)
 
-        # ----- collect arguments for step 1
+        with st.expander("Raw data"):
+            st.dataframe(data=history.df)
 
-        st.markdown("## 2. Simulate future asset prices")
+        with st.expander("Plot data"):
+            visualize_assets(history)
 
-        submit_1 = step_1_form(register.xlsm.val)
-        logger.info(f"{submit_1=}")
+        sub1, ns, er = step_1_form(history)
 
-        # ----- argument for step 1 has been collected
-        if hasattr(register, "step_1"):
+        if sub1 or memory.get("step_2_form"):
 
-            # ----- compute step 1
-            if submit_1:
-                # ----- collect args for step_1_compute
-                # TODO quite bad this code!
+            if not sub0:
 
-                assets = register.xlsm.val
-                ns = register.step_1.args[0]
-                er = dict(zip(assets.df, register.step_1.args[1:]))
+                assert er is not None
 
-                register.step_1.val = step_1_compute(assets, ns, er)
+                st.markdown("## 2. Assets simulation")
 
-            st.markdown("**Look at the simulated assets.**")
+                future = step_1_compute(history, ns, er, order=12)
 
-            # ----- display results of step 1
-            with st.expander("Explore the future assets"):
-                st.dataframe(register.step_1.val.df)
+                with st.expander("Raw future assets"):
+                    st.dataframe(data=future.df)
 
-            with st.expander("Plot the future assets"):
-                step_0_visualize(register.step_1.val)
+                with st.expander("Plot the future assets"):
+                    visualize_assets(future)
 
-            st.markdown("## 3. Found the best porfolio")
+                sub2, budget, w, theta1, theta2, theta3, steps = step_2_form()
 
-            # ----- collect arguments for step 2
-            submit_2 = step_2_form()
-            logger.info(f"{submit_2=}")
+                if sub2:
 
-            #  ----- the button in step 2 has been pressed
-            if submit_2:
+                    st.markdown("## 3. Find the best portfolio")
 
-                # ----- compute step 2
-                (
-                    b,
-                    w,
-                    theta1,
-                    theta2,
-                    theta3,
-                    steps,
-                ) = register.step_2.args  # For better readability
+                    interpretation = step_2_compute(
+                        future,
+                        budget,
+                        w,
+                        theta1,
+                        theta2,
+                        theta3,
+                        SolverTypes.hybrid_solver,
+                        token_api,
+                        steps,
+                        verbose=False,
+                    )
 
-                args = (
-                    register.step_1.val,
-                    *(b, w, theta1, theta2, theta3),
-                    SolverTypes.hybrid_solver,
-                    token_api,  # ""
-                    steps,
-                )
-                register.step_2.val = step_2_compute(*args)
-
-            # ----- display results step 2
-            if hasattr(register, "step_2"):
-                with st.expander("Optimization results"):
-                    step_2_display(register.step_2.val)
-
-    logger.info(f"memo = {register}")
+                    step_2_display(interpretation)
 
     logger.info(f"{'-':->50}")
     logger.info(f"{' Done ':^50}")
     logger.info(f"{'-':->50}")
-
-
-class App:
-    @staticmethod
-    def f1():
-        logger.info("enter f1")
-        with st.form(key="f1"):
-            st.text_input("val1", 10, key="f1_v1")
-            st.text_input("val2", 30, key="f1_v2")
-
-            logger.info(f"F1 = {st.session_state.keys()}")
-
-            submit = st.form_submit_button(
-                "submit values",
-                on_click=register,
-                args=("f1", 0, "f1_v1", "f1_v2"),  # register arguments
-            )
-            logger.info(f"{submit=}")
-            return submit
-
-    @staticmethod
-    @st.cache
-    def calc_1(a, b) -> float:
-        logger.debug(f"inside calc_1 {locals()}")
-        return a + b
-
-    @staticmethod
-    def f2():
-        logger.info("enter f2")
-        with st.form(key="f2"):
-            st.text_input("val1", 10, key="f2_v1")
-            st.text_input("val2", 30, key="f2_v2")
-
-            submit = st.form_submit_button(
-                "submit values",
-                on_click=register,
-                args=("f2", 1, "f2_v1", "f2_v2"),
-            )
-            logger.info(f"submit 2: {submit}")
-            return submit
-
-    @staticmethod
-    @st.cache
-    def calc_2(a, b, c) -> float:
-        logger.debug("inside calc_2")
-        return a + b + c
-
-    @staticmethod
-    def __call__():
-        logger.info(f"{'-':->50}")
-        logger.info(f"{' Enter App ':^50}")
-        logger.info(f"{'-':->50}")
-
-        # ----- collect arguments for creating assets
-        submit_0 = step_0_form()
-        logger.info(f"{submit_0}")
-
-        # ----- argument for step 1 has been collected
-        if hasattr(register, "xlsm"):
-
-            # ----- compute step 1
-            if submit_0:
-                register.xlsm.val = step_0_compute(*register.xlsm.args)
-
-            # ----- display results of step 0
-            # st.text(f"XLSM TEST STAY {register.xlsm.val}")
-            step_0_visualize(register.xlsm.val)
-
-            # ----- collect arguments for step 1
-            submit_1 = App.f1()
-            logger.info(f"{submit_1=}")
-
-            # ----- argument for step 1 has been collected
-            if hasattr(register, "f1"):
-
-                # ----- compute step 1
-                if submit_1:
-                    register.f1.val = App.calc_1(*register.f1.args)
-
-                # ----- display results of step 1
-                st.text(f"F1 TEST STAY {register.f1.val}")
-
-                # ----- collect arguments for step 2
-                submit_2 = App.f2()
-                logger.info(f"{submit_2=}")
-
-                #  ----- the button in step 2 has been pressed
-                if submit_2:
-
-                    # ----- compute step 2
-                    args = register.f2.args + (register.f1.val,)
-                    register.f2.val = App.calc_2(*args)
-
-                # ----- display results step 2
-                if hasattr(register, "f2"):
-                    st.text(f"F2 TEST STAY {register.f2.val}")
-
-        logger.info(f"memo = {register}")
-
-        logger.info(f"{'-':->50}")
-        logger.info(f"{' Done ':^50}")
-        logger.info(f"{'-':->50}")
+    logger.info(f"\n\n\n\n")
 
 
 if __name__ == "__main__":
-    log.enable(log.LevelName.DEBUG)
     app()

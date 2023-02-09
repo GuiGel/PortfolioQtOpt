@@ -192,7 +192,7 @@ def step_2_compute(
             verbose=verbose,
         )
         # import numpy as np
-        # 
+        #
         # interpretation = Interpretation(
         #     selected_indexes=pd.Index(["A", "C", "D"], dtype="object"),
         #     investments=np.array([0.75, 0.125, 0.125]),

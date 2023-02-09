@@ -4,8 +4,6 @@ from typing import Dict, Hashable, Optional, Tuple, Union
 
 import pandas as pd
 import streamlit as st
-from bokeh.palettes import Turbo256  # type: ignore[import]
-from bokeh.plotting import figure  # type: ignore[import]
 from dotenv import load_dotenv
 from loguru import logger
 from streamlit.runtime.uploaded_file_manager import UploadedFile
@@ -268,6 +266,13 @@ def app():
     logger.info(f"{'-':->50}")
     logger.info(f"{' Enter App ':^50}")
     logger.info(f"{'-':->50}")
+
+    st.set_page_config(
+        page_title="QOptimiza",
+        page_icon="./page_icon.png",
+        layout="centered",
+        initial_sidebar_state="collapsed",
+    )
 
     st.title("Portfolio Quantum Optimization")
 

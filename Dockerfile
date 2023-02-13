@@ -10,8 +10,10 @@ COPY ./poetry.lock /code/poetry.lock
 
 RUN pip install --no-cache-dir --upgrade pip
 
+# https://stackoverflow.com/questions/53835198/integrating-python-poetry-with-docker/57886655#57886655
 # https://stackoverflow.com/questions/53835198/integrating-python-poetry-with-docker
-RUN pip install --no-cache-dir `poetry==$POETRY_VERSION`
+
+RUN pip install --no-cache-dir "poetry==$POETRY_VERSION" 
 RUN poetry config virtualenvs.create false
 RUN poetry --version
 

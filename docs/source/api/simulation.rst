@@ -168,6 +168,6 @@ we have:
 
     Ed^{s} = ML^{-1}L_{h} + c
 
-.. automodule:: portfolioqtopt.simulation.simulation
+.. automodule:: qoptimiza.simulation.simulation
     :members:
     :private-members: _chol, _get_random_unit_cov

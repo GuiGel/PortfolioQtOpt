@@ -10,15 +10,15 @@ from dimod.sampleset import SampleSet
 from dwave.system import LeapHybridSampler  # type: ignore
 from loguru import logger
 
-from portfolioqtopt.assets import Assets
-from portfolioqtopt.optimization.interpreter import (
+from qoptimiza.assets import Assets
+from qoptimiza.optimization.interpreter import (
     Indexes,
     Interpretation,
     Qbits,
     get_investments,
     interpret,
 )
-from portfolioqtopt.optimization.qubo import Q, get_qubo
+from qoptimiza.optimization.qubo import Q, get_qubo
 
 
 @unique

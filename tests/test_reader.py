@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-from portfolioqtopt.reader import read_welzia_stocks_file
+from qoptimiza.reader import read_welzia_stocks_file
 
 
 def test_read_welzia_stocks_file(welzia):

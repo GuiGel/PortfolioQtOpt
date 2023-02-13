@@ -23,7 +23,7 @@ RUN --mount=type=cache,target=/home/.cache/pypoetry/cache \
     --mount=type=cache,target=/home/.cache/pypoetry/artifacts \
     poetry install --without test,docs,dev
 
-COPY ./portfolioqtopt /code/portfolioqtopt
+COPY ./qoptimiza /code/qoptimiza
 
 EXPOSE 8501
 
@@ -33,4 +33,4 @@ ENV PYTHONPATH "${PYTHONPATH}:/code"
 
 ENV TOKEN_API ""
 
-CMD ["streamlit", "run", "portfolioqtopt/application/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "qoptimiza/application/app.py", "--server.port=8501", "--server.address=0.0.0.0"]

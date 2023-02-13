@@ -9,12 +9,12 @@ from dotenv import load_dotenv
 from loguru import logger
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
-from portfolioqtopt.application.utils import visualize_assets
-from portfolioqtopt.assets import Assets, Scalar
-from portfolioqtopt.optimization import Interpretation, SolverTypes, optimize
-from portfolioqtopt.optimization.interpreter import Interpretation
-from portfolioqtopt.reader import read_welzia_stocks_file
-from portfolioqtopt.simulation import simulate_assets
+from qoptimiza.application.utils import visualize_assets
+from qoptimiza.assets import Assets, Scalar
+from qoptimiza.optimization import Interpretation, SolverTypes, optimize
+from qoptimiza.optimization.interpreter import Interpretation
+from qoptimiza.reader import read_welzia_stocks_file
+from qoptimiza.simulation import simulate_assets
 
 load_dotenv()
 

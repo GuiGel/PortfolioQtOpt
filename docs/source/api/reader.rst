@@ -1,5 +1,5 @@
 Reader
 ======
 
-.. automodule:: portfolioqtopt.reader
+.. automodule:: qoptimiza.reader
     :members:

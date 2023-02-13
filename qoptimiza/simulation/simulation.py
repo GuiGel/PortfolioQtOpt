@@ -7,8 +7,8 @@ import pandas as pd
 from loguru import logger
 from numpy.polynomial import Polynomial as P
 
-from portfolioqtopt.assets import Array, Assets, Scalar
-from portfolioqtopt.simulation.errors import CovNotSymDefPos
+from qoptimiza.assets import Array, Assets, Scalar
+from qoptimiza.simulation.errors import CovNotSymDefPos
 
 
 class Simulation:
@@ -37,7 +37,7 @@ index=["A", "B"]).T
 
         Finally we simulate the future prices with the `simulate` callable.
 
-        >>> logger.disable("portfolioqtopt")  # Disable logging messages
+        >>> logger.disable("qoptimiza")  # Disable logging messages
         >>> future_assets = simulate(order=5)
 
         We can observe the simulate prices

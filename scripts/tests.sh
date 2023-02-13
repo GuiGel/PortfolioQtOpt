@@ -3,4 +3,4 @@
 set -e
 set -x
 
-pytest --doctest-modules portfolioqtopt tests
+pytest --doctest-modules qoptimiza tests

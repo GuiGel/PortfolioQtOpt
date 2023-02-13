@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 from pytest import fixture
 
-from portfolioqtopt.assets import Assets
-from portfolioqtopt.simulation.simulation import Simulation
+from qoptimiza.assets import Assets
+from qoptimiza.simulation.simulation import Simulation
 
 
 @fixture

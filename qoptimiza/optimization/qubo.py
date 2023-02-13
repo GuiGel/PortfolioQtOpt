@@ -1,7 +1,7 @@
 """Preliminary calculations.
 
 In this module, we calculate the qubo dict for a given portfolio represented by a 
-:class:`portfolioqtopt.assets_.Assets` object, with a granularity depth :math:`w` 
+:class:`qoptimiza.assets_.Assets` object, with a granularity depth :math:`w` 
 and a budget :math:`b`.
 
 .. note:: 
@@ -16,7 +16,7 @@ from functools import cache
 import numpy as np
 from dimod.typing import Bias, Variable
 
-from portfolioqtopt.assets import Array, Assets
+from qoptimiza.assets import Array, Assets
 
 Q = typing.Mapping[typing.Tuple[Variable, Variable], Bias]
 

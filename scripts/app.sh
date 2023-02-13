@@ -1,4 +1,4 @@
 #!/bin/sh -e
 set -x
 
-streamlit run portfolioqtopt/application/app.py
+streamlit run qoptimiza/application/app.py

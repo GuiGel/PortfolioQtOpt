@@ -4,6 +4,6 @@
 set -e
 set -x
 
-mypy portfolioqtopt
-black portfolioqtopt tests --check
-isort portfolioqtopt tests --check-only
+mypy qoptimiza
+black qoptimiza tests --check
+isort qoptimiza tests --check-only

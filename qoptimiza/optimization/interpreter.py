@@ -1,7 +1,7 @@
 """Module that extract relevant information from the optimization results.
 
 All the functions extract only information from \
-:class:`~portfolioqtopt.assets.Assets` and :class:`Qbits`.
+:class:`~qoptimiza.assets.Assets` and :class:`Qbits`.
 """
 import itertools as it
 import typing
@@ -12,8 +12,8 @@ import numpy.typing as npt
 import pandas as pd
 from loguru import logger
 
-from portfolioqtopt.assets import Array, Assets
-from portfolioqtopt.optimization.qubo import get_pw
+from qoptimiza.assets import Array, Assets
+from qoptimiza.optimization.qubo import get_pw
 
 Qbits = npt.NDArray[np.int8]
 """A typing alias for documentation purpose of an 1D array made of only 0 and 1 
@@ -188,7 +188,7 @@ def interpret(assets: Assets, qbits: Qbits) -> Interpretation:
     """Interpret the optimization results.
 
     Args:
-        assets (:class:`~portfolioqtopt.assets.Assets`): The assets.
+        assets (:class:`~qoptimiza.assets.Assets`): The assets.
         qbits (:class:`Qbits`): The qbits resulting of the optimization.
 
     Returns:
@@ -211,7 +211,7 @@ def interpret(assets: Assets, qbits: Qbits) -> Interpretation:
         ...     dtype=np.float64
         ...     ).T
 
-        Create an instance of the :class:`~portfolioqtopt.assets.Assets`
+        Create an instance of the :class:`~qoptimiza.assets.Assets`
         object.
 
         >>> assets = Assets(df=prices)
@@ -228,7 +228,7 @@ def interpret(assets: Assets, qbits: Qbits) -> Interpretation:
         ...     dtype=np.int8,
         ...     ).flatten()
 
-        Create an :class:`~portfolioqtopt.optimization.interpreter.Interpretation`
+        Create an :class:`~qoptimiza.optimization.interpreter.Interpretation`
         object.
 
         >>> interpret(assets, qbits)  # doctest: +NORMALIZE_WHITESPACE

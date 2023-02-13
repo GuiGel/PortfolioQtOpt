@@ -1,7 +1,7 @@
 Interpreter
 ===========
 
-.. automodule:: portfolioqtopt.optimization.interpreter
+.. automodule:: qoptimiza.optimization.interpreter
     :members:
     :private-members: 
 

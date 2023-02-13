@@ -4,10 +4,10 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from portfolioqtopt.assets import Assets
-from portfolioqtopt.optimization.interpreter import Interpretation
-from portfolioqtopt.optimization.optimization import SolverTypes, optimize
-from portfolioqtopt.reader import read_welzia_stocks_file
+from qoptimiza.assets import Assets
+from qoptimiza.optimization.interpreter import Interpretation
+from qoptimiza.optimization.optimization import SolverTypes, optimize
+from qoptimiza.reader import read_welzia_stocks_file
 
 
 @pytest.fixture
@@ -466,9 +466,7 @@ def test_optimize(welzia: Assets):
         )
     )
 
-    with patch(
-        "portfolioqtopt.optimization.optimization.get_qbits"
-    ) as mocked_get_qbits:
+    with patch("qoptimiza.optimization.optimization.get_qbits") as mocked_get_qbits:
         mocked_get_qbits.side_effect = qbits_iterator
 
         assets, interpretation = optimize(

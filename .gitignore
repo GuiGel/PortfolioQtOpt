@@ -5,8 +5,6 @@ __pycache__
 # Pyenv
 .python-version
 
-# Poetry
-poetry.lock
 
 # Data direcotry from Welzia
 data

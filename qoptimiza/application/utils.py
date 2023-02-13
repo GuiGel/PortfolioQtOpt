@@ -3,7 +3,7 @@ from bokeh.palettes import Turbo256  # type: ignore[import]
 from bokeh.plotting import figure  # type: ignore[import]
 from loguru import logger
 
-from portfolioqtopt.assets import Assets
+from qoptimiza.assets import Assets
 
 
 def visualize_assets(assets: Assets) -> None:

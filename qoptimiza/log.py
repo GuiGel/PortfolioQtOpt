@@ -34,7 +34,7 @@ def enable(
             Defaults to None.
 
     """
-    logger.enable("portfolioqtopt")
+    logger.enable("qoptimiza")
     logger.remove()
     if file_dir:
         file_path = "/".join([f"{file_dir}", "{time}.log"])

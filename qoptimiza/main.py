@@ -6,10 +6,10 @@ import numpy as np
 from dotenv import load_dotenv
 from loguru import logger
 
-from portfolioqtopt.assets import Assets, Scalar
-from portfolioqtopt.optimization import SolverTypes, optimize
-from portfolioqtopt.reader import read_welzia_stocks_file
-from portfolioqtopt.simulation import simulate_assets
+from qoptimiza.assets import Assets, Scalar
+from qoptimiza.optimization import SolverTypes, optimize
+from qoptimiza.reader import read_welzia_stocks_file
+from qoptimiza.simulation import simulate_assets
 
 # Loading environment variables
 load_dotenv()
@@ -63,7 +63,7 @@ def main(
 
         First if you want to see some logs, don't forget to enable the logs.
 
-        >>> from portfolioqtopt import log
+        >>> from qoptimiza import log
         >>> log.enable(log.LevelName.INFO)
 
         Then we can directly call the main function to run the portfolio optimization.

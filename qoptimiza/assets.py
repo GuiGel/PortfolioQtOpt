@@ -102,7 +102,7 @@ class Assets(BaseModel):
         .. note::
 
             The covariance of the daily returns are used in the simulation part of the
-            project by :class:`portfolioqtopt.simulation.simulation.Simulation`.
+            project by :class:`qoptimiza.simulation.simulation.Simulation`.
 
         Returns:
             :class:`Array`: The covariance matrix. (m, m)
@@ -198,7 +198,7 @@ class Assets(BaseModel):
         .. note::
 
             :math:`\\bar a_{u}` is pass to the function
-            :func:`portfolioqtopt.optimization.qubo.get_qubo`
+            :func:`qoptimiza.optimization.qubo.get_qubo`
             that prepare the qubo for the optimization process.
 
         Returns:
@@ -220,7 +220,7 @@ class Assets(BaseModel):
         .. note::
 
             This attribute is used in the interpretation part
-            :func:`portfolioqtopt.optimization.interpreter.interpret` to compute the
+            :func:`qoptimiza.optimization.interpreter.interpret` to compute the
             sharpe ratio of the portfolio.
 
 
@@ -234,7 +234,7 @@ class Assets(BaseModel):
         self,
     ) -> typing.Dict[typing.Union[Scalar, typing.Tuple[typing.Hashable, ...]], int]:
         """Return a `dict`  that map each column name of
-        :attr:`~portfolioqtopt.assets.Assets.df` to it's positional order.
+        :attr:`~qoptimiza.assets.Assets.df` to it's positional order.
 
         Example:
 
@@ -258,7 +258,7 @@ class Assets(BaseModel):
         self,
     ) -> typing.Dict[int, typing.Union[Scalar, typing.Tuple[typing.Hashable, ...]]]:
         """Return a `dict`  that map each column position of
-        :attr:`~portfolioqtopt.assets.Assets.df` to it's value.
+        :attr:`~qoptimiza.assets.Assets.df` to it's value.
 
         Example:
 
@@ -360,7 +360,7 @@ class Assets(BaseModel):
         .. note::  
 
             We use this method in the optimization process 
-            :func:`~portfolioqtopt.optimization.optimization.optimize` portfolio just 
+            :func:`~qoptimiza.optimization.optimization.optimize` portfolio just 
             after the universe reduction in order to create a new :class:`Assets`object
             with the selected indexes.
 

@@ -1,5 +1,5 @@
 main
 ====
 
-.. automodule:: portfolioqtopt.main
+.. automodule:: qoptimiza.main
     :members:

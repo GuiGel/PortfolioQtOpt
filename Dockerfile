@@ -2,10 +2,24 @@ FROM python:3.9
 
 WORKDIR /code
 
-COPY ./requirements.txt /code/requirements.txt
+ENV POETRY_VERSION 1.3.1
+
+# COPY ./requirements.txt /code/requirements.txt
+COPY ./pyproject.toml /code/pyproject.toml
+COPY ./poetry.lock /code/poetry.lock
 
 RUN pip install --no-cache-dir --upgrade pip
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+
+# https://stackoverflow.com/questions/53835198/integrating-python-poetry-with-docker
+RUN pip install --no-cache-dir `poetry==$POETRY_VERSION`
+RUN poetry config virtualenvs.create false
+RUN poetry --version
+
+# https://github.com/python-poetry/poetry/issues/3374
+
+RUN --mount=type=cache,target=/home/.cache/pypoetry/cache \
+    --mount=type=cache,target=/home/.cache/pypoetry/artifacts \
+    poetry install --without test,docs,dev
 
 COPY ./portfolioqtopt /code/portfolioqtopt
 

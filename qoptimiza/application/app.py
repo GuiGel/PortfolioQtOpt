@@ -10,6 +10,7 @@ from loguru import logger
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 from qoptimiza.application.utils import visualize_assets
+from qoptimiza.application.memory import _token_api
 from qoptimiza.assets import Assets, Scalar
 from qoptimiza.optimization import Interpretation, SolverTypes, optimize
 from qoptimiza.optimization.interpreter import Interpretation
@@ -17,14 +18,6 @@ from qoptimiza.reader import read_welzia_stocks_file
 from qoptimiza.simulation import simulate_assets
 
 load_dotenv()
-
-token_api = None
-if token_api is None:
-    if (token_api := os.getenv("TOKEN_API")) is None:
-        raise ValueError(
-            "TOKEN_API env var not set. Please pass your dwave token-api trough "
-            "the 'token_api' parameter or define the TOKEN_API env var."
-        )
 
 
 memory = st.session_state
@@ -84,7 +77,7 @@ def step_0_compute(file_path: UploadedFile, sheet_name: str) -> Assets:
 
 def step_1_form(
     assets: Assets,
-) -> Tuple[bool, int, Optional[Dict[Union[Scalar, Tuple[Hashable, ...]], float]]]:
+) -> Tuple[bool, int, Optional[Dict[Union[Scalar, Tuple[Hashable, ...]], float]], int]:
     with st.sidebar:
         st.markdown("## Simulate future assets")
         with st.form(key="simulation"):
@@ -92,6 +85,18 @@ def step_1_form(
                 "Rellenar las distintas opciones si se necesita o seguir con los "
                 "valores por defecto."
             ):
+                # ----- chose a seed for random number generation
+                seed = st.number_input(
+                    "choose a seed for random number generation",
+                    help=(
+                        "Internally the simulation begin by generating random numbers "
+                        "that are exactly the same between each runs if they have the "
+                        "same seed. "
+                    ),
+                    value=42,
+                )
+                logger.debug(f"{seed=}")
+
                 # ----- select number of days
                 days_number = st.number_input(
                     "Choose a number of days to simulate",
@@ -114,7 +119,7 @@ def step_1_form(
                 on_click=form_submit_button_callback,
                 args=("step_1_form", 2),
             )
-    return submit, int(days_number), expected_returns
+    return submit, int(days_number), expected_returns, int(seed)
 
 
 @st.cache(suppress_st_warning=True)
@@ -123,11 +128,13 @@ def step_1_compute(
     ns: int,
     er: Optional[Dict[Union[Scalar, Tuple[Hashable, ...]], float]] = None,
     order: int = 12,
+    seed: Optional[int] = None,
 ) -> Assets:
     logger.info("step 1")
     with st.spinner("Generation en curso ..."):
-        future = simulate_assets(assets, ns, er, order)
+        future = simulate_assets(assets, ns, er, order, seed)
     st.success("Hecho!", icon="✅")
+    logger.debug(f"{future.df.iloc[2, 2]=}")
     return future
 
 
@@ -173,20 +180,19 @@ def step_2_compute(
     steps: int,
     verbose: bool = False,
 ) -> Optional[Interpretation]:
-    import time
+    import copy
 
     logger.info(f"step 2")
     with st.spinner("Ongoing optimization... Take your time it can last!"):
-        time.sleep(2)
         _, interpretation = optimize(
-            assets,
+            copy.deepcopy(assets),
             b,
             w,
             theta1,
             theta2,
             theta3,
             solver,
-            "token_api",
+            token_api,
             steps,
             verbose=verbose,
         )
@@ -262,11 +268,42 @@ def step_2_display(interpretation: Optional[Interpretation] = None):
         st.markdown("Optimization fails. Run it again!")
 
 
-def app():
+def get_token_api() -> str:
+    def callback():
+        if st.session_state["token_api"] != "":
+            logger.debug("token api not equal to ''")
+            logger.debug("empty token api container")
+            _token_api.value = memory.token_api
+            token_api_container.empty()
+            logger.info(f"token_api = {memory.token_api}")
 
+    st.markdown(
+        f"Set the token api to connect to dwave solver in order to solve the "
+        f"optimization problem"
+    )
+
+    if st.button("token api", key="token_api_button"):
+        logger.debug("token api button press")
+        token_api_container = st.empty()
+        token_api_container.text_input(
+            "Enter your dwave leap token",
+            label_visibility="visible",
+            key="token_api",
+            on_change=callback,
+        )
+
+    logger.debug(f"returned token api = {memory.get('token_api')}")
+
+    return memory.get("token_api", "")
+
+
+def app():
     logger.info(f"{'-':->50}")
     logger.info(f"{' Enter App ':^50}")
     logger.info(f"{'-':->50}")
+
+    logger.debug(st.session_state)
+    logger.debug(_token_api)
 
     logo_path = str(Path(__file__).parent / "images/logo.png")
     icon_path = str(Path(__file__).parent / "images/icon.png")
@@ -280,71 +317,84 @@ def app():
 
     st.image(logo_path)
     st.markdown("**Markowitz Portfolio Quantum Optimization**")
-    st.markdown(":blue[by: Serikat and Tecnalia]")
+    st.markdown(":blue[by: Serikat & Tecnalia]")
     st.markdown("---")
 
     with st.sidebar:
-        st.title("Parameter selection")
+        st.title("Parameter selection for portfolio optimization")
         st.markdown(
-            "In this sidebar you are invited to parametrize the optimization process "
+            "In this sidebar you can parametrize the optimization process "
             "in 3 ordered steps."
         )
         st.markdown("---")
 
-    sub0, file_path, sheet_name = step_0_form()
+    with st.sidebar:
+        get_token_api()
 
-    if sub0 or memory.get("step_1_form"):
+    if _token_api.value is not None:
 
-        assert file_path is not None
+        sub0, file_path, sheet_name = step_0_form()
 
-        st.markdown("## 1. Historical assets")
+        if sub0 or memory.get("step_1_form"):
 
-        history = step_0_compute(file_path, sheet_name)
+            assert file_path is not None
 
-        with st.expander("Raw data"):
-            st.dataframe(data=history.df)
+            st.markdown("## 1. Historical assets")
 
-        with st.expander("Plot data"):
-            visualize_assets(history)
+            history = step_0_compute(file_path, sheet_name)
 
-        sub1, ns, er = step_1_form(history)
+            with st.expander("Raw data"):
+                st.dataframe(data=history.df)
 
-        if sub1 or memory.get("step_2_form"):
+            with st.expander("Plot data"):
+                visualize_assets(history)
 
-            if not sub0:
+            sub1, ns, er, seed = step_1_form(history)
 
-                assert er is not None
+            if sub1 or memory.get("step_2_form"):
 
-                st.markdown("## 2. Assets simulation")
+                if not sub0:
 
-                future = step_1_compute(history, ns, er, order=12)
+                    assert er is not None
 
-                with st.expander("Raw future assets"):
-                    st.dataframe(data=future.df)
+                    st.markdown("## 2. Assets simulation")
 
-                with st.expander("Plot the future assets"):
-                    visualize_assets(future)
+                    future = step_1_compute(history, ns, er, order=12)
 
-                sub2, budget, w, theta1, theta2, theta3, steps = step_2_form()
+                    with st.expander("Raw future assets"):
+                        st.dataframe(data=future.df)
 
-                if sub2:
+                    with st.expander("Plot the future assets"):
+                        visualize_assets(future)
 
-                    st.markdown("## 3. Find the best portfolio")
-
-                    interpretation = step_2_compute(
-                        future,
+                    (
+                        sub2,
                         budget,
                         w,
                         theta1,
                         theta2,
                         theta3,
-                        SolverTypes.hybrid_solver,
-                        token_api,
                         steps,
-                        verbose=False,
-                    )
+                    ) = step_2_form()
 
-                    step_2_display(interpretation)
+                    if sub2:
+
+                        st.markdown("## 3. Find the best portfolio")
+
+                        interpretation = step_2_compute(
+                            future,
+                            budget,
+                            w,
+                            theta1,
+                            theta2,
+                            theta3,
+                            SolverTypes.hybrid_solver,
+                            _token_api.value,
+                            steps,
+                            verbose=False,
+                        )
+
+                        step_2_display(interpretation)
 
     logger.info(f"{'-':->50}")
     logger.info(f"{' Done ':^50}")

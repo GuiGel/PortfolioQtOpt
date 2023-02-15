@@ -374,6 +374,7 @@ def simulate_assets(
         typing.Dict[typing.Union[Scalar, typing.Tuple[Hashable, ...]], float]
     ] = None,
     order: int = 12,
+    seed: Optional[int] = None,
 ) -> Assets:
     """Function that create the future assets.
 
@@ -385,11 +386,15 @@ def simulate_assets(
             Defaults to the input expected returns.
         order (int, optional): The order of the polynomial approximation of the
             expected returns. Defaults to 12.
+        seed (int, optional): The seed for random number generation.
 
     Returns:
         Assets: The future assets.
     """
     logger.info("simulate future assets")
+
+    np.random.seed(seed=seed)
+
     if er is None:
         er = dict(zip(assets.df.columns, assets.anual_returns))
     simulate = Simulation(assets, er, ns)

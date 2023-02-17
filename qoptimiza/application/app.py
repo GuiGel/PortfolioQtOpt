@@ -1,20 +1,20 @@
-from typing import Any, Dict, Hashable, Optional, Tuple, Union
+from pathlib import Path
+from typing import Dict, Hashable, Optional, Tuple, Union
 
+import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 from loguru import logger
 from streamlit.runtime.uploaded_file_manager import UploadedFile
-import pandas as pd
-from pathlib import Path
 
 from qoptimiza.application import streamlit_debug
+from qoptimiza.application.record import Record, delete_posterior_records
 from qoptimiza.application.utils import visualize_assets
 from qoptimiza.assets import Assets, Scalar
+from qoptimiza.optimization import Interpretation, SolverTypes, check_dwave_token
 from qoptimiza.reader import read_welzia_stocks_file
 from qoptimiza.simulation import simulate_assets
 from qoptimiza.simulation.errors import CovNotSymDefPos
-from qoptimiza.optimization import Interpretation, SolverTypes, check_dwave_token
-from qoptimiza.application.record import Record, delete_posterior_records
 
 streamlit_debug.set(flag=False, wait_for_client=False)
 
@@ -30,9 +30,7 @@ def get_token_api() -> None:
             memory["token_api"] = None
 
         if (input_token := memory["input_token_api"]) != "":
-            if (
-                not check_dwave_token(input_token) 
-            ):
+            if not check_dwave_token(input_token):
                 st.error("Bad dwave solver authentication!")
             else:
                 memory["token_api"] = Record(order=1, value=input_token)
@@ -112,7 +110,7 @@ def step_0_compute(file_path: UploadedFile, sheet_name: str):
     try:
         df = read_welzia_stocks_file(file_path, sheet_name)
         # raise ValueError()
-    except Exception as e:
+    except Exception:
         st.error("read welzia fails!")
         delete_posterior_records(order=4, memory=memory)
     else:
@@ -250,15 +248,16 @@ def _step_2_initialize(
     memory["step_2_form"] = Record(
         order=6,
         value={
-        "assets": assets,
-        "b": b,
-        "w": w,
-        "theta1": theta1,
-        "theta2": theta2,
-        "theta3": theta3,
-        "solver": solver,
-        "token_api": memory["token_api"],
-        "steps": steps},
+            "assets": assets,
+            "b": b,
+            "w": w,
+            "theta1": theta1,
+            "theta2": theta2,
+            "theta3": theta3,
+            "solver": solver,
+            "token_api": memory["token_api"],
+            "steps": steps,
+        },
     )
 
 
@@ -271,12 +270,19 @@ def step_2_form(asset: Assets, solver: SolverTypes) -> None:
     if submit:
         delete_posterior_records(order=6, memory=memory)
 
-        if any([b <= 0, ]):  # TODO add more conditions
+        if any(
+            [
+                b <= 0,
+            ]
+        ):  # TODO add more conditions
             # _step_0_check_error(submit, file_path, sheet_name)
             st.error("budget can't be negative")
-            pass
 
-        elif all([b > 0, ]):
+        elif all(
+            [
+                b > 0,
+            ]
+        ):
             _step_2_initialize(asset, b, w, theta1, theta2, theta3, solver, steps)
 
 
@@ -418,7 +424,7 @@ def app():
         get_token_api()
 
     if memory.get("token_api") is not None:
- 
+
         step_0_form()
 
         if (record := memory.get("step_0_form")) is not None:
@@ -461,12 +467,15 @@ def app():
                             if memory.get("FormSubmitter:optimization-submit values"):
                                 step_2_compute(**args_2.value)
 
-                            if (interpretation := memory.get("step_2_compute")) is not None:
+                            if (
+                                interpretation := memory.get("step_2_compute")
+                            ) is not None:
                                 step_2_display(interpretation.value)
 
     logger.info("-".center(30, "-"))
     logger.info(" END ".center(30, "-"))
-    logger.info("\n\n\n\n\n")    
+    logger.info("\n\n\n\n\n")
+
 
 if __name__ == "__main__":
-   app()
+    app()

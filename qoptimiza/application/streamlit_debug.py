@@ -7,12 +7,16 @@ How to use:
 
 [1] Ensure you have `debugpy` installed:
    > pip install debugpy
+
 [2] In your main streamlit app:
    import streamlit_debug
    streamlit_debug.set(flag=True, wait_for_client=True, host='localhost', port=8765)
-`flag=True` will initiate a debug session. `wait_for_client=True` will wait for a debug 
-client to attach when the streamlit app is run before hitting your next debug 
-breakpoint. `wait_for_client=False` will not wait.
+
+`flag=True` will initiate a debug session.
+`wait_for_client=True` will wait for a debug  client to attach when the streamlit app 
+is run before hitting your next debug  breakpoint.
+`wait_for_client=False` will not wait.
+
 If using VS Code, you need this config in your `.vscode/launch.json` file:
     {
         // Use IntelliSense to learn about possible attributes.
@@ -49,9 +53,10 @@ If using VS Code, you need this config in your `.vscode/launch.json` file:
             },
         ]
     }
+
 The port numbers you use need to match - in `streamlit_debug.set()` and `launch.json`. 
-It should NOT be the same port that
-streamlit is started on.
+It should NOT be the same port that streamlit is started on.
+
 When `flag=True` and `wait_for_client=True`, you'll must activate the "Python: debugpy 
 Remote Attach" debug session from vs-code.
 
@@ -74,7 +79,7 @@ def set(flag: bool = False, wait_for_client=False, host="localhost", port=8765) 
 
         if _DEBUG and not st.session_state.debugging:
             # https://code.visualstudio.com/docs/python/debugging
-            import debugpy
+            import debugpy  # type:  ignore[import]
 
             if not debugpy.is_client_connected():
                 debugpy.listen((host, port))

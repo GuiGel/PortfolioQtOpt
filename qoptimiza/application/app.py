@@ -13,8 +13,7 @@ from qoptimiza.assets import Assets, Scalar
 from qoptimiza.reader import read_welzia_stocks_file
 from qoptimiza.simulation import simulate_assets
 from qoptimiza.simulation.errors import CovNotSymDefPos
-from qoptimiza.optimization import Interpretation, SolverTypes
-from qoptimiza.optimization.optimization import check_dwave_token
+from qoptimiza.optimization import Interpretation, SolverTypes, check_dwave_token
 from qoptimiza.application.record import Record, delete_posterior_records
 
 streamlit_debug.set(flag=False, wait_for_client=False)
@@ -30,13 +29,13 @@ def get_token_api() -> None:
         if "token_api" not in memory:
             memory["token_api"] = None
 
-        if memory["input_token_api"] != "":
+        if (input_token := memory["input_token_api"]) != "":
             if (
-                not check_dwave_token(memory._token_api) 
-            ):  # memory["input_token_api"] != "coucou":
+                not check_dwave_token(input_token) 
+            ):
                 st.error("Bad dwave solver authentication!")
             else:
-                memory["token_api"] = Record(order=1, value=memory["input_token_api"])
+                memory["token_api"] = Record(order=1, value=input_token)
                 token_api_container.empty()
 
     st.markdown(
@@ -55,6 +54,7 @@ def get_token_api() -> None:
             label_visibility="visible",
             key="input_token_api",
             on_change=callback,
+            type="password",
         )
 
 

@@ -25,35 +25,46 @@ memory = st.session_state
 
 
 def get_token_api() -> None:
+
+    col1, col2 = st.columns(2)
+
     def callback() -> None:
+        nonlocal col2
         if "token_api" not in memory:
             memory["token_api"] = None
 
         if (input_token := memory["input_token_api"]) != "":
             if not check_dwave_token(input_token):
-                st.error("Bad dwave solver authentication!")
+                with st.sidebar:
+                    with col2:
+                        st.error("Authentication error!")
             else:
                 memory["token_api"] = Record(order=1, value=input_token)
                 token_api_container.empty()
 
-    st.markdown(
-        f"Set the token api to connect to dwave solver in order to solve the "
-        f"optimization problem"
-    )
+    with col1:
+        if st.button(
+            "Connect to D-Wave",
+            key="token_api_button_pressed",
+            help=(
+                "Set the token api to connect to dwave solver in order to solve the "
+                "optimization problem"
+            ),
+        ):
+            # A new token api have been submitted. Clean memory.
 
-    if st.button("token api", key="token_api_button_pressed"):
+            for key in memory:
+                del memory[key]
 
-        for key in memory:
-            del memory[key]
+            token_api_container = st.empty()
 
-        token_api_container = st.empty()
-        token_api_container.text_input(
-            "Enter your dwave leap token",
-            label_visibility="visible",
-            key="input_token_api",
-            on_change=callback,
-            type="password",
-        )
+            token_api_container.text_input(
+                "Enter your dwave leap token",
+                label_visibility="visible",
+                key="input_token_api",
+                on_change=callback,
+                type="password",
+            )
 
 
 def _step_0_form() -> Tuple[bool, Optional[UploadedFile], str]:

@@ -15,8 +15,11 @@ def visualize_assets(assets: Assets) -> None:
     """
     logger.info("visualize df")
 
-    # Sort column in increasing order based on their last price. This is done to have
-    # an ordered color plot.
+    # Sort column in decreasing order based on their last price. This is done to have
+    # an ordered color plot. By this way the first asset that appears on the top of
+    # the legend correspond to the highest value on the left of the plot.
+
+
     last_row = assets.df.tail(1).iloc[-1, :]
     sorted_columns = last_row.argsort().to_numpy()[::-1]
 
@@ -28,7 +31,7 @@ def visualize_assets(assets: Assets) -> None:
         x_axis_type="datetime",
         y_axis_type="log",
         background_fill_color="#fafafa",
-        height=assets.m * 25,
+        height=assets.m * 26,
         width=1000,
     )
 
@@ -47,9 +50,7 @@ def visualize_assets(assets: Assets) -> None:
         legend_it.append((column, [c]))
 
     legend = Legend(items=legend_it)
-
     legend.title = "Assets"
-
     legend.click_policy = "hide"
     legend.border_line_width = 1
     legend.border_line_color = "grey"

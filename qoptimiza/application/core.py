@@ -412,7 +412,7 @@ def app():
     st.set_page_config(
         page_title="QOptimiza",
         page_icon=icon_path,
-        layout="centered",
+        layout="wide",
         initial_sidebar_state="collapsed",
     )
 

@@ -201,7 +201,6 @@ def step_1_form(
         _step_1_initialize(assets, days_numbers, expected_returns, seed)
 
 
-# @st.cache(suppress_st_warning=True, show_spinner=False)
 def step_1_compute(
     assets: Assets,
     ns: int,

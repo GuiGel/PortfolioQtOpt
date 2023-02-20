@@ -1,3 +1,6 @@
+"""Utility function for the ``streamlit`` application.
+
+"""
 import streamlit as st
 from bokeh.models import Legend
 from bokeh.palettes import Turbo256
@@ -8,7 +11,7 @@ from qoptimiza.assets import Assets
 
 
 def visualize_assets(assets: Assets) -> None:
-    """Create a `bokeh` graph of the assets.
+    """Create a ``bokeh`` plot given an :class:`~qoptimiza.assets.Assets`
 
     Args:
         assets (Assets): The assets to plot.
@@ -34,6 +37,8 @@ def visualize_assets(assets: Assets) -> None:
         height=assets.m * 26,
         width=1000,
     )
+
+    # Create Legend outside the Figure. This way the plot are not erased by the legend.
 
     legend_it = []
     for i, column in enumerate(assets[sorted_columns].df):

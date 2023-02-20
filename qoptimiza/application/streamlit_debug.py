@@ -1,16 +1,24 @@
-"""module to help streamlit debugging.
+"""Module that help with streamlit debugging.
 
-Taken from: https://gist.github.com/asehmi/aafacaef2b56332c341794fe18e01f9d
-Also see the discuss: https://discuss.streamlit.io/t/vs-code-debug/520/3
+Taken from `link <https://gist.github.com/asehmi/aafacaef2b56332c341794fe18e01f9d>`_.
+Also see this `discussion <https://discuss.streamlit.io/t/vs-code-debug/520/3>`_ on
+``Streamlit`` discuss forum.
 
 How to use:
 
-[1] Ensure you have `debugpy` installed:
-   > pip install debugpy
+1.  Ensure you have ``debugpy`` installed:
 
-[2] In your main streamlit app:
-   import streamlit_debug
-   streamlit_debug.set(flag=True, wait_for_client=True, host='localhost', port=8765)
+    .. code-block:: console
+
+        $ pip install debugpy
+
+2.  In your main streamlit app:
+
+    .. code::
+
+        import streamlit_debug
+        streamlit_debug.set(flag=True, wait_for_client=True, host='localhost', port=8765)
+
 
 `flag=True` will initiate a debug session.
 `wait_for_client=True` will wait for a debug  client to attach when the streamlit app 
@@ -18,43 +26,47 @@ is run before hitting your next debug  breakpoint.
 `wait_for_client=False` will not wait.
 
 If using VS Code, you need this config in your `.vscode/launch.json` file:
-    {
-        // Use IntelliSense to learn about possible attributes.
-        // Hover to view descriptions of existing attributes.
-        // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-        "version": "0.2.0",
-        "configurations": [
-            {
-                "name": "Python: Current File",
-                "type": "python",
-                "request": "launch",
-                "program": "${file}",
-                "console": "integratedTerminal",
-                "env": {"DEBUG": "true"}
-            },
-            {
-                "name": "Python: debugpy Remote Attach",
-                "type": "python",
-                "request": "attach",
-                "connect": {
-                    "port": 8765,
-                    "host": "127.0.0.1",
-                },
-                "justMyCode": false,
-                "redirectOutput": true,
-                "logToFile": true,
-                "pathMappings": [
-                    {
-                        "localRoot": "${workspaceFolder}",
-                        "remoteRoot": "."
-                    }
-                ]
-                // "debugAdapterPath": "${workspaceFolder}/src/debugpy/adapter",
-            },
-        ]
-    }
 
-The port numbers you use need to match - in `streamlit_debug.set()` and `launch.json`. 
+    .. code:: json
+
+        {
+            // Use IntelliSense to learn about possible attributes.
+            // Hover to view descriptions of existing attributes.
+            // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+            "version": "0.2.0",
+            "configurations": [
+                {
+                    "name": "Python: Current File",
+                    "type": "python",
+                    "request": "launch",
+                    "program": "${file}",
+                    "console": "integratedTerminal",
+                    "env": {"DEBUG": "true"}
+                },
+                {
+                    "name": "Python: debugpy Remote Attach",
+                    "type": "python",
+                    "request": "attach",
+                    "connect": {
+                        "port": 8765,
+                        "host": "127.0.0.1",
+                    },
+                    "justMyCode": false,
+                    "redirectOutput": true,
+                    "logToFile": true,
+                    "pathMappings": [
+                        {
+                            "localRoot": "${workspaceFolder}",
+                            "remoteRoot": "."
+                        }
+                    ]
+                    // "debugAdapterPath": "${workspaceFolder}/src/debugpy/adapter",
+                },
+            ]
+        }
+
+The port numbers you use need to match - in both
+:func:`~qoptimiza.application.streamlit_debug.set()` and `launch.json`. 
 It should NOT be the same port that streamlit is started on.
 
 When `flag=True` and `wait_for_client=True`, you'll must activate the "Python: debugpy 
@@ -69,6 +81,15 @@ _DEBUG = False
 
 
 def set(flag: bool = False, wait_for_client=False, host="localhost", port=8765) -> None:
+    """Debug Streamlit.
+
+    Args:
+        flag (bool, optional): The debugging flag. Defaults to False.
+        wait_for_client (bool, optional): Wait for a the client to attach.
+            Defaults to False.
+        host (str, optional): The IP for ``debugpy`` ip. Defaults to "localhost".
+        port (int, optional): The port for ``debugpy``. Defaults to 8765.
+    """
     global _DEBUG
     _DEBUG = flag
     try:

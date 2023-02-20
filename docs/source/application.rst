@@ -7,3 +7,4 @@ Application
 
    application/app
    application/utils
+   application/streamlit_debug

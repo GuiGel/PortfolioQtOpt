@@ -2,7 +2,7 @@
 
 Taken from `link <https://gist.github.com/asehmi/aafacaef2b56332c341794fe18e01f9d>`_.
 Also see this `discussion <https://discuss.streamlit.io/t/vs-code-debug/520/3>`_ on
-``Streamlit`` discuss forum.
+`streamlit`_ discuss forum.
 
 How to use:
 
@@ -66,11 +66,13 @@ If using VS Code, you need this config in your `.vscode/launch.json` file:
         }
 
 The port numbers you use need to match - in both
-:func:`~qoptimiza.application.streamlit_debug.set()` and `launch.json`. 
-It should NOT be the same port that streamlit is started on.
+:func:`~qoptimiza.application.streamlit_debug.set` and `launch.json`. 
+It should NOT be the same port that `streamlit`_ is started on.
 
 When `flag=True` and `wait_for_client=True`, you'll must activate the "Python: debugpy 
 Remote Attach" debug session from vs-code.
+
+.. _streamlit: https://streamlit.io/
 
 """
 import logging

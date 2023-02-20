@@ -7,6 +7,11 @@ from qoptimiza.assets import Assets
 
 
 def visualize_assets(assets: Assets) -> None:
+    """Create a `bokeh` graph of the assets.
+
+    Args:
+        assets (Assets): The assets to plot.
+    """
     logger.info("visualize df")
     # ----- bokeh visualization
     p = figure(

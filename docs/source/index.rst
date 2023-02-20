@@ -12,6 +12,7 @@ Welcome to PortfolioQtOpt's documentation!
 
    simulation/example_1
    simulation/example_2
+   application
    api
    bibliography
 

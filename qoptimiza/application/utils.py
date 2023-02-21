@@ -11,7 +11,7 @@ from qoptimiza.assets import Assets
 
 
 def visualize_assets(assets: Assets) -> None:
-    """Create a ``bokeh`` plot given an :class:`~qoptimiza.assets.Assets`
+    """Create a ``bokeh`` plot given an :class:`~qoptimiza.assets.Assets`.
 
     Args:
         assets (Assets): The assets to plot.

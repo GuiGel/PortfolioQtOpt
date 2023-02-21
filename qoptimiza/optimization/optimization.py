@@ -7,6 +7,8 @@ from enum import Enum, unique
 import numpy as np
 import pandas as pd
 from dimod.sampleset import SampleSet
+from dwave.cloud import Client  # type: ignore[import]
+from dwave.cloud import exceptions as dwave_exceptions
 from dwave.system import LeapHybridSampler  # type: ignore
 from loguru import logger
 
@@ -19,6 +21,49 @@ from qoptimiza.optimization.interpreter import (
     interpret,
 )
 from qoptimiza.optimization.qubo import Q, get_qubo
+
+
+def check_dwave_token(token_api: str) -> bool:
+    """Check that the given `token_api` allow a connection to dwave-leap.
+
+    Ref: https://dwave-meta-doc.readthedocs.io/en/latest/overview/dwavesys.html
+
+    Args:
+        token_api (str): The connection token
+
+    Returns:
+        bool: True for a valid token false otherwise
+
+    Example:
+
+        >>> TOKEN_API = 'ABC-123456789123456789123456789'
+        >>> client = Client.from_config(token=TOKEN_API)
+        >>> client.get_solvers()
+        Traceback (most recent call last):
+        ...
+        dwave.cloud.exceptions.SolverAuthenticationError: Invalid token or access denied
+
+        Now do the same with :func:`~qoptimiza.application.utils.check_dwave_token`.
+
+        >>> check_dwave_token(TOKEN_API)
+        False
+
+        >>> check_dwave_token("xxxxxxxxxxxxxxxxxxxxxxxxxxxx")  # doctest: +SKIP
+        True
+
+    """
+    client = Client.from_config(
+        token=token_api,
+        endpoint="https://na-west-1.cloud.dwavesys.com/sapi/v2/",
+        client="hybrid",
+    )
+    try:
+        client.get_solvers()
+    except dwave_exceptions.SolverAuthenticationError as e:
+        logger.exception(e)
+        return False
+    else:
+        return True
 
 
 @unique

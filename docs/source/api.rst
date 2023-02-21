@@ -12,4 +12,3 @@ API
    api/qubo
    api/interpreter
    api/optimization
-

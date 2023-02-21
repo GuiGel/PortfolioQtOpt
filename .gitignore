@@ -9,9 +9,6 @@ __pycache__
 # Data direcotry from Welzia
 data
 
-# vscode stuff
-.vscode
-
 # Sphinx
 docs/build
 *.ipynb_checkpoints

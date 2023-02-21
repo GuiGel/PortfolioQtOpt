@@ -1,0 +1,38 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/qoptimiza", // https://stackoverflow.com/questions/58709973/vscode-1-39-x-python-3-7-x-importerror-attempted-relative-import-with-no-kn
+            }
+        },
+        {
+            "name": "Python: debugpy Remote Attach",
+            "type": "python",
+            "request": "attach",
+            "connect": {
+                "port": 8765,
+                "host": "127.0.0.1",
+            },
+            "justMyCode": false,
+            "redirectOutput": true,
+            "logToFile": true,
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "."
+                }
+            ]
+            // "debugAdapterPath": "${workspaceFolder}/src/debugpy/adapter",
+             },
+    ]
+}

@@ -22,7 +22,6 @@ def visualize_assets(assets: Assets) -> None:
     # an ordered color plot. By this way the first asset that appears on the top of
     # the legend correspond to the highest value on the left of the plot.
 
-
     last_row = assets.df.tail(1).iloc[-1, :]
     sorted_columns = last_row.argsort().to_numpy()[::-1]
 
